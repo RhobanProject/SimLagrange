@@ -68,6 +68,8 @@ class SmartPtr
                 _counter = ptr._counter;
                 _counter->incr();
             }
+
+            return *this;
         }
 
         /**
