@@ -6,6 +6,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 #Tests to compile
 set (TESTS_DIRECTORIES
     SmartPointer
+    Symbolic
+    Any
 )
 
 #Build tests
