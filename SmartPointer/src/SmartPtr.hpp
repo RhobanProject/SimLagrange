@@ -2,6 +2,7 @@
 #define LEPH_SMARTPOINTER_SMARTPTR_HPP
 
 #include <stdexcept>
+#include <typeinfo>
 #include "SmartPointer/src/ReferenceCounter.hpp"
 
 namespace Leph {
@@ -21,7 +22,7 @@ class SmartPtr
         /**
          * Initialization with the newly allocated Object
          */
-        explicit SmartPtr(T* obj) :
+        SmartPtr(T* obj) :
             _pointer(obj),
             _counter(NULL)
         {
@@ -49,6 +50,24 @@ class SmartPtr
             _pointer(ptr._pointer),
             _counter(ptr._counter)
         {
+            _counter->incr();
+        }
+
+        /**
+         * Copy constructor for inheritance
+         * Throw bad_cast on error
+         * (T is not a base class of U)
+         */
+        template <class U>
+        SmartPtr(const SmartPtr<U>& ptr) :
+            _counter(ptr._counter)
+        {
+            T* pt = dynamic_cast<T*>(ptr._pointer);
+            if (pt == NULL) {
+                throw std::bad_cast();
+            }
+
+            _pointer = pt;
             _counter->incr();
         }
 
@@ -92,6 +111,18 @@ class SmartPtr
             return _pointer;
         }
 
+        /**
+         * Convertion for inheritance purpose
+         * Throw bad_cast on error
+         * (U is not a base class of T)
+         */
+        template <class U>
+        operator SmartPtr<U>() const
+        {
+            return SmartPtr<U>(*this);
+        }
+        
+
     private:
 
         /**
@@ -118,6 +149,12 @@ class SmartPtr
                 _counter = NULL;
             }
         }
+
+        /**
+         * Friend inter SmartPtr
+         */
+        template <class U>
+        friend class SmartPtr;
 };
 
 /**
