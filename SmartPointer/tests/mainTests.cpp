@@ -58,6 +58,14 @@ int main()
     SmartPtr<A> ptr6 = function();
     assert(ptr6->nb == 50);
 
+    SmartPtr<int> ptr7;
+    SmartPtr<int> ptr8 = ptr7;
+    assert(ptr7.isNull());
+    assert(ptr8.isNull());
+    ptr8 = ptr1;
+    assert(*ptr8 == 41);
+    assert(!ptr8.isNull());
+
     return 0;
 }
 

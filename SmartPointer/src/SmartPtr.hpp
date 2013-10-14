@@ -20,6 +20,16 @@ class SmartPtr
     public:
 
         /**
+         * Initialize an empty pointer
+         */
+        SmartPtr() :
+            _pointer(NULL),
+            _counter(NULL)
+        {
+            _counter = new ReferenceCounter();
+        }
+
+        /**
          * Initialization with the newly allocated Object
          */
         SmartPtr(T* obj) :
@@ -63,7 +73,7 @@ class SmartPtr
             _counter(ptr._counter)
         {
             T* pt = dynamic_cast<T*>(ptr._pointer);
-            if (pt == NULL) {
+            if (ptr._pointer != NULL && pt == NULL) {
                 throw std::bad_cast();
             }
 
@@ -96,6 +106,10 @@ class SmartPtr
          */
         inline const T& operator*() const
         {
+            if (_pointer == NULL) {
+                throw std::logic_error("SmartPtr null pointer");
+            }
+
             return *_pointer;
         }
         inline const T* operator->() const
@@ -109,6 +123,14 @@ class SmartPtr
         inline T* operator->()
         {
             return _pointer;
+        }
+
+        /**
+         * Return true if the pointer is null
+         */
+        inline bool isNull() const
+        {
+            return _pointer == NULL;
         }
 
         /**
