@@ -55,7 +55,13 @@ class Symbol : public BaseSymbol, public Term<T>
          */
         virtual T computeEvaluation(const Bounder& bounder)
         {
-            return bounder.getValue<T>(*this);
+            if (BaseSymbol::getName() == BaseSymbol::zero()) {
+                return T(0);
+            } else if (BaseSymbol::getName() == BaseSymbol::one()) {
+                return T(1);
+            } else {
+                return bounder.getValue<T>(*this);
+            }
         }
 
         /**
