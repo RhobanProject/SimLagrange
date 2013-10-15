@@ -2,6 +2,7 @@
 #define LEPH_SYMBOLIC_TERM_HPP
 
 #include <map>
+#include <ostream>
 #include "SmartPointer/src/SmartPtr.hpp"
 #include "Symbolic/src/BaseSymbol.hpp"
 #include "Symbolic/src/Bounder.hpp"
@@ -138,6 +139,16 @@ class Term
         T _value;
         bool _isValueComputed;
 };
+
+/**
+ * Print operator
+ */
+template <class T>
+std::ostream& operator<<(std::ostream& os, Term<T>& term)
+{
+    os << term.toString();
+    return os;
+}
 
 }
 }
