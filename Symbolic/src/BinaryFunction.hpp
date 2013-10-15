@@ -57,7 +57,7 @@ class BinaryFunction : public Term<T>
         /**
          * @Inherit
          */
-        virtual T computeEvaluation(const Bounder& bounder)
+        virtual inline T computeEvaluation(const Bounder& bounder)
         {
             throw std::logic_error("BinaryFunction not implemented");
         }
@@ -65,7 +65,7 @@ class BinaryFunction : public Term<T>
         /**
          * @Inherit
          */
-        virtual void doReset() 
+        virtual inline void doReset() 
         {
             _argLeft->reset();
             _argRight->reset();

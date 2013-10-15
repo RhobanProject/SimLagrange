@@ -8,6 +8,7 @@
 #include "Symbolic/src/BinaryFunction.hpp"
 #include "Symbolic/src/terms/Add.hpp"
 #include "Symbolic/src/terms/Mult.hpp"
+#include "Symbolic/src/terms/Exp.hpp"
 
 using namespace std;
 using namespace Leph::Symbolic;
@@ -50,6 +51,15 @@ int main()
     assert(term2->derivate(sym1)->toString() == "ZERO");
     assert(term2->derivate(t)->toString() 
         == "((d(sym2)/dt)*(sym3))+((sym2)*(d(sym3)/dt))");
+
+    Symbol<double>::SymbolPtr sym4 = Symbol<double>::create("sym4");
+    sym4->depend(t);
+    Term<double>::TermPtr term3 = Exp<double,double>::create(sym4);
+    assert(term3->derivate(t)->toString() == "(d(sym4)/dt)*(exp(sym4))");
+
+    bounder.setValue(sym4, 1.0);
+    assert(term3->evaluate(bounder) > 2.71 
+        && term3->evaluate(bounder) < 2.72);
 
     return 0;
 }
