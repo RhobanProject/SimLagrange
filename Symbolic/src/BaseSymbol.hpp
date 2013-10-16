@@ -37,6 +37,19 @@ class BaseSymbol
         }
 
         /**
+         * Copy with new name
+         * (Copy the depends)
+         */
+        BaseSymbol(const std::string& name, const BaseSymbol& copy) :
+            _name(name),
+            _depends(copy._depends)
+        {
+            if (_name.empty()) {
+                throw std::logic_error("BaseSymbol empty name");
+            }
+        }
+
+        /**
          * Return the Symbol name
          */
         inline const std::string& getName() const

@@ -34,6 +34,10 @@ class Bounder
         {
             return _symbolValues.count(sym->getName());
         }
+        inline bool isSymbol(const BaseSymbol& sym) const
+        {
+            return _symbolValues.count(sym.getName());
+        }
 
         /**
          * Register the given Symbol
@@ -42,7 +46,7 @@ class Bounder
         inline void setSymbol(const BaseSymbol::BaseSymbolPtr& sym)
         {
             //Insert value zero
-            T zero = T() - T();
+            T zero = T();
             _symbolValues[sym->getName()] = Any::Any(zero);
         }
 

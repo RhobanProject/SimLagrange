@@ -1,6 +1,7 @@
 #ifndef LEPH_SYMBOLIC_SYMBOL_HPP
 #define LEPH_SYMBOLIC_SYMBOL_HPP
 
+#include <stdexcept>
 #include "Symbolic/src/Term.hpp"
 #include "Symbolic/src/BaseSymbol.hpp"
 
@@ -47,7 +48,9 @@ class Symbol : public BaseSymbol, public Term<T>
         virtual inline typename Term<T>::TermPtr computeDerivative
             (const BaseSymbol::BaseSymbolPtr& sym)
         {
-            return Symbol<T>::create(BaseSymbol::derivateString(sym));
+            return SymbolPtr(new Symbol<T>(
+                BaseSymbol::derivateString(sym),
+                *this));
         }
        
         /**
@@ -56,11 +59,16 @@ class Symbol : public BaseSymbol, public Term<T>
         virtual T computeEvaluation(const Bounder& bounder)
         {
             if (BaseSymbol::getName() == BaseSymbol::zero()) {
-                return T(0);
+                return T();
             } else if (BaseSymbol::getName() == BaseSymbol::one()) {
                 return T(1);
             } else {
-                return bounder.getValue<T>(*this);
+                if (bounder.isSymbol(*this)) {
+                    return bounder.getValue<T>(*this);
+                } else {
+                    throw std::logic_error(
+                        "Symbol unbound: " + BaseSymbol::getName());
+                }
             }
         }
 
@@ -83,6 +91,14 @@ class Symbol : public BaseSymbol, public Term<T>
         {
         }
 
+        /**
+         * Copy with new name
+         */
+        Symbol(const std::string& name, const Symbol<T>& copy) :
+            BaseSymbol(name, copy),
+            Term<T>()
+        {
+        }
 };
 
 }
