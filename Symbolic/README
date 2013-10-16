@@ -1,0 +1,8 @@
+Symbolic
+========
+
+The types used must:
+- Be assignable, copyable and constructible (default constructor)
+- Implement operator addition, multiplication and print (ostream)
+- Constructor T() and T(1) be the neutral value of addition and multiplication
+
