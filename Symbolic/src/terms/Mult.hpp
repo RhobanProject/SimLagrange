@@ -3,6 +3,7 @@
 
 #include "Symbolic/src/BinaryFunction.hpp"
 #include "Symbolic/src/terms/Add.hpp"
+#include "Symbolic/src/Symbol.hpp"
 
 namespace Leph {
 namespace Symbolic {
@@ -20,13 +21,9 @@ class Mult : public BinaryFunction<T,U,V>
             typename Term<V>::TermPtr termRight)
         {
             if (termLeft->toString() == BaseSymbol::zero()) {
-                return termLeft;
+                return Symbol<T>::create(BaseSymbol::zero());
             } else if (termRight->toString() == BaseSymbol::zero()) {
-                return termRight;
-            } else if (termLeft->toString() == BaseSymbol::one()) {
-                return termRight;
-            } else if (termRight->toString() == BaseSymbol::one()) {
-                return termLeft;
+                return Symbol<T>::create(BaseSymbol::zero());
             } else {
                 return typename Term<T>::TermPtr(
                     new Mult<T,U,V>(termLeft, termRight));
@@ -59,7 +56,7 @@ class Mult : public BinaryFunction<T,U,V>
             typename Term<V>::TermPtr termRight = 
                 argRight->derivate(sym);
 
-            return Add<T,T,T>::create(
+            return Add<T>::create(
                 Mult<T,U,V>::create(termLeft, argRight), 
                 Mult<T,U,V>::create(argLeft, termRight));
         }
