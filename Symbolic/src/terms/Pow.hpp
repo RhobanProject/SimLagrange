@@ -14,13 +14,13 @@ namespace Symbolic {
 /**
  * Pow
  */
-template <class T, class U>
-class Pow : public UnaryFunction<T,U>
+template <class T>
+class Pow : public UnaryFunction<T,T>
 {
     public:
         
         static inline typename Term<T>::TermPtr create(
-            typename Term<U>::TermPtr term, long power)
+            typename Term<T>::TermPtr term, long power)
         {
             if (power == 0) {
                return Symbol<T>::create(BaseSymbol::one());
@@ -28,7 +28,7 @@ class Pow : public UnaryFunction<T,U>
                 return term;
             } else {
                 return typename Term<T>::TermPtr(
-                    new Pow<T,U>(term, power));
+                    new Pow<T>(term, power));
             }
         }
 
@@ -39,9 +39,9 @@ class Pow : public UnaryFunction<T,U>
          */
         long _power;
 
-        Pow(const typename Term<U>::TermPtr& term,
+        Pow(const typename Term<T>::TermPtr& term,
             long power) :
-            UnaryFunction<T,U>(term),
+            UnaryFunction<T,T>(term),
             _power(power)
         {
         }
@@ -53,7 +53,7 @@ class Pow : public UnaryFunction<T,U>
         {
             std::ostringstream oss;
             oss << _power;
-            return "(" + UnaryFunction<T,U>::_arg->toString() 
+            return "(" + UnaryFunction<T,T>::_arg->toString() 
                 + ")^" + oss.str();
         }
         
@@ -63,21 +63,21 @@ class Pow : public UnaryFunction<T,U>
         }
 
         virtual inline typename Term<T>::TermPtr functionderivative
-            (const typename Term<U>::TermPtr arg) const
+            (const typename Term<T>::TermPtr arg) const
         {
             return Mult<T,long,T>::create(
                 Constant<long>::create(_power),
-                Pow<T,U>::create(arg, _power-1));
+                Pow<T>::create(arg, _power-1));
         }
 
-        virtual inline T functionEvaluation(const U& argVal) const
+        virtual inline T functionEvaluation(const T& argVal) const
         {
             throw std::logic_error("Pow not implemented");
         }
 };
 
 template <>
-inline double Pow<double,double>::functionEvaluation
+inline double Pow<double>::functionEvaluation
     (const double& argVal) const
 {
     return pow(argVal, _power);
