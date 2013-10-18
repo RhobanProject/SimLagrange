@@ -20,7 +20,7 @@ class Add : public BinaryFunction<T,T,T>
         {
             if (termLeft->toString() == BaseSymbol::zero()) {
                 return termRight;
-            } else if (termLeft->toString() == BaseSymbol::zero()) {
+            } else if (termRight->toString() == BaseSymbol::zero()) {
                 return termLeft;
             } else {
                 return typename Term<T>::TermPtr(
