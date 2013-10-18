@@ -11,6 +11,7 @@
 #include "Symbolic/src/terms/Exp.hpp"
 #include "Symbolic/src/terms/Pow.hpp"
 #include "Symbolic/src/Constant.hpp"
+#include "Symbolic/src/terms/Frac.hpp"
 
 using namespace std;
 using namespace Leph::Symbolic;
@@ -64,7 +65,7 @@ int main()
     assert(term3->evaluate(bounder) > 2.71 
         && term3->evaluate(bounder) < 2.72);
 
-    Term<double>::TermPtr term4 = Pow<double,double>::create(sym4, 3);
+    Term<double>::TermPtr term4 = Pow<double>::create(sym4, 3);
     assert(term4->derivate(t)->toString() 
         == "(d(sym4)/dt)*((3)*((sym4)^2))");
     assert(term4->derivate(t)->derivate(t)->toString() == 
@@ -75,6 +76,10 @@ int main()
     assert(cst1->toString() == "3.14");
     assert(cst1->derivate(t)->toString() == "ZERO");
     assert(cst1->evaluate(bounder) == 3.14);
+
+    Term<double>::TermPtr term5 = Frac<double>::create(cst1, sym4);
+    assert(term5->toString() == "(3.14)/(sym4)");
+    assert(term5->derivate(t)->toString() == "(-((3.14)*(d(sym4)/dt)))/((sym4)^2)");
 
     return 0;
 }
