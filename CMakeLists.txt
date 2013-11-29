@@ -8,6 +8,9 @@ set (TESTS_DIRECTORIES
     SmartPointer
     Symbolic
     Any
+    LWPLS
+    Random
+    Plot
 )
 
 #Build tests
