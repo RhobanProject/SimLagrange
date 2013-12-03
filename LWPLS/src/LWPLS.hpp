@@ -1,7 +1,9 @@
 #ifndef LEPH_LWPLS_LWPLS_HPP
 #define LEPH_LWPLS_LWPLS_HPP
 
+#include <iostream>
 #include <vector>
+#include <cmath>
 #include <stdexcept>
 #include "Eigen/Dense"
 #include "Eigen/StdVector"
@@ -39,10 +41,10 @@ class LWPLS
 
         /**
          * Initialization
-         * The learning rate between 0 and 1 is given
+         * The forgetting rate between 0 and 1 is given
          */
-        LWPLS(scalar learningRate) :
-            _learningRate(learningRate),
+        LWPLS(scalar forgettingRate) :
+            _forgettingRate(forgettingRate),
             _sumWeight(0.0),
             _inputMean(InputVector::Zero()),
             _outputMean(0.0),
@@ -56,7 +58,7 @@ class LWPLS
             _inputCovariance()
         {
             //Sanity checks
-            if (_learningRate < 0.0 || _learningRate > 1.0) {
+            if (_forgettingRate < 0.0 || _forgettingRate > 1.0) {
                 throw std::logic_error("LWPLS invalid learning rate");
             }
             //Initialize first projection
@@ -75,10 +77,10 @@ class LWPLS
         {
             scalar oldSumWeight = _sumWeight;
             //Update sum of weights and means (table 3 - 2a)
-            _sumWeight = _learningRate*_sumWeight + weight;
-            _inputMean = (_learningRate*oldSumWeight*_inputMean 
+            _sumWeight = _forgettingRate*_sumWeight + weight;
+            _inputMean = (_forgettingRate*oldSumWeight*_inputMean 
                 + weight*inputVector)/_sumWeight;
-            _outputMean = (_learningRate*oldSumWeight*_outputMean 
+            _outputMean = (_forgettingRate*oldSumWeight*_outputMean 
                 + weight*outputScalar)/_sumWeight;
 
             //Latent coordinate of learning point for each projection (z_r)
@@ -91,14 +93,20 @@ class LWPLS
             inputRes[0] = inputVector - _inputMean;
             scalar outputRes = _outputMean;
             for (unsigned int r=0;r<_projectionDim;r++) {
-                latentCoord[r] = inputRes[r].transpose()
-                    *_projectionVector[r].normalized();
+                double normProjectionVector = _projectionVector[r].norm();
+                if (normProjectionVector > 1e-9f) {
+                    latentCoord[r] = (1.0/normProjectionVector)
+                        *inputRes[r].transpose()*_projectionVector[r];
+                } else {
+                    latentCoord[r] = 0.0;
+                }
                 outputRes = outputRes + latentCoord[r]*_outputRegression[r];
-                _projectionPredictionError[r] = 
-                    _learningRate*_projectionPredictionError[r] 
+                _projectionPredictionError[r] =
+                    _forgettingRate*_projectionPredictionError[r] 
                     + weight*(outputScalar-outputRes)*(outputScalar-outputRes);
                 if (r != _projectionDim-1) {
-                    inputRes[r+1] = inputRes[r] - latentCoord[r]*_inputRegression[r];
+                    inputRes[r+1] = inputRes[r] 
+                        - latentCoord[r]*_inputRegression[r];
                 }
             }
 
@@ -106,15 +114,24 @@ class LWPLS
             //variance/covariance variables (table 3 - 2c)
             outputRes = outputScalar - _outputMean;
             for (unsigned int r=0;r<_projectionDim;r++) {
-                _latentVariance[r] = _learningRate*_latentVariance[r]
+                _latentVariance[r] = _forgettingRate*_latentVariance[r]
                     + weight*latentCoord[r]*latentCoord[r];
-                _outputCovariance[r] = _learningRate*_outputCovariance[r]
+                _outputCovariance[r] = _forgettingRate*_outputCovariance[r]
                     + weight*latentCoord[r]*outputRes;
-                _inputCovariance[r] = _learningRate*_inputCovariance[r] 
+                _inputCovariance[r] = _forgettingRate*_inputCovariance[r] 
                     + weight*latentCoord[r]*inputRes[r];
-                _outputRegression[r] = _outputCovariance[r]/_latentVariance[r];
-                _inputRegression[r] = _inputCovariance[r]/_latentVariance[r];
-                _projectionVector[r] = _learningRate*_projectionVector[r] 
+                //Protection against null latent variance 
+                //(mostly during initialization)
+                if (abs(_latentVariance[r]) > 1e-9f) {
+                    _outputRegression[r] = 
+                        _outputCovariance[r]/_latentVariance[r];
+                    _inputRegression[r] = 
+                        _inputCovariance[r]/_latentVariance[r];
+                } else {
+                    _outputRegression[r] = 0.0;
+                    _inputRegression[r] = InputVector::Zero();
+                }
+                _projectionVector[r] = _forgettingRate*_projectionVector[r] 
                     + weight*outputRes*inputRes[r];
                 outputRes = outputRes - latentCoord[r]*_outputRegression[r];
             }
@@ -124,7 +141,7 @@ class LWPLS
          * Use LWPLS model to predicts a new output scalar
          * value for the given input vector (x)
          */
-        inline scalar prediction(const InputVector& inputVector)
+        inline scalar prediction(const InputVector& inputVector) const
         {
             InputVector inputRes = inputVector - _inputMean;
             scalar output = _outputMean;
@@ -166,13 +183,97 @@ class LWPLS
          */
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+        /**
+         * Print nicely internal state for debuging
+         */
+        inline void print() const
+        {
+            std::cout << "LWPLS R=" << _projectionDim;
+            std::cout << " lambda=" << _forgettingRate << std::endl;
+            std::cout << "  W=" << _sumWeight << std::endl;
+            std::cout << "  Ymean=" << _outputMean;
+            std::cout << " Xmean=[" << _inputMean.transpose();
+            std::cout << "]" << std::endl;
+            for (unsigned int r=0;r<_projectionDim;r++) {
+                std::cout << "- r=" << r << std::endl;
+                std::cout << "    MSE=" << _projectionPredictionError[r];
+                std::cout << std::endl;
+                std::cout << "    u=[" << _projectionVector[r].transpose();
+                std::cout << "]" << std::endl;
+                std::cout << "    beta=" << _outputRegression[r];
+                std::cout << std::endl;
+                std::cout << "    p=[" << _inputRegression[r].transpose();
+                std::cout << "]" << std::endl;
+                std::cout << "    a_zz=" << _latentVariance[r];
+                std::cout << std::endl;
+                std::cout << "    a_zres=" << _outputCovariance[r];
+                std::cout << std::endl;
+                std::cout << "    a_zx=[" << _inputCovariance[r].transpose();
+                std::cout << "]" << std::endl;
+            }
+        }
+
+        /**
+         * Internal getters
+         * Values associated with a specific projection 
+         * are 0-indexed
+         */
+        inline scalar getForgettingRate() const
+        {
+            return _forgettingRate;
+        }
+        inline scalar getSumWeight() const
+        {
+            return _sumWeight;
+        }
+        inline const InputVector& getInputMean() const
+        {
+            return _inputMean;
+        }
+        inline scalar getOutputMean() const
+        {
+            return _outputMean;
+        }
+        inline scalar getProjectionDim() const
+        {
+            return _projectionDim;
+        }
+        inline const InputVector& getProjectionVector(size_t r) const
+        {
+            return _projectionVector.at(r);
+        }
+        inline scalar getProjectionPredictionError(size_t r) const
+        {
+            return _projectionPredictionError.at(r);
+        }
+        inline const InputVector& getInputRegression(size_t r) const
+        {
+            return _inputRegression.at(r);
+        }
+        inline scalar getOutputRegression(size_t r) const
+        {
+            return _outputRegression.at(r);
+        }
+        inline scalar getLatentVariance(size_t r) const
+        {
+            return _latentVariance.at(r);
+        }
+        inline scalar getOutputCovariance(size_t r) const
+        {
+            return _outputCovariance.at(r);
+        }
+        inline const InputVector& getInputCovariance(size_t r) const
+        {
+            return _inputCovariance.at(r);
+        }
+
     private:
 
         /**
-         * Incremental leanring rate (\lambda)
+         * Incremental forgetting rate (\lambda)
          * (Between 0 and 1)
          */
-        scalar _learningRate;
+        scalar _forgettingRate;
 
         /**
          * The sum of learning points weight (W)

@@ -1,0 +1,6 @@
+LWPLS
+=====
+
+Implementation of Incremental Locally Weigthed PLS 
+(Partial Least Square) with linear algebra Eigen library
+
