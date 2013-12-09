@@ -88,15 +88,21 @@ class Plot
 
         /**
          * Set GnuPlot options associated with 
-         * specific plot dataset
+         * specific plot dataset with and without
+         * name sufixe
          */
         static void option(const std::string& name, const std::string& opt)
         {
             getPlotOptions()[name] = opt;
         }
+        static void option(int index, const std::string& name, const std::string& opt)
+        {
+            option(suffixe(name, index), opt);
+        }
 
         /**
-         * Add a 2d or 3d data point to the given plot dataset
+         * Add a 2d or 3d data point to the given plot dataset 
+         * with given name
          */
         static void add(const std::string& name, double y)
         {
@@ -115,6 +121,22 @@ class Plot
         static void add(const std::string& name, double x, double y, double z)
         {
             getPlot3d()[name].push_back(PlotPoint3d(x, y, z));
+        }
+        /**
+         * Add a 2d or 3d data point to the given plot dataset
+         * with given name sufixed by given integer index
+         */
+        static void add(int index, const std::string& name, double y)
+        {
+            add(suffixe(name, index), y);
+        }
+        static void add(int index, const std::string& name, double x, double y)
+        {
+            add(suffixe(name, index), x, y);
+        }
+        static void add(int index, const std::string& name, double x, double y, double z)
+        {
+            add(suffixe(name, index), x, y, z);
         }
 
         /**
@@ -306,6 +328,13 @@ class Plot
             //Sending commands and data to GnuPlot
             write(getPipeFd(), commands.c_str(), commands.length());
             write(getPipeFd(), data.c_str(), data.length());
+        }
+
+        static inline std::string suffixe(const std::string& name, int index)
+        {
+            std::ostringstream oss;
+            oss << name << "_" << index;
+            return oss.str();
         }
 };
 
