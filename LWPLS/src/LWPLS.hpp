@@ -23,7 +23,7 @@ namespace LWPLS {
  * inputDim is the prediction (x) space dimention (K)
  * scalar is value type (float or double)
  */
-template <int inputDim, class scalar = double>
+template <unsigned int inputDim, class scalar = double>
 class LWPLS
 {
     public:
@@ -40,7 +40,7 @@ class LWPLS
         typedef Eigen::aligned_allocator<InputVector> InputVectorAllocator;
 
         /**
-         * Initialization
+         * Initialization of PLS regression with a single proejection
          * The forgetting rate between 0 and 1 is given
          */
         LWPLS(scalar forgettingRate) :
@@ -55,7 +55,10 @@ class LWPLS
             _inputRegression(),
             _latentVariance(),
             _outputCovariance(),
-            _inputCovariance()
+            _inputCovariance(),
+            _lastPredictionError(0.0),
+            _lastFittingError(0.0),
+            _lastLatentCoord()
         {
             //Sanity checks
             if (_forgettingRate < 0.0 || _forgettingRate > 1.0) {
@@ -75,6 +78,11 @@ class LWPLS
         inline void learning(const InputVector& inputVector, 
             scalar outputScalar, scalar weight)
         {
+            //No learning in case of null weight
+            if (weight < 1e-9f) {
+                return;
+            }
+
             scalar oldSumWeight = _sumWeight;
             //Update sum of weights and means (table 3 - 2a)
             _sumWeight = _forgettingRate*_sumWeight + weight;
@@ -83,8 +91,6 @@ class LWPLS
             _outputMean = (_forgettingRate*oldSumWeight*_outputMean 
                 + weight*outputScalar)/_sumWeight;
 
-            //Latent coordinate of learning point for each projection (z_r)
-            std::vector<scalar> latentCoord(_projectionDim);
             //Input residuals for each projection (x_{res,r})
             std::vector<InputVector, InputVectorAllocator> 
                 inputRes(_projectionDim);
@@ -95,34 +101,37 @@ class LWPLS
             for (unsigned int r=0;r<_projectionDim;r++) {
                 double normProjectionVector = _projectionVector[r].norm();
                 if (normProjectionVector > 1e-9f) {
-                    latentCoord[r] = (1.0/normProjectionVector)
+                    _lastLatentCoord[r] = (1.0/normProjectionVector)
                         *inputRes[r].transpose()*_projectionVector[r];
                 } else {
-                    latentCoord[r] = 0.0;
+                    _lastLatentCoord[r] = 0.0;
                 }
-                outputRes = outputRes + latentCoord[r]*_outputRegression[r];
+                outputRes = outputRes 
+                    + _lastLatentCoord[r]*_outputRegression[r];
                 _projectionPredictionError[r] =
                     _forgettingRate*_projectionPredictionError[r] 
                     + weight*(outputScalar-outputRes)*(outputScalar-outputRes);
                 if (r != _projectionDim-1) {
                     inputRes[r+1] = inputRes[r] 
-                        - latentCoord[r]*_inputRegression[r];
+                        - _lastLatentCoord[r]*_inputRegression[r];
                 }
             }
+            //Set prediction error
+            _lastPredictionError = outputScalar - outputRes;
 
             //Update regression coefficients and 
             //variance/covariance variables (table 3 - 2c)
             outputRes = outputScalar - _outputMean;
             for (unsigned int r=0;r<_projectionDim;r++) {
                 _latentVariance[r] = _forgettingRate*_latentVariance[r]
-                    + weight*latentCoord[r]*latentCoord[r];
+                    + weight*_lastLatentCoord[r]*_lastLatentCoord[r];
                 _outputCovariance[r] = _forgettingRate*_outputCovariance[r]
-                    + weight*latentCoord[r]*outputRes;
+                    + weight*_lastLatentCoord[r]*outputRes;
                 _inputCovariance[r] = _forgettingRate*_inputCovariance[r] 
-                    + weight*latentCoord[r]*inputRes[r];
+                    + weight*_lastLatentCoord[r]*inputRes[r];
                 //Protection against null latent variance 
                 //(mostly during initialization)
-                if (abs(_latentVariance[r]) > 1e-9f) {
+                if (fabs(_latentVariance[r]) > 1e-9f) {
                     _outputRegression[r] = 
                         _outputCovariance[r]/_latentVariance[r];
                     _inputRegression[r] = 
@@ -133,8 +142,11 @@ class LWPLS
                 }
                 _projectionVector[r] = _forgettingRate*_projectionVector[r] 
                     + weight*outputRes*inputRes[r];
-                outputRes = outputRes - latentCoord[r]*_outputRegression[r];
+                outputRes = outputRes 
+                    - _lastLatentCoord[r]*_outputRegression[r];
             }
+            //Set fitting error
+            _lastFittingError = outputRes;
         }
 
         /**
@@ -148,8 +160,12 @@ class LWPLS
 
             //(Table 3 - 3)
             for (unsigned int r=0;r<_projectionDim;r++) {
-                scalar latentCoord = inputRes.transpose()
-                    *_projectionVector[r].normalized();
+                double normProjectionVector = _projectionVector[r].norm();
+                scalar latentCoord = 0.0;
+                if (normProjectionVector > 1e-9f) {
+                    latentCoord = (1.0/normProjectionVector)
+                        *inputRes.transpose()*_projectionVector[r];
+                }
                 output = output + latentCoord*_outputRegression[r];
                 inputRes = inputRes - latentCoord*_inputRegression[r];
             }
@@ -175,6 +191,7 @@ class LWPLS
             _latentVariance.push_back(0.0);
             _outputCovariance.push_back(0.0);
             _inputCovariance.push_back(InputVector::Zero());
+            _lastLatentCoord.push_back(0.0);
         }
 
         /**
@@ -234,7 +251,7 @@ class LWPLS
         {
             return _outputMean;
         }
-        inline scalar getProjectionDim() const
+        inline unsigned int getProjectionDim() const
         {
             return _projectionDim;
         }
@@ -265,6 +282,18 @@ class LWPLS
         inline const InputVector& getInputCovariance(size_t r) const
         {
             return _inputCovariance.at(r);
+        }
+        inline scalar getLastPredictionError() const
+        {
+            return _lastPredictionError;
+        }
+        inline scalar getLastFittingError() const
+        {
+            return _lastFittingError;
+        }
+        inline scalar getLastLatentCoord(size_t r) const
+        {
+            return _lastLatentCoord.at(r);
         }
 
     private:
@@ -334,6 +363,18 @@ class LWPLS
          * for each projection (a_{xz,r})
          */
         std::vector<InputVector, InputVectorAllocator> _inputCovariance;
+
+        /**
+         * Prediction signed error (e_cv) and fitting signed error (e) 
+         * of last learned point
+         */
+        scalar _lastPredictionError;
+        scalar _lastFittingError;
+
+        /**
+         * Latent coordinates (z_r) of last learned point
+         */
+        std::vector<scalar> _lastLatentCoord;
 };
 
 }
