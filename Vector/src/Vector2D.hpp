@@ -28,6 +28,11 @@ class Vector2D
             _y(0)
         {
         }
+        Vector2D(scalar val) :
+            _x(val),
+            _y(val)
+        {
+        }
         Vector2D(scalar x, scalar y) :
             _x(x),
             _y(y)
