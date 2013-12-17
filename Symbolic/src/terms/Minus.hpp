@@ -46,7 +46,7 @@ class Minus : public UnaryFunction<T,T>
         virtual inline typename Term<T>::TermPtr functionCreate
             (const typename Term<T>::TermPtr& arg) const
         {
-            return Minus::create(arg);
+            return Minus<T>::create(arg);
         }
 };
 

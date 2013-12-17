@@ -12,6 +12,8 @@
 #include "Symbolic/src/terms/Pow.hpp"
 #include "Symbolic/src/Constant.hpp"
 #include "Symbolic/src/terms/Frac.hpp"
+#include "Symbolic/src/terms/Re.hpp"
+#include "Symbolic/src/terms/Im.hpp"
 
 using namespace std;
 using namespace Leph::Symbolic;
@@ -91,6 +93,23 @@ int main()
     assert(term5->derivate(t)->toString() == "(-((3.14)*(d(sym4)/dt)))/((sym4)^2)");
     assert(term5->substitute<double>(sym4, term3)->toString()
         == "(3.14)/(exp(sym4))");
+
+    Symbol<Leph::Vector::Vector2D<double> >::SymbolPtr sym5 = 
+        Symbol<Leph::Vector::Vector2D<double> >::create("vect1");
+    sym5->depend(t);
+    bounder.setValue(sym5, Leph::Vector::Vector2D<double>(1.0, 2.0));
+
+    Term<double>::TermPtr term6 = 
+        Re<double,Leph::Vector::Vector2D<double> >::create(sym5);
+    assert(term6->toString() == "Re(vect1)");
+    assert(term6->evaluate(bounder) == 1.0);
+    assert(term6->derivate(t)->toString() == "Re(d(vect1)/dt)");
+
+    Term<double>::TermPtr term7 = 
+        Im<double,Leph::Vector::Vector2D<double> >::create(sym5);
+    assert(term7->toString() == "Im(vect1)");
+    assert(term7->evaluate(bounder) == 2.0);
+    assert(term7->derivate(t)->toString() == "Im(d(vect1)/dt)");
 
     return 0;
 }

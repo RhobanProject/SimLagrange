@@ -1,62 +1,71 @@
-#ifndef LEPH_SYMBOLIC_EXP_HPP
-#define LEPH_SYMBOLIC_EXP_HPP
+#ifndef LEPH_SYMBOLIC_IM_HPP
+#define LEPH_SYMBOLIC_IM_HPP
 
-#include <cmath>
 #include "Symbolic/src/UnaryFunction.hpp"
+#include "Vector/src/Vector2D.hpp"
 
 namespace Leph {
 namespace Symbolic {
 
 /**
- * Exp
+ * Im
  */
 template <class T, class U>
-class Exp : public UnaryFunction<T,U>
+class Im : public UnaryFunction<T,U>
 {
     public:
-        
+
         static inline typename Term<T>::TermPtr create(
             const typename Term<U>::TermPtr& term)
         {
             return typename Term<T>::TermPtr(
-                new Exp<T,U>(term));
+                new Im<T,U>(term));
         }
 
     protected:
-
-        Exp(const typename Term<U>::TermPtr& term) :
+        
+        Im(const typename Term<U>::TermPtr& term) :
             UnaryFunction<T,U>(term)
         {
         }
         
         virtual inline std::string functionString() const
         {
-            return "exp";
+            return "Im";
+        }
+
+        /**
+         * @Inherit
+         */
+        virtual inline typename Term<T>::TermPtr computeDerivative
+            (const BaseSymbol::BaseSymbolPtr& sym)
+        {
+            return functionderivative(UnaryFunction<T,U>::_arg->derivate(sym));
         }
 
         virtual inline typename Term<T>::TermPtr functionderivative
             (const typename Term<U>::TermPtr& arg) const
         {
-            return Exp<T,U>::create(arg);
+            return Im<T,U>::create(arg);
         }
 
         virtual inline T functionEvaluation(const U& argVal) const
         {
-            throw std::logic_error("Exp not implemented");
+            throw std::logic_error("Im not implemented");
         }
         
         virtual inline typename Term<T>::TermPtr functionCreate
             (const typename Term<U>::TermPtr& arg) const
         {
-            return Exp<T,U>::create(arg);
+            return Im<T,U>::create(arg);
         }
 };
 
 template <>
-inline double Exp<double,double>::functionEvaluation
-    (const double& argVal) const
+inline double Im<double,Vector::Vector2D<double> >::functionEvaluation
+    (const Vector::Vector2D<double>& argVal) const
 {
-    return exp(argVal);
+    return argVal.y();
 }
 
 }

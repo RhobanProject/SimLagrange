@@ -78,7 +78,7 @@ class Pow : public UnaryFunction<T,T>
         virtual inline typename Term<T>::TermPtr functionCreate
             (const typename Term<T>::TermPtr& arg) const
         {
-            return Pow::create(arg, _power);
+            return Pow<T>::create(arg, _power);
         }
 };
 
