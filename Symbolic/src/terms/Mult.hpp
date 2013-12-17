@@ -30,6 +30,21 @@ class Mult : public BinaryFunction<T,U,V>
             }
         }
 
+        virtual inline typename Term<T>::TermPtr computeSubstitution
+            (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term)
+        {
+            typename Term<U>::TermPtr argLeft = 
+                BinaryFunction<T,U,V>::_argLeft;
+            typename Term<V>::TermPtr argRight = 
+                BinaryFunction<T,U,V>::_argRight;
+            typename Term<U>::TermPtr termLeft = 
+                argLeft->computeSubstitution(sym, term);
+            typename Term<V>::TermPtr termRight = 
+                argRight->computeSubstitution(sym, term);
+
+            return Mult<T,U,V>::create(termLeft, termRight);
+        }
+        
     protected:
 
         Mult(const typename Term<U>::TermPtr& termLeft, 

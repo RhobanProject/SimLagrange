@@ -27,6 +27,15 @@ class Constant : public Term<T>
             return typename Term<T>::TermPtr(new Constant<T>(value));
         }
 
+        /**
+         * @Inherit
+         */
+        virtual inline typename Term<T>::TermPtr computeSubstitution
+            (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term)
+        {
+            return Constant<T>::create(_value);
+        }
+
     protected:
 
         /**

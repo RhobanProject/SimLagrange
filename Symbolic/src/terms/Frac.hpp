@@ -33,6 +33,21 @@ class Frac : public BinaryFunction<T,T,T>
             }
         }
 
+        virtual inline typename Term<T>::TermPtr computeSubstitution
+            (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term)
+        {
+            typename Term<T>::TermPtr argLeft = 
+                BinaryFunction<T,T,T>::_argLeft;
+            typename Term<T>::TermPtr argRight = 
+                BinaryFunction<T,T,T>::_argRight;
+            typename Term<T>::TermPtr termLeft = 
+                argLeft->computeSubstitution(sym, term);
+            typename Term<T>::TermPtr termRight = 
+                argRight->computeSubstitution(sym, term);
+
+            return Frac<T>::create(termLeft, termRight);
+        }
+
     protected:
         
         Frac(const typename Term<T>::TermPtr& termLeft, 
@@ -65,7 +80,7 @@ class Frac : public BinaryFunction<T,T,T>
                     Mult<T,T,T>::create(argLeft, termRight)),
                 Pow<T>::create(argRight, 2));
         }
-
+        
         virtual T computeEvaluation(const Bounder& bounder)
         {
             T left = BinaryFunction<T,T,T>::_argLeft->evaluate(bounder);

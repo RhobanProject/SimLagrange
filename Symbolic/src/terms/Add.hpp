@@ -28,6 +28,21 @@ class Add : public BinaryFunction<T,T,T>
             }
         }
 
+        virtual inline typename Term<T>::TermPtr computeSubstitution
+            (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term)
+        {
+            typename Term<T>::TermPtr argLeft = 
+                BinaryFunction<T,T,T>::_argLeft;
+            typename Term<T>::TermPtr argRight = 
+                BinaryFunction<T,T,T>::_argRight;
+            typename Term<T>::TermPtr termLeft = 
+                argLeft->computeSubstitution(sym, term);
+            typename Term<T>::TermPtr termRight = 
+                argRight->computeSubstitution(sym, term);
+
+            return Add<T>::create(termLeft, termRight);
+        }
+        
     protected:
 
         Add(const typename Term<T>::TermPtr& termLeft, 

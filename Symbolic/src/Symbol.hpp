@@ -32,6 +32,25 @@ class Symbol : public BaseSymbol, public Term<T>
             return SymbolPtr(new Symbol<T>(name));
         }
         
+        /**
+         * @Inherit
+         */
+        virtual inline typename Term<T>::TermPtr computeSubstitution
+            (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term)
+        {
+            if (BaseSymbol::getName() == sym->getName()) {
+                try {
+                    return term.get<typename Term<T>::TermPtr>();
+                } catch (const std::logic_error& e) {
+                    throw std::logic_error("Symbol invalid substitution type");
+                }
+            } else {
+                return SymbolPtr(new Symbol<T>(
+                    BaseSymbol::getName(), 
+                    *this));
+            }
+        }
+        
     protected:
 
         /**
@@ -52,7 +71,7 @@ class Symbol : public BaseSymbol, public Term<T>
                 BaseSymbol::derivateString(sym),
                 *this));
         }
-       
+        
         /**
          * @Inherit
          */

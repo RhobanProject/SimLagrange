@@ -3,6 +3,7 @@
 
 #include <map>
 #include <ostream>
+#include "Any/src/Any.hpp"
 #include "SmartPointer/src/SmartPtr.hpp"
 #include "Symbolic/src/BaseSymbol.hpp"
 #include "Symbolic/src/Bounder.hpp"
@@ -58,6 +59,30 @@ class Term
 
             return _derivatives.at(sym->getName());
         }
+
+        /**
+         * Return the Term with all Symbol sym substituted by
+         * the expression Term of return type U
+         * (The Symbol sym must be of type U)
+         */
+        template <class U>
+        inline TermPtr substitute(const BaseSymbol::BaseSymbolPtr& sym, 
+            const typename Term<U>::TermPtr& term)
+        {
+            //Call substitution implementation holding term 
+            //in a Any container (template virtual methods not allowed)
+            return computeSubstitution(sym, Any::Any(term));
+        }
+        
+        /**
+         * Compute and return the Term where all Symbol sym
+         * are substituated by the Term term
+         * Any hold a TermPtr with same type of sym 
+         * (template virtual methods not allowed)
+         * (This method should not be used by user)
+         */
+        virtual TermPtr computeSubstitution
+            (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term) = 0;
 
         /**
          * Return the typed value of Term evaluation with respect

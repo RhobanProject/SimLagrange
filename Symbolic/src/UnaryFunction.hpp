@@ -17,6 +17,17 @@ namespace Symbolic {
 template <class T, class U>
 class UnaryFunction : public Term<T>
 {
+    public:
+
+        /**
+         * @Inherit
+         */
+        virtual inline typename Term<T>::TermPtr computeSubstitution
+            (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term)
+        {
+            return functionCreate(_arg->computeSubstitution(sym, term));
+        }
+       
     protected:
 
         /**
@@ -52,7 +63,7 @@ class UnaryFunction : public Term<T>
                 _arg->derivate(sym), 
                 functionderivative(_arg));
         }
-       
+        
         /**
          * @Inherit
          */
@@ -76,8 +87,15 @@ class UnaryFunction : public Term<T>
          */
         virtual std::string functionString() const = 0;
         virtual typename Term<T>::TermPtr functionderivative
-            (const typename Term<U>::TermPtr arg) const = 0;
+            (const typename Term<U>::TermPtr& arg) const = 0;
         virtual T functionEvaluation(const U& argVal) const = 0;
+
+        /**
+         * Return a newly allocated instance of derived class 
+         * with given argument
+         */
+        virtual typename Term<T>::TermPtr functionCreate
+            (const typename Term<U>::TermPtr& arg) const = 0;
 };
 
 }

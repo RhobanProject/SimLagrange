@@ -15,7 +15,7 @@ class Minus : public UnaryFunction<T,T>
     public:
 
         static inline typename Term<T>::TermPtr create(
-            typename Term<T>::TermPtr term)
+            const typename Term<T>::TermPtr& term)
         {
             return typename Term<T>::TermPtr(
                 new Minus<T>(term));
@@ -33,7 +33,7 @@ class Minus : public UnaryFunction<T,T>
         }
 
         virtual inline typename Term<T>::TermPtr functionderivative
-            (const typename Term<T>::TermPtr arg) const
+            (const typename Term<T>::TermPtr& arg) const
         {
             return Minus<T>::create(arg);
         }
@@ -41,6 +41,12 @@ class Minus : public UnaryFunction<T,T>
         virtual inline T functionEvaluation(const T& argVal) const
         {
             return -argVal;
+        }
+        
+        virtual inline typename Term<T>::TermPtr functionCreate
+            (const typename Term<T>::TermPtr& arg) const
+        {
+            return Minus::create(arg);
         }
 };
 

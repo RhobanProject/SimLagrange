@@ -16,7 +16,7 @@ class Exp : public UnaryFunction<T,U>
     public:
         
         static inline typename Term<T>::TermPtr create(
-            typename Term<U>::TermPtr term)
+            const typename Term<U>::TermPtr& term)
         {
             return typename Term<T>::TermPtr(
                 new Exp<T,U>(term));
@@ -35,7 +35,7 @@ class Exp : public UnaryFunction<T,U>
         }
 
         virtual inline typename Term<T>::TermPtr functionderivative
-            (const typename Term<U>::TermPtr arg) const
+            (const typename Term<U>::TermPtr& arg) const
         {
             return Exp<T,U>::create(arg);
         }
@@ -43,6 +43,12 @@ class Exp : public UnaryFunction<T,U>
         virtual inline T functionEvaluation(const U& argVal) const
         {
             throw std::logic_error("Exp not implemented");
+        }
+        
+        virtual inline typename Term<T>::TermPtr functionCreate
+            (const typename Term<U>::TermPtr& arg) const
+        {
+            return Exp::create(arg);
         }
 };
 

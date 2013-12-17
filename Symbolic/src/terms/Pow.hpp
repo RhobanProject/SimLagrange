@@ -20,7 +20,7 @@ class Pow : public UnaryFunction<T,T>
     public:
         
         static inline typename Term<T>::TermPtr create(
-            typename Term<T>::TermPtr term, long power)
+            const typename Term<T>::TermPtr& term, long power)
         {
             if (power == 0) {
                return Symbol<T>::create(BaseSymbol::one());
@@ -63,7 +63,7 @@ class Pow : public UnaryFunction<T,T>
         }
 
         virtual inline typename Term<T>::TermPtr functionderivative
-            (const typename Term<T>::TermPtr arg) const
+            (const typename Term<T>::TermPtr& arg) const
         {
             return Mult<T,long,T>::create(
                 Constant<long>::create(_power),
@@ -73,6 +73,12 @@ class Pow : public UnaryFunction<T,T>
         virtual inline T functionEvaluation(const T& argVal) const
         {
             throw std::logic_error("Pow not implemented");
+        }
+        
+        virtual inline typename Term<T>::TermPtr functionCreate
+            (const typename Term<T>::TermPtr& arg) const
+        {
+            return Pow::create(arg, _power);
         }
 };
 
