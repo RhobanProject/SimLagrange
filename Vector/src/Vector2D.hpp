@@ -128,6 +128,12 @@ inline Vector2D<scalar> operator-
 {
     return Vector2D<scalar>(v1.x()-v2.x(), v1.y()-v2.y());
 }
+template <class scalar>
+inline scalar operator*
+    (const Vector2D<scalar>& v1, const Vector2D<scalar>& v2)
+{
+    return Vector2D<scalar>::dot(v1, v2);
+}
 
 /**
  * Vector operator
