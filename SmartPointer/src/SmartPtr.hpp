@@ -126,6 +126,26 @@ class SmartPtr
         }
 
         /**
+         * Explicit getter
+         */
+        inline const T* getPointer() const
+        {
+            return _pointer;
+        }
+        inline T* getPointer()
+        {
+            return _pointer;
+        }
+        inline const T& getReference() const
+        {
+            return *_pointer;
+        }
+        inline T& getReference()
+        {
+            return *_pointer;
+        }
+
+        /**
          * Return true if the pointer is null
          */
         inline bool isNull() const
