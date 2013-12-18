@@ -17,8 +17,15 @@ class Minus : public UnaryFunction<T,T>
         static inline typename Term<T>::TermPtr create(
             const typename Term<T>::TermPtr& term)
         {
-            return typename Term<T>::TermPtr(
-                new Minus<T>(term));
+            //Test -(-(term)) == term case
+            const Minus<T>* pt = dynamic_cast<const Minus<T>*>
+                (term.getPointer());
+            if (pt != NULL) {
+                return pt->UnaryFunction<T,T>::_arg;
+            } else {
+                return typename Term<T>::TermPtr(
+                    new Minus<T>(term));
+            }
         }
     protected:
         
@@ -32,6 +39,16 @@ class Minus : public UnaryFunction<T,T>
             return "-";
         }
 
+        /**
+         * @Inherit
+         */
+        virtual inline typename Term<T>::TermPtr computeDerivative
+            (const BaseSymbol::BaseSymbolPtr& sym)
+        {
+            return functionderivative(
+                UnaryFunction<T,T>::_arg->derivate(sym));
+        }
+        
         virtual inline typename Term<T>::TermPtr functionderivative
             (const typename Term<T>::TermPtr& arg) const
         {

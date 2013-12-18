@@ -12,6 +12,7 @@
 #include "Symbolic/src/terms/Pow.hpp"
 #include "Symbolic/src/Constant.hpp"
 #include "Symbolic/src/terms/Frac.hpp"
+#include "Symbolic/src/terms/Minus.hpp"
 #include "Symbolic/src/terms/Re.hpp"
 #include "Symbolic/src/terms/Im.hpp"
 
@@ -110,6 +111,12 @@ int main()
     assert(term7->toString() == "Im(vect1)");
     assert(term7->evaluate(bounder) == 2.0);
     assert(term7->derivate(t)->toString() == "Im(d(vect1)/dt)");
+
+    Term<double>::TermPtr term8 = Minus<double>::create(sym4);
+    Term<double>::TermPtr term9 = Minus<double>::create(term8);
+    assert(term8->toString() == "-(sym4)");
+    assert(term8->derivate(t)->toString() == "-(d(sym4)/dt)");
+    assert(term9->toString() == "sym4");
 
     return 0;
 }
