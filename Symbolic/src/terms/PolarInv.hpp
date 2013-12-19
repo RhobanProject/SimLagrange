@@ -20,7 +20,7 @@ class PolarInv : public UnaryFunction<T,U>
     public:
 
         static inline typename Term<T>::TermPtr create(
-            const typename Term<U>::TermPtr& term)
+            typename Term<U>::TermPtr term)
         {
             return typename Term<T>::TermPtr(
                 new PolarInv<T,U>(term));

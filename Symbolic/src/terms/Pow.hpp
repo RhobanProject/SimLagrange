@@ -20,7 +20,7 @@ class Pow : public UnaryFunction<T,T>
     public:
         
         static inline typename Term<T>::TermPtr create(
-            const typename Term<T>::TermPtr& term, long power)
+            typename Term<T>::TermPtr term, long power)
         {
             if (power == 0) {
                return Symbol<T>::create(BaseSymbol::one());
