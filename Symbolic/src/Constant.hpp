@@ -1,7 +1,7 @@
 #ifndef LEPH_SYMBOLIC_CONSTANT_HPP
 #define LEPH_SYMBOLIC_CONSTANT_HPP
 
-#include <ostream>
+#include <sstream>
 #include "Symbolic/src/Term.hpp"
 #include "Symbolic/src/BaseSymbol.hpp"
 
