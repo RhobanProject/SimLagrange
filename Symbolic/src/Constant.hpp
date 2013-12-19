@@ -33,6 +33,8 @@ class Constant : public Term<T>
         virtual inline typename Term<T>::TermPtr computeSubstitution
             (const BaseSymbol::BaseSymbolPtr& sym, const Any::Any& term)
         {
+            (void)sym;
+            (void)term;
             return Constant<T>::create(_value);
         }
 
@@ -54,6 +56,7 @@ class Constant : public Term<T>
         virtual inline typename Term<T>::TermPtr computeDerivative
             (const BaseSymbol::BaseSymbolPtr& sym)
         {
+            (void)sym;
             return Symbol<T>::create(BaseSymbol::zero());
         }
        
@@ -62,6 +65,7 @@ class Constant : public Term<T>
          */
         virtual T computeEvaluation(const Bounder& bounder)
         {
+            (void)bounder;
             return _value;
         }
 

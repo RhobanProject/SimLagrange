@@ -51,6 +51,7 @@ class BinaryFunction : public Term<T>
         virtual inline typename Term<T>::TermPtr computeDerivative
             (const BaseSymbol::BaseSymbolPtr& sym)
         {
+            (void)sym;
             throw std::logic_error("BinaryFunction not implemented");
         }
        
@@ -59,6 +60,7 @@ class BinaryFunction : public Term<T>
          */
         virtual inline T computeEvaluation(const Bounder& bounder)
         {
+            (void)bounder;
             throw std::logic_error("BinaryFunction not implemented");
         }
 

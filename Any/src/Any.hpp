@@ -152,7 +152,7 @@ class Any
             if (_pointer != NULL) {
                 T* ptr = getPointer<T>();
                 delete ptr;
-                _pointer == NULL;
+                _pointer = NULL;
             }
         }
 
