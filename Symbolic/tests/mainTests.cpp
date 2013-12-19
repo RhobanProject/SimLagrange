@@ -1,23 +1,10 @@
 #include <iostream>
 #include <cassert>
 #include "Symbolic/src/Term.hpp"
-#include "Symbolic/src/BaseSymbol.hpp"
 #include "Symbolic/src/Symbol.hpp"
 #include "Symbolic/src/Bounder.hpp"
-#include "Symbolic/src/UnaryFunction.hpp"
-#include "Symbolic/src/UnaryOperator.hpp"
-#include "Symbolic/src/BinaryFunction.hpp"
-#include "Symbolic/src/terms/Add.hpp"
-#include "Symbolic/src/terms/Mult.hpp"
-#include "Symbolic/src/terms/Exp.hpp"
-#include "Symbolic/src/terms/Pow.hpp"
 #include "Symbolic/src/Constant.hpp"
-#include "Symbolic/src/terms/Frac.hpp"
-#include "Symbolic/src/terms/Minus.hpp"
-#include "Symbolic/src/terms/Re.hpp"
-#include "Symbolic/src/terms/Im.hpp"
-#include "Symbolic/src/terms/Polar.hpp"
-#include "Symbolic/src/terms/PolarInv.hpp"
+#include "Symbolic/src/terms.h"
 
 using namespace std;
 using namespace Leph::Symbolic;
