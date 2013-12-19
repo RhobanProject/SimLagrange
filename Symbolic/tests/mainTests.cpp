@@ -5,6 +5,7 @@
 #include "Symbolic/src/Symbol.hpp"
 #include "Symbolic/src/Bounder.hpp"
 #include "Symbolic/src/UnaryFunction.hpp"
+#include "Symbolic/src/UnaryOperator.hpp"
 #include "Symbolic/src/BinaryFunction.hpp"
 #include "Symbolic/src/terms/Add.hpp"
 #include "Symbolic/src/terms/Mult.hpp"
@@ -15,6 +16,8 @@
 #include "Symbolic/src/terms/Minus.hpp"
 #include "Symbolic/src/terms/Re.hpp"
 #include "Symbolic/src/terms/Im.hpp"
+#include "Symbolic/src/terms/Polar.hpp"
+#include "Symbolic/src/terms/PolarInv.hpp"
 
 using namespace std;
 using namespace Leph::Symbolic;
@@ -117,6 +120,23 @@ int main()
     assert(term8->toString() == "-(sym4)");
     assert(term8->derivate(t)->toString() == "-(d(sym4)/dt)");
     assert(term9->toString() == "sym4");
+
+    Term<Leph::Vector::Vector2D<double> >::TermPtr term10 =
+        Polar<Leph::Vector::Vector2D<double>,double>::create(sym4);
+    assert(term10->toString() == "Polar(sym4)");
+    assert(term10->derivate(t)->toString() 
+        == "(d(sym4)/dt)*(PolarInv(-(sym4)))");
+    
+    Term<Leph::Vector::Vector2D<double> >::TermPtr term11 =
+        PolarInv<Leph::Vector::Vector2D<double>,double>::create(sym4);
+    assert(term11->toString() == "PolarInv(sym4)");
+    assert(term11->derivate(t)->toString() 
+        == "(d(sym4)/dt)*(Polar(-(sym4)))");
+
+    sym4->reset();
+    bounder.setValue(sym4, 0.0);
+    assert(term10->evaluate(bounder).x() == 1.0);
+    assert(term10->evaluate(bounder).y() == 0.0);
 
     return 0;
 }
