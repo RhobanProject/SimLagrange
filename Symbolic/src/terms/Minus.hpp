@@ -15,8 +15,11 @@ class Minus : public UnaryOperator<T,T>
     public:
 
         static inline typename Term<T>::TermPtr create(
-            const typename Term<T>::TermPtr& term)
+            typename Term<T>::TermPtr term)
         {
+            if (term->toString() == BaseSymbol::zero()) {
+                return term;
+            }
             //Test -(-(term)) == term case
             const Minus<T>* pt = dynamic_cast<const Minus<T>*>
                 (term.getPointer());
