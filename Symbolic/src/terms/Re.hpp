@@ -1,7 +1,7 @@
 #ifndef LEPH_SYMBOLIC_RE_HPP
 #define LEPH_SYMBOLIC_RE_HPP
 
-#include "Symbolic/src/UnaryFunction.hpp"
+#include "Symbolic/src/UnaryOperator.hpp"
 #include "Vector/src/Vector2D.hpp"
 
 namespace Leph {
@@ -11,7 +11,7 @@ namespace Symbolic {
  * Re
  */
 template <class T, class U>
-class Re : public UnaryFunction<T,U>
+class Re : public UnaryOperator<T,U>
 {
     public:
 
@@ -25,22 +25,13 @@ class Re : public UnaryFunction<T,U>
     protected:
         
         Re(const typename Term<U>::TermPtr& term) :
-            UnaryFunction<T,U>(term)
+            UnaryOperator<T,U>(term)
         {
         }
         
         virtual inline std::string functionString() const
         {
             return "Re";
-        }
-
-        /**
-         * @Inherit
-         */
-        virtual inline typename Term<T>::TermPtr computeDerivative
-            (const BaseSymbol::BaseSymbolPtr& sym)
-        {
-            return functionderivative(UnaryFunction<T,U>::_arg->derivate(sym));
         }
 
         virtual inline typename Term<T>::TermPtr functionderivative

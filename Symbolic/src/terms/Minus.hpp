@@ -1,7 +1,7 @@
 #ifndef LEPH_SYMBOLIC_MINUS_HPP
 #define LEPH_SYMBOLIC_MINUS_HPP
 
-#include "Symbolic/src/UnaryFunction.hpp"
+#include "Symbolic/src/UnaryOperator.hpp"
 
 namespace Leph {
 namespace Symbolic {
@@ -10,7 +10,7 @@ namespace Symbolic {
  * Minus
  */
 template <class T>
-class Minus : public UnaryFunction<T,T>
+class Minus : public UnaryOperator<T,T>
 {
     public:
 
@@ -21,7 +21,7 @@ class Minus : public UnaryFunction<T,T>
             const Minus<T>* pt = dynamic_cast<const Minus<T>*>
                 (term.getPointer());
             if (pt != NULL) {
-                return pt->UnaryFunction<T,T>::_arg;
+                return pt->UnaryOperator<T,T>::_arg;
             } else {
                 return typename Term<T>::TermPtr(
                     new Minus<T>(term));
@@ -30,7 +30,7 @@ class Minus : public UnaryFunction<T,T>
     protected:
         
         Minus(const typename Term<T>::TermPtr& term) :
-            UnaryFunction<T,T>(term)
+            UnaryOperator<T,T>(term)
         {
         }
         
@@ -39,16 +39,6 @@ class Minus : public UnaryFunction<T,T>
             return "-";
         }
 
-        /**
-         * @Inherit
-         */
-        virtual inline typename Term<T>::TermPtr computeDerivative
-            (const BaseSymbol::BaseSymbolPtr& sym)
-        {
-            return functionderivative(
-                UnaryFunction<T,T>::_arg->derivate(sym));
-        }
-        
         virtual inline typename Term<T>::TermPtr functionderivative
             (const typename Term<T>::TermPtr& arg) const
         {
