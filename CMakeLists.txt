@@ -11,6 +11,8 @@ set (TESTS_DIRECTORIES
     LWPLS
     Random
     Plot
+    LWPR
+    Vector
 )
 
 #Include Eigen (linear algebra template library)
