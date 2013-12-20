@@ -1,0 +1,1 @@
+g++ main.cpp -W -Wall -I .. -I ../Eigen/ -g -ggdb && ./a.out
