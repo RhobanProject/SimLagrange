@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <stdexcept>
 #include "Eigen/Dense"
 #include "Vector/src/Vector2D.hpp"
 #include "Symbolic/src/Symbol.hpp"
@@ -77,7 +78,7 @@ class Model
             _parameters(parameters)
         {
             //Create symbol for gravity (not depending on time)
-            _dofs["g"] = Symbol::create("g");
+            _gravity = Symbol::create("g");
         }
 
         /**
@@ -99,32 +100,10 @@ class Model
          */
         inline void test()
         {
-        }
-
-        /**
-         * TODO
-         * Compute according to the model the dynamic torque
-         * with respect to given symbolic degree of freedom
-         * (derivation variable)
-         * The model state (position, velocity and acceleration)
-         * of all degrees of freedom is given
-         */
-        inline scalar computeTorque(SymbolPtr dof, 
-            const EigenVector& position, 
-            const EigenVector& velocity, 
-            const EigenVector& acceleration, 
-            bool withGravity)
-        {
-            TermPtr dL_dq = 
-                _lagrangian->derivate(dof);
-            TermPtr dL_ddq = 
-                _lagrangian->derivate(dof->derivate(_time));
-            TermPtr dL_ddq_dt = 
-                dL_ddq->derivate(_time);
-            TermPtr dynamic = 
-                Symbolic::Sub<scalar>::create(dL_ddq_dt, dL_dq);
-
-            Symbolic::Bounder;
+            computeTorque(_dofs["theta"], 
+                EigenVector::Zero(_dofs.size(), 1),
+                EigenVector::Zero(_dofs.size(), 1),
+                EigenVector::Zero(_dofs.size(), 1));
         }
 
         /**
@@ -171,6 +150,11 @@ class Model
         DofContainer _dofs;
 
         /**
+         * Symbolic gravity constant
+         */
+        SymbolPtr _gravity;
+
+        /**
          * Lagrangian symbolic
          * expression
          */
@@ -188,6 +172,107 @@ class Model
         {
             _dofs[name] = Model::Symbol::create(name);
             _dofs[name]->depend(_time);
+        }
+
+    private:
+
+        /**
+         * Compute according to the model the dynamic torque
+         * with respect to given symbolic degree of freedom
+         * (derivation variable)
+         * The model state (position, velocity and acceleration)
+         * of all degrees of freedom is given
+         */
+        inline scalar computeTorque(SymbolPtr dof, 
+            const EigenVector& position, 
+            const EigenVector& velocity, 
+            const EigenVector& acceleration, 
+            bool withGravity = true)
+        {
+            //Dofs state size check
+            if (
+                position.rows() != (int)_dofs.size() ||
+                velocity.rows() != (int)_dofs.size() ||
+                acceleration.rows() != (int)_dofs.size()
+            ) {
+                throw std::logic_error("Model invalid dofs state size");
+            }
+            //Check gravity parameters is registered
+            if (_parameters.count("g") == 0) {
+                throw std::logic_error("Model undefined gravity parameters");
+            }
+
+            //Compute symbolic dynamic equation
+            TermPtr dL_dq = 
+                _lagrangian->derivate(dof);
+            TermPtr dL_ddq = 
+                _lagrangian->derivate(dof->derivate(_time));
+            TermPtr dL_ddq_dt = 
+                dL_ddq->derivate(_time);
+            TermPtr dynamic = 
+                Symbolic::Sub<scalar>::create(dL_ddq_dt, dL_dq);
+
+            std::cout << *dynamic << std::endl;
+            //Set bounder values
+            Symbolic::Bounder bounder;
+            DofContainer::iterator it;
+            int index = 0;
+            for (it=_dofs.begin();it!=_dofs.end();it++) {
+                SymbolPtr sym = it->second;
+                SymbolPtr sym_dt = sym->derivate(_time);
+                SymbolPtr sym_ddt = sym_dt->derivate(_time);
+                bounder.setValue(sym, position[index]);
+                bounder.setValue(sym_dt, velocity[index]);
+                bounder.setValue(sym_ddt, acceleration[index]);
+                index++;
+            }
+            //Gravity
+            if (withGravity) {
+                bounder.setValue(_gravity, _parameters.at("g"));
+            } else {
+                bounder.setValue(_gravity, 0.0);
+            }
+
+            //Evaluate the dynamic equation
+            return dynamic->evaluate(bounder);
+        }
+
+        /**
+         * Call computeTorque for all degrees of freedom
+         * and return torque vector
+         */
+        inline EigenVector computeVectorTorque(
+            const EigenVector& position, 
+            const EigenVector& velocity, 
+            const EigenVector& acceleration, 
+            bool withGravity = true)
+        {
+            EigenVector torque = EigenVector::Zero(_dofs.size(), 1);
+
+            int index = 0;
+            DofContainer::iterator it;
+            for (it=_dofs.begin();it!=_dofs.end();it++) {
+                torque(index, 1) = computeTorque(
+                    it->second,
+                    position, velocity, 
+                    acceleration, withGravity);
+                index++;
+            }
+
+            return torque;
+        }
+
+        /**
+         * Compute the acceleration of the given degree 
+         * of freedom given all degrees of freedom 
+         * position and velocity
+         */
+        inline EigenVector computeAcceleration(
+            SymbolPtr dof,
+            const EigenVector& position, 
+            const EigenVector& velocity)
+        {
+            EigenVector force = 
         }
 };
 

@@ -70,10 +70,9 @@ class FlyModel : public Model
                 Symbolic::Mult<Model::scalar,Model::scalar,Model::scalar>::
                 create(tmp3, velocityPSquared);
 
-            Model::TermPtr g = _dofs.at("g");
             Model::TermPtr tmp4 = 
                 Symbolic::Mult<Model::scalar,Model::scalar,Model::scalar>::
-                create(mass, g);
+                create(mass, Model::_gravity);
             Model::TermPtr heightP =
                 Symbolic::Im<Model::scalar,Model::Vector2D>::
                 create(positionP);
