@@ -110,6 +110,14 @@ class Model
         /**
          * TODO
          */
+        inline EigenVector runStep(const EigenVector& state, const EigenVector& torque, scalar dt)
+        {
+            return rungeKutta4(state, torque, dt);
+        }
+
+        /**
+         * TODO
+         */
         inline void test()
         {
             EigenVector position = EigenVector::Zero(_dofs.size(), 1);
@@ -234,7 +242,7 @@ class Model
             const EigenVector& velocity, 
             const EigenVector& acceleration)
         {
-            EigenVector torque = EigenVector::Zero(_dofs.size(), 1);
+            EigenVector torque(_dofs.size(), 1);
 
             int index = 0;
             DofContainer::iterator it;
@@ -258,6 +266,10 @@ class Model
             const EigenVector& velocity,
             const EigenVector& torque)
         {
+            if (torque.rows() != (int)_dofs.size()) {
+                throw std::logic_error("Model invalid torque size");
+            }
+
             EigenVector force = computeVectorTorque(
                 position, velocity, EigenVector::Zero(_dofs.size(), 1));
             EigenMatrix inertia = EigenMatrix::Zero(
@@ -278,6 +290,87 @@ class Model
             } else {
                 return EigenVector::Zero(_dofs.size(), 1);
             }
+        }
+
+        /**
+         * Construct and return the state vector
+         * from position and velocity
+         */
+        inline EigenVector vectorsToState(
+            const EigenVector& position, 
+            const EigenVector& velocity) const
+        {
+            EigenVector state(2*_dofs.size(), 1);
+            for (size_t i=0;i<2*_dofs.size();i++) {
+                if (i < _dofs.size()) {
+                    state(i) = position(i);
+                } else {
+                    state(i) = velocity(i-_dofs.size());
+                }
+            }
+
+            return state;
+        }
+
+        /**
+         * Assign position and velocity from state vector
+         */
+        inline void stateToVectors(const EigenVector& state, 
+            EigenVector& position, EigenVector& velocity) const
+        {
+            if (state.rows() != 2*(int)_dofs.size() ||
+                position.rows() != (int)_dofs.size() ||
+                velocity.rows() != (int)_dofs.size()) {
+                throw std::logic_error("Model invalid vectors size");
+            }
+
+            for (size_t i=0;i<2*_dofs.size();i++) {
+                if (i < _dofs.size()) {
+                    position(i) = state(i);
+                } else {
+                    velocity(i-_dofs.size()) = state(i);
+                }
+            }
+        }
+
+        /**
+         * Return state derivative vector given state vector
+         * and applied torques with respect to the Model
+         */
+        inline EigenVector differentialEquations
+            (const EigenVector& state, const EigenVector& torque)
+        {
+            EigenVector position(_dofs.size(), 1);
+            EigenVector velocity(_dofs.size(), 1);
+            stateToVectors(state, position, velocity);
+
+            EigenVector acceleration = computeAcceleration(
+                position, velocity, torque);
+
+            EigenVector nextState(2*_dofs.size(), 1);
+            for (size_t i=0;i<2*_dofs.size();i++) {
+                if (i < _dofs.size()) {
+                    nextState(i) = velocity(i);
+                } else {
+                    nextState(i) = acceleration(i-_dofs.size());
+                }
+            }
+
+            return nextState;
+        }
+
+        /**
+         * Integrate the given state over dt given time. The given
+         * torque vector is applied to degrees of freedom
+         */
+        inline EigenVector rungeKutta4(const EigenVector& state, const EigenVector& torque, scalar dt)
+        {
+            EigenVector k1 = differentialEquations(state, torque);
+            EigenVector k2 = differentialEquations(state + (dt/2.0)*k1, torque);
+            EigenVector k3 = differentialEquations(state + (dt/2.0)*k2, torque);
+            EigenVector k4 = differentialEquations(state + dt*k3, torque);
+
+            return state + (dt/6.0)*(k1 + 2.0*k2 + 2.0*k3 + k4);
         }
 };
 
