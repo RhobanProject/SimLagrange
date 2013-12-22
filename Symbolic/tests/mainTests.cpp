@@ -40,10 +40,14 @@ int main()
     assert(term1->toString() == "(sym2)+(sym3)");
     assert(term1->derivate(sym1)->toString() == "ZERO");
     assert(term1->derivate(t)->toString() == "(d(sym2)/dt)+(d(sym3)/dt)");
+    assert(term1->substitute<int>(sym2, t)->toString() == "(t)+(sym3)");
     bounder.setValue(sym2, 1);
     bounder.setValue(sym3, 2);
     assert(term1->evaluate(bounder) == 3);
-    assert(term1->substitute<int>(sym2, t)->toString() == "(t)+(sym3)");
+    term1->reset();
+    bounder.setValue(sym2, 2);
+    bounder.setValue(sym3, 2);
+    assert(term1->evaluate(bounder) == 4);
     
     Term<int>::TermPtr term2 = Mult<int,int,int>::create(sym2, sym3);
     assert(term2->toString() == "(sym2)*(sym3)");

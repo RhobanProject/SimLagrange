@@ -106,6 +106,7 @@ class Term
             _string = std::string();
             _derivatives.clear();
             _isValueComputed = false;
+            doReset();
         }
 
     protected:
