@@ -100,10 +100,11 @@ class Model
          */
         inline void test()
         {
-            computeTorque(_dofs["theta"], 
-                EigenVector::Zero(_dofs.size(), 1),
-                EigenVector::Zero(_dofs.size(), 1),
-                EigenVector::Zero(_dofs.size(), 1));
+            EigenVector position = EigenVector::Zero(_dofs.size(), 1);
+            EigenVector velocity = EigenVector::Zero(_dofs.size(), 1);
+            EigenVector torque = EigenVector::Zero(_dofs.size(), 1);
+            position(0) = 0.4;
+            std::cout << computeAcceleration(position, velocity, torque) << std::endl;
         }
 
         /**
@@ -201,6 +202,7 @@ class Model
             if (_parameters.count("g") == 0) {
                 throw std::logic_error("Model undefined gravity parameters");
             }
+            _lagrangian->reset();//TODO
 
             //Compute symbolic dynamic equation
             TermPtr dL_dq = 
@@ -234,6 +236,7 @@ class Model
             }
 
             //Evaluate the dynamic equation
+            dynamic->reset(); //TODO
             return dynamic->evaluate(bounder);
         }
 
@@ -252,27 +255,54 @@ class Model
             int index = 0;
             DofContainer::iterator it;
             for (it=_dofs.begin();it!=_dofs.end();it++) {
-                torque(index, 1) = computeTorque(
-                    it->second,
-                    position, velocity, 
+                torque(index) = computeTorque(
+                    it->second, position, velocity, 
                     acceleration, withGravity);
                 index++;
             }
 
+            std::cout << "==> " << torque << std::endl;
             return torque;
         }
 
         /**
-         * Compute the acceleration of the given degree 
+         * Compute the acceleration of degrees 
          * of freedom given all degrees of freedom 
-         * position and velocity
+         * position and velocity and torque applied to it
          */
         inline EigenVector computeAcceleration(
-            SymbolPtr dof,
             const EigenVector& position, 
-            const EigenVector& velocity)
+            const EigenVector& velocity,
+            const EigenVector& torque)
         {
-            EigenVector force = 
+            EigenVector force = computeVectorTorque(
+                position, velocity, EigenVector::Zero(_dofs.size(), 1));
+            EigenMatrix inertia = EigenMatrix::Zero(
+                _dofs.size(), _dofs.size());
+            EigenVector acceleration = EigenVector::Zero(_dofs.size(), 1);
+            for (size_t i=0;i<_dofs.size();i++) {
+                acceleration(i) = 1.0;
+                //TODO
+                //inertia.col(i) = 
+                //    computeVectorTorque(position, velocity, acceleration)
+                //    - force;
+                inertia.col(i) = 
+                    computeVectorTorque(position, EigenVector::Zero(_dofs.size(),1), acceleration, false);
+                acceleration(i) = 0.0;
+            }
+            std::cout << position << std::endl;
+            std::cout << velocity << std::endl;
+            std::cout << torque << std::endl;
+            std::cout << force << std::endl;
+            std::cout << inertia << std::endl;
+
+            //Using LU decomposition for inversing inertia matrix
+            Eigen::FullPivLU<EigenMatrix> inertiaLU(inertia);
+            if (inertiaLU.isInvertible()) {
+                return inertiaLU.inverse()*(torque - force);
+            } else {
+                return EigenVector::Zero(_dofs.size(), 1);
+            }
         }
 };
 
