@@ -23,10 +23,12 @@ class FlyModel : public Model
         {
         }
 
+    protected:
+
         /**
          * @Inherit
          */
-        virtual inline void initialization()
+        virtual inline void doInit()
         {
             //Initialization of degrees of freedom
             Model::addDof("theta");
@@ -70,9 +72,12 @@ class FlyModel : public Model
                 Symbolic::Mult<Model::scalar,Model::scalar,Model::scalar>::
                 create(tmp3, velocityPSquared);
 
+            Model::TermPtr gravity = 
+                Symbolic::Constant<Model::scalar>::
+                create(Model::_parameters.at("g"));
             Model::TermPtr tmp4 = 
                 Symbolic::Mult<Model::scalar,Model::scalar,Model::scalar>::
-                create(mass, Model::_gravity);
+                create(mass, gravity);
             Model::TermPtr heightP =
                 Symbolic::Im<Model::scalar,Model::Vector2D>::
                 create(positionP);

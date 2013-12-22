@@ -64,6 +64,11 @@ class Model
         typedef std::map<std::string, SymbolPtr> DofContainer;
 
         /**
+         * Typedef for dynamic model container
+         */
+        typedef std::map<std::string, TermPtr> ModelContainer;
+
+        /**
          * Typedef for parameters container
          */
         typedef std::map<std::string, scalar> ParameterContainer;
@@ -77,8 +82,6 @@ class Model
             _lagrangian(),
             _parameters(parameters)
         {
-            //Create symbol for gravity (not depending on time)
-            _gravity = Symbol::create("g");
         }
 
         /**
@@ -90,10 +93,19 @@ class Model
 
         /**
          * Initialize the model
-         * Init degrees of freedom
-         * Compute kinetic and potential energy
          */
-        virtual void initialization() = 0;
+        inline void initialization()
+        {
+            //Initialization of degree of freedom
+            //and Lagrangian symbolic expression
+            doInit();
+            //The Lagrangian is now initialized
+            //Computing Symbolic dynamic model expression
+            DofContainer::iterator it;
+            for (it=_dofs.begin();it!=_dofs.end();it++) {
+                computeDynamicModel(it->second);
+            }
+        }
 
         /**
          * TODO
@@ -103,40 +115,9 @@ class Model
             EigenVector position = EigenVector::Zero(_dofs.size(), 1);
             EigenVector velocity = EigenVector::Zero(_dofs.size(), 1);
             EigenVector torque = EigenVector::Zero(_dofs.size(), 1);
-            position(0) = 0.4;
+            position(0) = -0.5;
             std::cout << computeAcceleration(position, velocity, torque) << std::endl;
         }
-
-        /**
-         * Access to time symbolic expression
-         */
-        /*
-        inline SymbolPtr& getTime()
-        {
-            return _time;
-        }
-        */
-
-        /**
-         * Access to internal degree of freedom container
-         */
-        /*
-        inline DofContainer& getDofs()
-        {
-            return _dofs;
-        }
-        */
-
-        /**
-         * Return Lagrangian symbolic 
-         * expression for this model
-         */
-        /*
-        inline TermPtr& getLagrangian()
-        {
-            return _lagrangian;
-        }
-        */
 
     protected:
 
@@ -151,16 +132,17 @@ class Model
         DofContainer _dofs;
 
         /**
-         * Symbolic gravity constant
-         */
-        SymbolPtr _gravity;
-
-        /**
          * Lagrangian symbolic
          * expression
          */
         TermPtr _lagrangian;
 
+        /**
+         * Symbolic Dynamic model for all
+         * degrees of freedom
+         */
+        ModelContainer _dynamic;
+        
         /**
          * Model Parameters container
          */
@@ -175,36 +157,22 @@ class Model
             _dofs[name]->depend(_time);
         }
 
+        /**
+         * Initialization of the model
+         * Init degrees of freedom
+         * Compute kinetic and potential energy
+         */
+        virtual void doInit() = 0;
+
     private:
 
         /**
-         * Compute according to the model the dynamic torque
-         * with respect to given symbolic degree of freedom
-         * (derivation variable)
-         * The model state (position, velocity and acceleration)
-         * of all degrees of freedom is given
+         * Build and save the dynamical symbolic expression
+         * of torque accordingly with the model lagrangian
+         * with respect to given degree of freedom
          */
-        inline scalar computeTorque(SymbolPtr dof, 
-            const EigenVector& position, 
-            const EigenVector& velocity, 
-            const EigenVector& acceleration, 
-            bool withGravity = true)
+        inline void computeDynamicModel(SymbolPtr dof)
         {
-            //Dofs state size check
-            if (
-                position.rows() != (int)_dofs.size() ||
-                velocity.rows() != (int)_dofs.size() ||
-                acceleration.rows() != (int)_dofs.size()
-            ) {
-                throw std::logic_error("Model invalid dofs state size");
-            }
-            //Check gravity parameters is registered
-            if (_parameters.count("g") == 0) {
-                throw std::logic_error("Model undefined gravity parameters");
-            }
-            _lagrangian->reset();//TODO
-
-            //Compute symbolic dynamic equation
             TermPtr dL_dq = 
                 _lagrangian->derivate(dof);
             TermPtr dL_ddq = 
@@ -214,7 +182,29 @@ class Model
             TermPtr dynamic = 
                 Symbolic::Sub<scalar>::create(dL_ddq_dt, dL_dq);
 
-            std::cout << *dynamic << std::endl;
+            _dynamic[dof->toString()] = dynamic;
+        }
+
+        /**
+         * Compute according to the model the dynamic torque
+         * with respect to given symbolic degree of freedom
+         * The model state (position, velocity and acceleration)
+         * of all degrees of freedom is given
+         */
+        inline scalar computeTorque(SymbolPtr dof, 
+            const EigenVector& position, 
+            const EigenVector& velocity, 
+            const EigenVector& acceleration)
+        {
+            //Dofs state size check
+            if (
+                position.rows() != (int)_dofs.size() ||
+                velocity.rows() != (int)_dofs.size() ||
+                acceleration.rows() != (int)_dofs.size()
+            ) {
+                throw std::logic_error("Model invalid dofs state size");
+            }
+
             //Set bounder values
             Symbolic::Bounder bounder;
             DofContainer::iterator it;
@@ -228,16 +218,11 @@ class Model
                 bounder.setValue(sym_ddt, acceleration[index]);
                 index++;
             }
-            //Gravity
-            if (withGravity) {
-                bounder.setValue(_gravity, _parameters.at("g"));
-            } else {
-                bounder.setValue(_gravity, 0.0);
-            }
 
+            //Reset dynamic model
+            _dynamic.at(dof->toString())->reset();
             //Evaluate the dynamic equation
-            dynamic->reset(); //TODO
-            return dynamic->evaluate(bounder);
+            return _dynamic.at(dof->toString())->evaluate(bounder);
         }
 
         /**
@@ -247,8 +232,7 @@ class Model
         inline EigenVector computeVectorTorque(
             const EigenVector& position, 
             const EigenVector& velocity, 
-            const EigenVector& acceleration, 
-            bool withGravity = true)
+            const EigenVector& acceleration)
         {
             EigenVector torque = EigenVector::Zero(_dofs.size(), 1);
 
@@ -256,12 +240,11 @@ class Model
             DofContainer::iterator it;
             for (it=_dofs.begin();it!=_dofs.end();it++) {
                 torque(index) = computeTorque(
-                    it->second, position, velocity, 
-                    acceleration, withGravity);
+                    it->second, position, 
+                    velocity, acceleration);
                 index++;
             }
 
-            std::cout << "==> " << torque << std::endl;
             return torque;
         }
 
@@ -282,19 +265,11 @@ class Model
             EigenVector acceleration = EigenVector::Zero(_dofs.size(), 1);
             for (size_t i=0;i<_dofs.size();i++) {
                 acceleration(i) = 1.0;
-                //TODO
-                //inertia.col(i) = 
-                //    computeVectorTorque(position, velocity, acceleration)
-                //    - force;
                 inertia.col(i) = 
-                    computeVectorTorque(position, EigenVector::Zero(_dofs.size(),1), acceleration, false);
+                    computeVectorTorque(position, velocity, acceleration)
+                    - force;
                 acceleration(i) = 0.0;
             }
-            std::cout << position << std::endl;
-            std::cout << velocity << std::endl;
-            std::cout << torque << std::endl;
-            std::cout << force << std::endl;
-            std::cout << inertia << std::endl;
 
             //Using LU decomposition for inversing inertia matrix
             Eigen::FullPivLU<EigenMatrix> inertiaLU(inertia);
