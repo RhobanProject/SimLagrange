@@ -8,15 +8,18 @@ set (TESTS_DIRECTORIES
     SmartPointer
     Symbolic
     Any
-    LWPLS
     Random
     Plot
-    LWPR
     Vector
+    SimViewer
 )
 
 #Include Eigen (linear algebra template library)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Eigen)
+
+#Include SFML (windows and graphic library)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/include)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/lib)
 
 #Build tests
 foreach(f ${TESTS_DIRECTORIES})
@@ -25,4 +28,11 @@ foreach(f ${TESTS_DIRECTORIES})
         ${f}/tests/mainTests.cpp
     )
 endforeach(f) 
+
+#Link libraries
+target_link_libraries(testsSimViewer 
+    sfml-graphics 
+    sfml-window 
+    sfml-system
+)
 
