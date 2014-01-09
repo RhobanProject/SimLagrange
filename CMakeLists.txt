@@ -12,6 +12,8 @@ set (TESTS_DIRECTORIES
     Plot
     Vector
     SimViewer
+    VectorMap
+    SimMecha
 )
 
 #Include Eigen (linear algebra template library)
