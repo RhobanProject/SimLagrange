@@ -14,7 +14,8 @@ namespace SimViewer {
 /**
  * SimViewer
  *
- * TODO
+ * Graphical tool for drawing 2D
+ * mechanical simulations
  */
 class SimViewer
 {
