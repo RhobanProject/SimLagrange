@@ -37,6 +37,7 @@ class SimViewer
         static const double JOINT_LENGTH = 0.2;
         static const double JOINT_SIZE = 0.02;
         static const double TEXT_SIZE = 0.01;
+        static const double FRAME_SIZE = 0.02;
 
         /**
          * Initialization with windows 
@@ -120,6 +121,20 @@ class SimViewer
         }
 
         /**
+         * Draw a reference frame at the origine or
+         * at given coordinate
+         */
+        inline void drawFrame(double scale = 1.0, double x = 0.0, double y = 0.0)
+        {
+            drawLineByEnds(x, y, x+scale, y, 
+                FRAME_SIZE, sf::Color::Red);
+            drawLineByEnds(x, y, x, y+scale, 
+                FRAME_SIZE, sf::Color::Blue);
+            drawText("X", 1.0, 0.0, sf::Color::Red);
+            drawText("Y", 0.0, 1.0, sf::Color::Blue);
+        }
+
+        /**
          * Draw a mass at the given position or at
          * the current chain position
          */
@@ -164,22 +179,9 @@ class SimViewer
            
             //Print joint position
             std::ostringstream oss;
+            oss.precision(3);
             oss << angleNormalize(theta);
-            sf::Font font;
-            if (
-                !font.loadFromFile(
-                "/usr/share/fonts/truetype/freefont/FreeSerif.ttf")
-            ) {
-                throw std::runtime_error("SimViewer unable to load font");
-            }
-            sf::Text text;
-            text.setFont(font);
-            text.setString(oss.str());
-            text.setColor(sf::Color::Red);
-            text.setPosition(x-0.3, y);
-            text.setCharacterSize(20);
-            text.scale(TEXT_SIZE, TEXT_SIZE);
-            _window.draw(text);
+            drawText(oss.str(), x, y, sf::Color::Red);
         }
         inline void drawJoint(double theta)
         {
@@ -199,15 +201,20 @@ class SimViewer
         }
 
         /**
-         * Render the screen
+         * Render the screen and sleep the number
+         * of given milliseconds
          */
-        inline void endDraw()
+        inline void endDraw(long millis = -1)
         {
             //Display (double buffering)
             _window.display();
             //Reset chain
             _chainPos = sf::Vector2f(0.0, 0.0);
             _chainAngle = 0.0;
+            //Sleep
+            if (millis != -1) {
+                sf::sleep(sf::milliseconds(millis));
+            }
         }
 
     private:
@@ -244,7 +251,7 @@ class SimViewer
             double radius, sf::Color color)
         {
             sf::CircleShape circle(radius);
-            circle.setPosition(x-radius, y-radius);
+            circle.setPosition(x-radius, -y-radius);
             circle.setFillColor(color);
             _window.draw(circle);
         }
@@ -265,12 +272,36 @@ class SimViewer
         {
             sf::RectangleShape rectangle(sf::Vector2f(length, size));
             rectangle.setOrigin(0, size/2);
-            rectangle.setRotation(angle);
-            rectangle.move(x, y);
+            rectangle.setRotation(-angle);
+            rectangle.move(x, -y);
             rectangle.setFillColor(color);
             _window.draw(rectangle);
         }
 
+        /**
+         * Draw the given text at given position and color
+         */
+        inline void drawText(const std::string& str, 
+            double x, double y, sf::Color color)
+        {
+            sf::Font font;
+            if (!font.loadFromFile("DS-DIGII.TTF")) {
+                throw std::runtime_error("SimViewer unable to load font");
+            }
+            
+            sf::Text text;
+            text.setFont(font);
+            text.setString(str);
+            text.setColor(color);
+            text.setPosition(x, -y);
+            text.setCharacterSize(24);
+            text.scale(TEXT_SIZE, TEXT_SIZE);
+            _window.draw(text);
+        }
+
+        /**
+         * Normalize the given angle between -180 et 180
+         */
         inline double angleNormalize(double angle) const
         {
             while (angle <= -180.0) {

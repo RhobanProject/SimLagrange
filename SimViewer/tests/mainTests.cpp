@@ -13,6 +13,7 @@ int main()
         t += 0.3;
         //Handle events
         viewer.beginDraw();
+        viewer.drawFrame();
         //Draw first chain
         viewer.beginChain();
         viewer.drawMass();
@@ -24,7 +25,7 @@ int main()
         viewer.drawMass();
         //Draw second chain
         viewer.beginChain();
-        viewer.drawJoint(t);
+        viewer.drawJoint(45);
         viewer.drawSegment(1.5);
         viewer.drawMass();
         //Display 
