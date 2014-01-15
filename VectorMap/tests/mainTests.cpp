@@ -24,7 +24,7 @@ int main()
     assert(container[0] == 42);
     assert(container.getKey(0) == "a");
     assert(container.getIndex("a") == 0);
-    assert(container.getByKey("a") == 42);
+    assert(container.get("a") == 42);
 
     container[0] = 43;
     assert(container.size() == 1);
@@ -36,7 +36,7 @@ int main()
     assert(container[0] == 43);
     assert(container.getKey(0) == "a");
     assert(container.getIndex("a") == 0);
-    assert(container.getByKey("a") == 43);
+    assert(container.get("a") == 43);
     
     container.clear();
     assert(container.size() == 0);
@@ -62,7 +62,7 @@ int main()
 
     container[0] = 43;
     container["a"] = 43;
-    container.getByKey("a") = 43;
+    container.get("a") = 43;
     assert(container[0] == 43);
 
     return 0;

@@ -93,6 +93,14 @@ class VectorMap
 
             return _elementVector[size()-1];
         }
+        inline Elt& last()
+        {
+            if (isEmpty()) {
+                throw std::logic_error("VectorMap (last) is empty");
+            }
+
+            return _elementVector[size()-1];
+        }
         inline const Key& lastKey() const
         {
             if (isEmpty()) {
@@ -168,11 +176,19 @@ class VectorMap
         /**
          * Key to element
          */
-        inline const Elt& getByKey(const Key& key) const
+        inline const Elt& get(const Key& key) const
         {
             return _elementVector[_indexMap.at(key)];
         }
-        inline Elt& getByKey(const Key& key)
+        inline Elt& get(const Key& key)
+        {
+            return _elementVector[_indexMap.at(key)];
+        }
+        inline const Elt& at(const Key& key) const
+        {
+            return _elementVector[_indexMap.at(key)];
+        }
+        inline Elt& at(const Key& key)
         {
             return _elementVector[_indexMap.at(key)];
         }
