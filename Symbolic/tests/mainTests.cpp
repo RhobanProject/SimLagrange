@@ -95,16 +95,16 @@ int main()
     bounder.setValue(sym5, Leph::Vector::Vector2D<double>(1.0, 2.0));
 
     Term<double>::TermPtr term6 = 
-        Re<double,Leph::Vector::Vector2D<double> >::create(sym5);
-    assert(term6->toString() == "Re(vect1)");
+        X<double,Leph::Vector::Vector2D<double> >::create(sym5);
+    assert(term6->toString() == "X(vect1)");
     assert(term6->evaluate(bounder) == 1.0);
-    assert(term6->derivate(t)->toString() == "Re(d(vect1)/dt)");
+    assert(term6->derivate(t)->toString() == "X(d(vect1)/dt)");
 
     Term<double>::TermPtr term7 = 
-        Im<double,Leph::Vector::Vector2D<double> >::create(sym5);
-    assert(term7->toString() == "Im(vect1)");
+        Y<double,Leph::Vector::Vector2D<double> >::create(sym5);
+    assert(term7->toString() == "Y(vect1)");
     assert(term7->evaluate(bounder) == 2.0);
-    assert(term7->derivate(t)->toString() == "Im(d(vect1)/dt)");
+    assert(term7->derivate(t)->toString() == "Y(d(vect1)/dt)");
 
     Term<double>::TermPtr term8 = Minus<double>::create(sym4);
     Term<double>::TermPtr term9 = Minus<double>::create(term8);
