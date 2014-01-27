@@ -123,6 +123,15 @@ int main()
     assert(term11->toString() == "PolarInv(sym4)");
     assert(term11->derivate(t)->toString() 
         == "(d(sym4)/dt)*(Polar(-(sym4)))");
+    
+    Term<double>::TermPtr term12 = 
+        Dot<double,Leph::Vector::Vector2D<double>,Leph::Vector::Vector2D<double> >::
+        create(sym5, sym5);
+    assert(term12->toString() == "(vect1).(vect1)");
+    assert(term12->derivate(sym1)->toString() == "ZERO");
+    assert(term12->derivate(t)->toString() 
+        == "((d(vect1)/dt).(vect1))+((vect1).(d(vect1)/dt))");
+    assert(term12->evaluate(bounder) == 5.0);
 
     sym4->reset();
     bounder.setValue(sym4, 0.0);

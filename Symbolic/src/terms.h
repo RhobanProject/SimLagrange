@@ -2,6 +2,7 @@
 #define LEPH_SYMBOLIC_TERMS_H
 
 #include "Symbolic/src/terms/Add.hpp"
+#include "Symbolic/src/terms/Dot.hpp"
 #include "Symbolic/src/terms/Exp.hpp"
 #include "Symbolic/src/terms/Frac.hpp"
 #include "Symbolic/src/terms/Im.hpp"
