@@ -85,7 +85,8 @@ int main()
 
     Term<double>::TermPtr term5 = Frac<double>::create(cst1, sym4);
     assert(term5->toString() == "(3.14)/(sym4)");
-    assert(term5->derivate(t)->toString() == "(-((3.14)*(d(sym4)/dt)))/((sym4)^2)");
+    assert(term5->derivate(t)->toString() 
+        == "(-((3.14)*(d(sym4)/dt)))/((sym4)^2)");
     assert(term5->substitute<double>(sym4, term3)->toString()
         == "(3.14)/(exp(sym4))");
 
@@ -125,13 +126,19 @@ int main()
         == "(d(sym4)/dt)*(Polar(-(sym4)))");
     
     Term<double>::TermPtr term12 = 
-        Dot<double,Leph::Vector::Vector2D<double>,Leph::Vector::Vector2D<double> >::
-        create(sym5, sym5);
+        Dot<double,Leph::Vector::Vector2D<double>,
+            Leph::Vector::Vector2D<double> >::create(sym5, sym5);
     assert(term12->toString() == "(vect1).(vect1)");
     assert(term12->derivate(sym1)->toString() == "ZERO");
     assert(term12->derivate(t)->toString() 
         == "((d(vect1)/dt).(vect1))+((vect1).(d(vect1)/dt))");
     assert(term12->evaluate(bounder) == 5.0);
+    
+    Term<Leph::Vector::Vector2D<double> >::TermPtr term13 = 
+        Rotation<Leph::Vector::Vector2D<double>, double>::
+        create(sym5, sym4);
+    assert(term13->toString() 
+        == "((X(vect1))*(Polar(sym4)))+((Y(vect1))*(PolarInv(-(sym4))))");
 
     sym4->reset();
     bounder.setValue(sym4, 0.0);
