@@ -140,6 +140,12 @@ int main()
     assert(term13->toString() 
         == "((X(vect1))*(Polar(sym4)))+((Y(vect1))*(PolarInv(-(sym4))))");
 
+    Term<Leph::Vector::Vector2D<double> >::TermPtr term14 = 
+        Vect<Leph::Vector::Vector2D<double>, double>::
+        create(sym4, sym4);
+    assert(term14->toString() 
+        == "((sym4)*([1 0]))+((sym4)*([0 1]))");
+
     sym4->reset();
     bounder.setValue(sym4, 0.0);
     assert(term10->evaluate(bounder).x() == 1.0);

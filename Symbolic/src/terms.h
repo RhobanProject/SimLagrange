@@ -46,6 +46,29 @@ class Rotation
         }
 };
 
+/**
+ * Vect
+ */
+template <class T, class U>
+class Vect
+{
+    public:
+
+        inline static typename Term<T>::TermPtr create(
+            typename Term<U>::TermPtr termLeft, 
+            typename Term<U>::TermPtr termRight)
+        {
+            typename Term<T>::TermPtr x = 
+                Constant<T>::create(T(1, 0));
+            typename Term<T>::TermPtr y = 
+                Constant<T>::create(T(0, 1));
+
+            return Add<T>::create(
+                Mult<T,U,T>::create(termLeft, x), 
+                Mult<T,U,T>::create(termRight, y));
+        }
+};
+
 }
 }
 
