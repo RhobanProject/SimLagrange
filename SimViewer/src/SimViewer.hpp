@@ -29,7 +29,6 @@ class SimViewer
         /**
          * Configuation constant
          */
-        static const double PI = 3.141592653589793;
         static const double MASS_RADIUS = 0.1;
         static const double SEGMENT_SIZE = 0.05;
         static const double CAMERA_WIDTH = 7.0;
@@ -38,6 +37,8 @@ class SimViewer
         static const double JOINT_SIZE = 0.02;
         static const double TEXT_SIZE = 0.01;
         static const double FRAME_SIZE = 0.02;
+        static const double BASE_SIZE = 0.25;
+        static const double BASE_THICK = 0.01;
 
         /**
          * Initialization with windows 
@@ -122,25 +123,39 @@ class SimViewer
 
         /**
          * Draw a reference frame at the origine or
-         * at given coordinate
+         * at given coordinate and angle (in degree)
          */
-        inline void drawFrame(double scale = 1.0, double x = 0.0, double y = 0.0)
+        inline void drawFrame(double scale = 1.0, 
+            double x = 0.0, double y = 0.0, double angle = 0.0)
         {
-            drawLineByEnds(x, y, x+scale, y, 
+            double endX = x + scale*cos(angle*M_PI/180.0);
+            double endY = y + scale*sin(angle*M_PI/180.0);
+            double endX2 = x + scale*cos((angle+90.0)*M_PI/180.0);
+            double endY2 = y + scale*sin((angle+90.0)*M_PI/180.0);
+
+            drawLineByEnds(x, y, endX, endY, 
                 FRAME_SIZE, sf::Color::Red);
-            drawLineByEnds(x, y, x, y+scale, 
-                FRAME_SIZE, sf::Color::Blue);
-            drawText("X", 1.0, 0.0, sf::Color::Red);
-            drawText("Y", 0.0, 1.0, sf::Color::Blue);
+            drawLineByEnds(x, y, endX2, endY2, 
+                FRAME_SIZE, sf::Color::Green);
+            drawText("X", endX, endY, sf::Color::Red);
+            drawText("Y", endX2, endY2, sf::Color::Green);
         }
 
         /**
          * Draw a mass at the given position or at
          * the current chain position
          */
-        inline void drawMass(double x, double y)
+        inline void drawMass(double x, double y, double val = -1)
         {
             drawCircle(x, y, MASS_RADIUS, sf::Color::Blue);
+
+            //Print mass value
+            if (val > 0) {
+                std::ostringstream oss;
+                oss << val;
+                drawText(oss.str(), x, y, 
+                    sf::Color(0, 0, 255, 100));
+            }
         }
         inline void drawMass()
         {
@@ -160,8 +175,8 @@ class SimViewer
         inline void drawSegment(double length)
         {
             drawSegment(_chainPos.x, _chainPos.y, length, _chainAngle);
-            _chainPos.x += length*cos(_chainAngle*PI/180.0);
-            _chainPos.y += length*sin(_chainAngle*PI/180.0);
+            _chainPos.x += length*cos(_chainAngle*M_PI/180.0);
+            _chainPos.y += length*sin(_chainAngle*M_PI/180.0);
         }
 
         /**
@@ -171,22 +186,60 @@ class SimViewer
          */
         inline void drawJoint(double x, double y, double angle, double theta)
         {
-            drawCircle(x, y, JOINT_RADIUS, sf::Color::Red);
+            drawCircle(x, y, JOINT_RADIUS, sf::Color::White);
             drawLineByPolar(x, y, JOINT_LENGTH, angle, 
-                JOINT_SIZE, sf::Color::Red);
+                1.5*JOINT_SIZE, sf::Color::White);
             drawLineByPolar(x, y, JOINT_LENGTH, angle+theta, 
-                JOINT_SIZE, sf::Color::Red);
+                JOINT_SIZE, sf::Color::White);
            
             //Print joint position
             std::ostringstream oss;
             oss.precision(3);
             oss << angleNormalize(theta);
-            drawText(oss.str(), x, y, sf::Color::Red);
+            drawText(oss.str(), x, y, sf::Color::White);
         }
         inline void drawJoint(double theta)
         {
             drawJoint(_chainPos.x, _chainPos.y, _chainAngle, theta);
             _chainAngle += theta;
+        }
+
+        /**
+         * Draw a linear joint at given end position
+         * with given value
+         */
+        inline void drawLinearJoint(double x1, double y1, 
+            double x2, double y2, double value)
+        {
+            drawCircle(x1, y1, JOINT_RADIUS, sf::Color::White);
+            drawCircle(x2, y2, JOINT_RADIUS, sf::Color::White);
+            
+            drawLineByEnds(x1, y1, x2, y2, 
+                JOINT_SIZE, sf::Color::White);
+            
+            //Print joint value
+            std::ostringstream oss;
+            oss.precision(3);
+            oss << value;
+            drawText(oss.str(), x1, y1, sf::Color::White);
+        }
+
+        inline void drawBase(double x = 0.0, double y = 0.0)
+        {
+            drawRect(x, y, BASE_SIZE, BASE_SIZE, 
+                BASE_THICK, sf::Color::White);
+            drawLineByEnds(x-BASE_SIZE/2.0, y-BASE_SIZE/2.0, 
+                x+BASE_SIZE/2.0, y+BASE_SIZE/2.0, 
+                BASE_THICK, sf::Color::White);
+            drawLineByEnds(x-BASE_SIZE/2.0, y+BASE_SIZE/2.0, 
+                x+BASE_SIZE/2.0, y-BASE_SIZE/2.0, 
+                BASE_THICK, sf::Color::White);
+            
+            //Print Base position
+            std::ostringstream oss;
+            oss.precision(3);
+            oss << x << "," << y;
+            drawText(oss.str(), x, y, sf::Color::White);
         }
 
         /**
@@ -264,7 +317,7 @@ class SimViewer
             double x2, double y2, double size, sf::Color color)
         {
             double length = sqrt(pow(x2-x1, 2)+pow(y2-y1, 2));
-            double angle = atan2(y2-y1, x2-x1)*180.0/PI;
+            double angle = atan2(y2-y1, x2-x1)*180.0/M_PI;
             drawLineByPolar(x1, y1, length, angle, size, color);
         }
         inline void drawLineByPolar(double x, double y, 
@@ -275,6 +328,22 @@ class SimViewer
             rectangle.setRotation(-angle);
             rectangle.move(x, -y);
             rectangle.setFillColor(color);
+            _window.draw(rectangle);
+        }
+
+        /**
+         * Draw a rectangle shape og given size with its center
+         * at given position
+         */
+        inline void drawRect(double x, double y, 
+            double width, double height, double size, sf::Color color)
+        {
+            sf::RectangleShape rectangle(sf::Vector2f(width, height));
+            rectangle.setOrigin(width/2.0, height/2.0);
+            rectangle.move(x, -y);
+            rectangle.setOutlineThickness(size);
+            rectangle.setOutlineColor(color);
+            rectangle.setFillColor(sf::Color::Transparent);
             _window.draw(rectangle);
         }
 
