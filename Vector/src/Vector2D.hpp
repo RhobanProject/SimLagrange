@@ -97,6 +97,17 @@ class Vector2D
         }
 
         /**
+         * Compute and return the Vector rotated by given angle
+         */
+        inline static Vector2D<scalar> rotate
+            (const Vector2D<scalar>& v, scalar angle)
+        {
+            return Vector2D<scalar>(
+                v.x()*cos(angle)-v.y()*sin(angle), 
+                v.x()*sin(angle)+v.y()*cos(angle));
+        }
+
+        /**
          * Display
          */
         inline void print() const
