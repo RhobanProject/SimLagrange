@@ -18,8 +18,12 @@ class Y : public UnaryOperator<T,U>
         static inline typename Term<T>::TermPtr create(
             typename Term<U>::TermPtr term)
         {
-            return typename Term<T>::TermPtr(
-                new Y<T,U>(term));
+            if (term->toString() == BaseSymbol::zero()) {
+                return Symbol<T>::create(BaseSymbol::zero());
+            } else {
+                return typename Term<T>::TermPtr(
+                    new Y<T,U>(term));
+            }
         }
 
     protected:
