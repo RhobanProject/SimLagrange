@@ -40,6 +40,16 @@ int main()
     assert(dot(v1, v2) == 3.0);
     assert((v1*v2).x() == 3.0);
     assert((v1*v2).y() == 0.0);
+    
+    assert(
+        Vector2D<double>::rotate(v2, M_PI/2.0).x() < -1.99 &&
+        Vector2D<double>::rotate(v2, M_PI/2.0).x() > -2.01);
+    assert(
+        Vector2D<double>::rotate(v2, M_PI/2.0).y() > 0.99 &&
+        Vector2D<double>::rotate(v2, M_PI/2.0).y() < 1.01);
+
+    assert(Vector2D<double>::normal(v2).x() == -2.0);
+    assert(Vector2D<double>::normal(v2).y() == 1.0);
 
     return 0;
 }

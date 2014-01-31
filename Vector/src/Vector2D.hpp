@@ -108,6 +108,25 @@ class Vector2D
         }
 
         /**
+         * Compute and return the normal vector
+         * (Rotation by +90°)
+         */
+        inline static Vector2D<scalar> normal
+            (const Vector2D<scalar> v)
+        {
+            return Vector2D<scalar>(-v.y(), v.x());
+        }
+
+        /**
+         * Return the normalized given vector
+         */
+        inline static Vector2D<scalar> normalize
+            (const Vector2D<scalar> v)
+        {
+            return (1.0/v.norm())*v;
+        }
+
+        /**
          * Display
          */
         inline void print() const
