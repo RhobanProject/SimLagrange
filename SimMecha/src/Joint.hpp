@@ -102,6 +102,14 @@ class Joint
         }
 
         /**
+         * Return Joint name
+         */
+        inline const std::string& getName()
+        {
+            return _dof->toString();
+        }
+
+        /**
          * Build Symbolic transformation (position and angle)
          * of Body center from root Body to leaf Body 
          * and then update Symbolic leaf Body 
@@ -117,7 +125,15 @@ class Joint
         virtual void draw(SimViewer::SimViewer& viewer, 
             const Vector2D& posRoot, scalar angleRoot,
             const Vector2D& posLeaf, scalar angleLeaf,
-            scalar value) = 0;
+            scalar value)
+        {
+            (void)angleRoot;
+            (void)angleLeaf;
+            (void)value;
+
+            viewer.drawSegmentByEnd(posRoot.x(), posRoot.y(),
+                posLeaf.x(), posLeaf.y());
+        }
 
     private:
 

@@ -103,6 +103,9 @@ class LinearJoint : public Joint
             const Vector2D& posLeaf, scalar angleLeaf,
             scalar value)
         {
+            Joint::draw(viewer, posRoot, angleRoot,
+                posLeaf, angleLeaf, value);
+
             Vector2D pos1 = posRoot + Vector2D::rotate(
                 Joint::getPosRoot(), angleRoot);
             Vector2D pos2 = posLeaf + Vector2D::rotate(

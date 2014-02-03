@@ -56,6 +56,14 @@ class Body
         }
 
         /**
+         * Return the Joint linkd to the Base root
+         */
+        inline Joint* getJointRoot()
+        {
+            return _jointRoot;
+        }
+
+        /**
          * Add a mass with given value and position
          * to the Body coordinates system
          */

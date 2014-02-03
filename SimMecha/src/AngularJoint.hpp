@@ -96,8 +96,8 @@ class AngularJoint : public Joint
             const Vector2D& posLeaf, scalar angleLeaf,
             scalar value)
         {
-            (void)posLeaf;
-            (void)angleLeaf;
+            Joint::draw(viewer, posRoot, angleRoot,
+                posLeaf, angleLeaf, value);
 
             Vector2D pos = posRoot + Vector2D::rotate(
                 Joint::getPosRoot(), angleRoot);

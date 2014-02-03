@@ -137,8 +137,8 @@ class SimViewer
                 FRAME_SIZE, sf::Color::Red);
             drawLineByEnds(x, y, endX2, endY2, 
                 FRAME_SIZE, sf::Color::Green);
-            drawText("X", endX, endY, sf::Color::Red);
-            drawText("Y", endX2, endY2, sf::Color::Green);
+            drawText("X", endX, endY, sf::Color(255, 0, 0, 100));
+            drawText("Y", endX2, endY2, sf::Color(0, 255, 0, 100));
         }
 
         /**
@@ -172,6 +172,12 @@ class SimViewer
             drawLineByPolar(x, y, length, angle, 
                 SEGMENT_SIZE, sf::Color::Green);
         }
+        inline void drawSegmentByEnd(double x1, double y1, 
+            double x2, double y2)
+        {
+            drawLineByEnds(x1, y1, x2, y2, 
+                SEGMENT_SIZE, sf::Color(0, 255, 0, 50));
+        }
         inline void drawSegment(double length)
         {
             drawSegment(_chainPos.x, _chainPos.y, length, _chainAngle);
@@ -196,7 +202,7 @@ class SimViewer
             std::ostringstream oss;
             oss.precision(3);
             oss << angleNormalize(theta);
-            drawText(oss.str(), x, y, sf::Color::White);
+            drawText(oss.str(), x, y, sf::Color(255, 255, 255, 150));
         }
         inline void drawJoint(double theta)
         {
@@ -221,7 +227,7 @@ class SimViewer
             std::ostringstream oss;
             oss.precision(3);
             oss << value;
-            drawText(oss.str(), x1, y1, sf::Color::White);
+            drawText(oss.str(), x1, y1, sf::Color(255, 255, 255, 150));
         }
 
         inline void drawBase(double x = 0.0, double y = 0.0)
@@ -239,7 +245,7 @@ class SimViewer
             std::ostringstream oss;
             oss.precision(3);
             oss << x << "," << y;
-            drawText(oss.str(), x, y, sf::Color::White);
+            drawText(oss.str(), x, y, sf::Color(255, 255, 255, 150));
         }
 
         /**

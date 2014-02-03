@@ -263,6 +263,15 @@ class System
         }
 
         /**
+         * Return true if the given degree of freedom
+         * name exists
+         */
+        inline bool isDof(const std::string& name) const
+        {
+            return _dofs.isKey(name);
+        }
+
+        /**
          * Evaluate the position, angle and their velocity
          * with current system state
          */
@@ -317,7 +326,7 @@ class System
                 scalar angleLeaf = evalAngle(
                     _joints[i]->getBodyLeaf());
                 size_t index = _dofs.getIndex(
-                    _joints[i]->getDof()->toString());
+                    _joints[i]->getName());
                 _joints[i]->draw(viewer, 
                     posRoot, angleRoot, posLeaf, angleLeaf,
                     _statePosition[index]);

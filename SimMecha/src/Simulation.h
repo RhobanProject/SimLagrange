@@ -209,7 +209,9 @@ inline EigenVector simulationRungeKutta4(
 }
 
 /**
- *
+ * Compute the next simulation step and 
+ * update the given state using given
+ * applied torques and time step
  */
 inline void simulationComputeStep(
     std::vector<scalar>& statePosition,
