@@ -4,6 +4,7 @@
 #include <sstream>
 #include "Symbolic/src/Term.hpp"
 #include "Symbolic/src/BaseSymbol.hpp"
+#include "Symbolic/src/Symbol.hpp"
 
 namespace Leph {
 namespace Symbolic {
@@ -24,7 +25,13 @@ class Constant : public Term<T>
          */
         static inline typename Term<T>::TermPtr create(const T& value)
         {
-            return typename Term<T>::TermPtr(new Constant<T>(value));
+            if (value == T()) {
+                return typename Term<T>::TermPtr(
+                    Symbol<T>::create(BaseSymbol::zero()));
+            } else {
+                return typename Term<T>::TermPtr(
+                    new Constant<T>(value));
+            }
         }
 
         /**
