@@ -235,6 +235,16 @@ inline scalar dot
     return Vector2D<scalar>::dot(v1, v2);
 }
 
+/**
+ * Equality operator
+ */
+template <class scalar>
+inline bool operator==
+    (const Vector2D<scalar>& v1, const Vector2D<scalar>& v2)
+{
+    return (v1.x() == v2.x()) && (v1.y() == v2.y());
+}
+
 }
 }
 

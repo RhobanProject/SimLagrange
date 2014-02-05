@@ -35,6 +35,8 @@ int main()
     
     v3 += v2;
     assert(v3.x() == 0.0 && v3.y() == 0.0);
+
+    assert(Vector2D<double>() == Vector2D<double>(0.0, 0.0));
     
     assert(Vector2D<double>::dot(v1, v2) == 3.0);
     assert(dot(v1, v2) == 3.0);
