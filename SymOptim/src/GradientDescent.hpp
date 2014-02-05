@@ -3,6 +3,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <iostream>
 #include "VectorMap/src/VectorMap.hpp"
 #include "Symbolic/src/Symbol.hpp"
 #include "Symbolic/src/Bounder.hpp"
@@ -57,6 +58,8 @@ class GradientDescent
         scalar INITIAL_STEP;
         scalar STEP_ADAPTIVE_GAIN;
         scalar STOP_EPSILON;
+        unsigned int MAX_INCR_STEP;
+        unsigned int MAX_GRADIENT_STEP;
 
         /**
          * Initialization with Symbolic target function
@@ -64,12 +67,15 @@ class GradientDescent
          */
         GradientDescent
             (TermPtr targetFunction, const VariableContainer& variables) :
-            INITIAL_STEP(0.001),
+            INITIAL_STEP(0.0001),
             STEP_ADAPTIVE_GAIN(1.5),
             STOP_EPSILON(0.0001),
+            MAX_INCR_STEP(100),
+            MAX_GRADIENT_STEP(10000),
             _targetFunction(targetFunction),
-            _targetDerivatives(),
             _variables(variables),
+            _countIteration(0),
+            _targetDerivatives(),
             _currentState()
         {
             if (_variables.size() == 0) {
@@ -78,14 +84,7 @@ class GradientDescent
 
             //Initialize target derivatives and current
             //point values
-            for (size_t i=0;i<_variables.size();i++) {
-                _targetDerivatives.push(
-                    _variables.getKey(i),
-                    _targetFunction->derivate(_variables[i]));
-                _currentState.push(
-                    _variables.getKey(i),
-                    scalar(0.0));
-            }
+            initDerivatives();
         }
 
         /**
@@ -102,17 +101,43 @@ class GradientDescent
         }
 
         /**
+         * Return the number of run iteration
+         */
+        inline unsigned int getIterationCount() const
+        {
+            return _countIteration;
+        }
+
+        /**
          * Start from current given initial point and 
          * do a gradient descent until stop condition is meet
          * Return the founded minimal point
+         * If debug is true, print debug information
          */
-        inline ValueContainer runOptimization()
+        inline ValueContainer runOptimization(bool debug = false)
         {
+            //Verbose debug
+            if (debug) {
+                std::cout << "Start Gradient Descent of ";
+                std::cout << _targetFunction->toString() << std::endl;
+                std::cout << "Derivatives:" << std::endl;
+                for (size_t i=0;i<_variables.size();i++) {
+                    std::cout << _variables.getKey(i) << ": ";
+                    std::cout << _targetDerivatives[i]->toString();
+                    std::cout << std::endl;
+                }
+            }
             //Descent initial step
             scalar step = INITIAL_STEP;
             //Compute gradient at current state point
             ValueContainer gradient = computeGradient(_currentState);
+            _countIteration = 0;
             do {
+                //Verbose debug
+                if (debug) {
+                    std::cout << "Start gradient iteration ";
+                    std::cout << _countIteration << std::endl;
+                }
                 //Try to adapt the step size with simple heuristic
                 scalar valueOld = computeTarget(_currentState);
                 scalar valueNew = computeTarget(
@@ -122,26 +147,58 @@ class GradientDescent
                     step = step/STEP_ADAPTIVE_GAIN;
                     valueNew = computeTarget(
                         applyStep(_currentState, gradient, step));
+                    //Verbose debug
+                    if (debug) {
+                        std::cout << "Decr step=" << step << std::endl;
+                    }
                 }
                 //Increase the step while target value decrease
+                unsigned int countStep = 0;
                 while (valueNew < valueOld) {
                     step = step*STEP_ADAPTIVE_GAIN;
                     valueOld = valueNew;
                     valueNew = computeTarget(
                         applyStep(_currentState, gradient, step));
+                    //Verbose debug
+                    if (debug) {
+                        std::cout << "Incr step=" << step << std::endl;
+                    }
+                    //Check for non convex target function
+                    if (countStep > MAX_INCR_STEP) {
+                        throw std::runtime_error(
+                            "GradientDescent unable to find minimum");
+                    }
+                    countStep++;
                 }
                 step = step/STEP_ADAPTIVE_GAIN;
                 //Update current state point with founded step
                 _currentState = applyStep(_currentState, gradient, step);
                 //Recompute gradient
                 gradient = computeGradient(_currentState);
+                //Verbose debug
+                if (debug) {
+                    std::cout << "Iteration " << _countIteration;
+                    std::cout << " with step: " << step << std::endl;
+                    std::cout << "State:" << std::endl;
+                    for (size_t i=0;i<_variables.size();i++) {
+                        std::cout << _variables.getKey(i) << "=";
+                        std::cout << _currentState[i] << " (gradient=";
+                        std::cout << gradient[i] << ")" << std::endl;
+                    }
+                }
+                //Check for non convergence
+                if (_countIteration > MAX_GRADIENT_STEP) {
+                    throw std::runtime_error(
+                        "GradientDescent unable to converge");
+                }
+                _countIteration++;
             } while (infinityNorm(gradient) > STOP_EPSILON);
 
             return _currentState;
         }
 
-    private:
-
+    protected:
+        
         /**
          * The Symbolic multivariate
          * function to be optimized
@@ -149,16 +206,41 @@ class GradientDescent
         TermPtr _targetFunction;
 
         /**
+         * Symbolic variables container
+         */
+        VariableContainer _variables;
+
+        /**
+         * Compute and initialize
+         * target derivatites and reset current state
+         */
+        inline void initDerivatives()
+        {
+            _targetDerivatives.clear();
+            _currentState.clear();
+            for (size_t i=0;i<_variables.size();i++) {
+                _targetDerivatives.push(
+                    _variables.getKey(i),
+                    _targetFunction->derivate(_variables[i]));
+                _currentState.push(
+                    _variables.getKey(i),
+                    scalar(0.0));
+            }
+        }
+
+    private:
+
+        /**
+         * Count the number of descent iteration
+         */
+        unsigned int _countIteration;
+
+        /**
          * The Symbolic multivariate 
          * derivatives of target function with
          * respect to each Symbolic variable
          */
         DerivativeContainer _targetDerivatives;
-
-        /**
-         * Symbolic variables container
-         */
-        VariableContainer _variables;
 
         /**
          * Current variables state value
