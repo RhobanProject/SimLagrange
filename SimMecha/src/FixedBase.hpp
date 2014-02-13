@@ -20,7 +20,7 @@ class FixedBase : public Base
          * Initialization
          */
         FixedBase(const Vector2D& pos, SymbolPtr time) :
-            Base()
+            Base(time)
         {
             //Initiating Body Symbolic 
             //position and velocity
@@ -36,7 +36,7 @@ class FixedBase : public Base
             //Initalize Symblos and compute 
             //lagrangian symbolic expression
             Body::initSymbols(
-                symPos, symAngle, symPosVel, symAngleVel, time);
+                symPos, symAngle, symPosVel, symAngleVel);
         }
 };
 

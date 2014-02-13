@@ -124,7 +124,7 @@ class System
             const Vector2D& posLeaf, scalar angleLeaf,
             scalar statePos, scalar stateVel)
         {
-            Body* leaf = new Body();
+            Body* leaf = new Body(_time);
             Joint* joint = new AngularJoint(
                 root, posRoot, angleRoot,
                 *leaf, posLeaf, angleLeaf,
@@ -153,7 +153,7 @@ class System
             const Vector2D& posLeaf, scalar angleLeaf, 
             scalar statePos, scalar stateVel)
         {
-            Body* leaf = new Body();
+            Body* leaf = new Body(_time);
             Joint* joint = new LinearJoint(
                 root, posRoot, angleRoot,
                 *leaf, posLeaf, angleLeaf,
@@ -186,7 +186,7 @@ class System
                 _joints[i]->computeSymTransformation(_time);
             }
             //Recompute Base lagrangian (new masses added)
-            _base->initSymbols(_time);
+            _base->initSymbols();
             //Compute lagrangian expression
             _lagrangian = _base->getLagrangian();
             for (size_t i=0;i<_bodies.size();i++) {

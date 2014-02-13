@@ -21,9 +21,11 @@ class Body
     public:
 
         /**
-         * Initialization
+         * Initialization with time
+         * Symbol
          */
-        Body() :
+        Body(SymbolPtr time) :
+            _time(time),
             _symPos(),
             _symAngle(),
             _symPosVel(),
@@ -96,6 +98,20 @@ class Body
         }
 
         /**
+         * Build and return the Symbolic position and
+         * velocity expression of given point 
+         * in Body coordinate
+         */
+        inline TermVectorPtr buildSymPosition(const Vector2D& point)
+        {
+            return Symbolic::Add<Vector2D>::create(
+                _symPos,
+                Symbolic::Rotation<Vector2D, scalar>::create(
+                    ConstantVector::create(point),
+                    _symAngle));
+        }
+
+        /**
          * Return the Symbolic lagrangian
          */
         inline TermPtr getLagrangian()
@@ -130,8 +146,7 @@ class Body
          */
         inline void initSymbols(
             TermVectorPtr symPos, TermPtr symAngle,
-            TermVectorPtr symPosVel, TermPtr symAngleVel,
-            TermPtr time)
+            TermVectorPtr symPosVel, TermPtr symAngleVel)
         {
             //Assign Symbolic position and velocity
             _symPos = symPos;
@@ -140,15 +155,15 @@ class Body
             _symAngleVel = symAngleVel;
 
             //Compute lagrangian Symbolic expression
-            computeLagrangian(time);
+            computeLagrangian();
         }
 
         /**
          * Recompute lagrangian expression
          */
-        inline void initSymbols(TermPtr time)
+        inline void initSymbols()
         {
-            computeLagrangian(time);
+            computeLagrangian();
         }
 
         /**
@@ -171,6 +186,11 @@ class Body
         }
 
     private:
+
+        /**
+         * Time Symbolic variable
+         */
+        SymbolPtr _time;
 
         /**
          * Symbolic position, angle, position velocity
@@ -207,18 +227,15 @@ class Body
         /**
          * Compute lagrangian Symbolic expression
          */
-        inline void computeLagrangian(SymbolPtr time)
+        inline void computeLagrangian()
         {
             //Compute lagrangian for all masses
             for (size_t i=0;i<_massPositions.size();i++) {
                 //Mass position
-                TermVectorPtr posMass = Symbolic::Add<Vector2D>::create(
-                    _symPos, 
-                    Symbolic::Rotation<Vector2D, scalar>::create(
-                        ConstantVector::create(_massPositions[i]),
-                        _symAngle));
+                TermVectorPtr posMass = 
+                    buildSymPosition(_massPositions[i]);
                 //Mass velocity
-                TermVectorPtr velMass = posMass->derivate(time);
+                TermVectorPtr velMass = posMass->derivate(_time);
                 //Kinetic energy
                 TermPtr halfSym = Constant::create(0.5);
                 TermPtr massSym = Constant::create(_massValues[i]);

@@ -22,7 +22,7 @@ class FloatingBase : public Base
          */
         FloatingBase(SymbolPtr baseX, SymbolPtr baseY, 
             SymbolPtr time) :
-            Base()
+            Base(time)
         {
             //Initiating Body Symbolic 
             //position and velocity
@@ -38,7 +38,7 @@ class FloatingBase : public Base
             //Initalize Symblos and compute 
             //lagrangian symbolic expression
             Body::initSymbols(
-                symPos, symAngle, symPosVel, symAngleVel, time);
+                symPos, symAngle, symPosVel, symAngleVel);
         }
 };
 

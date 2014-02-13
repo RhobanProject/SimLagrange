@@ -91,8 +91,7 @@ class LinearJoint : public Joint
                 resultPos,
                 resultAngle,
                 resultPos->derivate(time),
-                resultAngle->derivate(time),
-                time);
+                resultAngle->derivate(time));
         }
         
         /**

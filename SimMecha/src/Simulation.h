@@ -149,7 +149,8 @@ inline EigenVector simulationComputeAccelerations(
     if (inertiaLU.isInvertible()) {
         return inertiaLU.inverse()*(torques - forces);
     } else {
-        return EigenVector::Zero(dofs.size(), 1);
+        throw std::logic_error("Simulation singular inertia matrix");
+        //return EigenVector::Zero(dofs.size(), 1);
     }
 }
 

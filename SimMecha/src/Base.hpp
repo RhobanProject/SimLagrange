@@ -21,6 +21,14 @@ class Base : public Body
         /**
          * @Inherit
          */
+        Base(SymbolPtr time) :
+            Body(time)
+        {
+        }
+
+        /**
+         * @Inherit
+         */
         inline virtual void draw(SimViewer::SimViewer& viewer, 
             const Vector2D& pos, scalar angle)
         {
