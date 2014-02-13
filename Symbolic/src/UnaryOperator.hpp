@@ -32,7 +32,7 @@ class UnaryOperator : public UnaryBase<T,U>
         virtual inline typename Term<T>::TermPtr computeDerivative
             (const BaseSymbol::BaseSymbolPtr& sym)
         {
-            return functionderivative(
+            return this->functionDerivative(
                 UnaryBase<T,U>::_arg->derivate(sym));
         }
 };

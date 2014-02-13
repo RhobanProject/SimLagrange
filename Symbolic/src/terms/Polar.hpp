@@ -38,7 +38,7 @@ class Polar : public UnaryFunction<T,U>
             return "Polar";
         }
 
-        virtual inline typename Term<T>::TermPtr functionderivative
+        virtual inline typename Term<T>::TermPtr functionDerivative
             (const typename Term<U>::TermPtr& arg) const
         {
             return PolarInv<T,U>::create(Minus<U>::create(arg));

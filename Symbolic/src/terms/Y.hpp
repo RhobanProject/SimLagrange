@@ -38,7 +38,7 @@ class Y : public UnaryOperator<T,U>
             return "Y";
         }
 
-        virtual inline typename Term<T>::TermPtr functionderivative
+        virtual inline typename Term<T>::TermPtr functionDerivative
             (const typename Term<U>::TermPtr& arg) const
         {
             return Y<T,U>::create(arg);

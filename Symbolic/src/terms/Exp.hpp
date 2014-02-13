@@ -34,7 +34,7 @@ class Exp : public UnaryFunction<T,U>
             return "exp";
         }
 
-        virtual inline typename Term<T>::TermPtr functionderivative
+        virtual inline typename Term<T>::TermPtr functionDerivative
             (const typename Term<U>::TermPtr& arg) const
         {
             return Exp<T,U>::create(arg);

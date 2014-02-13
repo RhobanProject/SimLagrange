@@ -62,7 +62,7 @@ class Pow : public UnaryFunction<T,T>
             return "pow";
         }
 
-        virtual inline typename Term<T>::TermPtr functionderivative
+        virtual inline typename Term<T>::TermPtr functionDerivative
             (const typename Term<T>::TermPtr& arg) const
         {
             return Mult<T,long,T>::create(

@@ -74,7 +74,7 @@ class UnaryBase : public Term<T>
          * given the argument value argVal
          */
         virtual std::string functionString() const = 0;
-        virtual typename Term<T>::TermPtr functionderivative
+        virtual typename Term<T>::TermPtr functionDerivative
             (const typename Term<U>::TermPtr& arg) const = 0;
         virtual T functionEvaluation(const U& argVal) const = 0;
 

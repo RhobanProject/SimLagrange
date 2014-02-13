@@ -42,7 +42,7 @@ class Minus : public UnaryOperator<T,T>
             return "-";
         }
 
-        virtual inline typename Term<T>::TermPtr functionderivative
+        virtual inline typename Term<T>::TermPtr functionDerivative
             (const typename Term<T>::TermPtr& arg) const
         {
             return Minus<T>::create(arg);
