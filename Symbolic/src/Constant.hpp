@@ -45,6 +45,14 @@ class Constant : public Term<T>
             return Constant<T>::create(_value);
         }
 
+        /**
+         * @Inherit
+         */
+        virtual inline bool isConstant() const
+        {
+            return true;
+        }
+
     protected:
 
         /**

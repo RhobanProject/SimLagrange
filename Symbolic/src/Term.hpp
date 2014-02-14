@@ -99,6 +99,15 @@ class Term
         }
 
         /**
+         * Return true if the Term can be evaluated with
+         * empty Bounder
+         */
+        virtual inline bool isConstant() const
+        {
+            return false;
+        }
+
+        /**
          * Clear all computed string, derivative and values
          */
         inline void reset()

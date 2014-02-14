@@ -38,6 +38,24 @@ class BinaryFunction : public Term<T>
         }
 
         /**
+         * If the arguments of given binary are constant, 
+         * a constant value is evaluated and return
+         * Else the original is return
+         */
+        static inline typename Term<T>::TermPtr checkCst
+            (BinaryFunction<T,U,V>* binary)
+        {
+            if (
+                binary->_argLeft->isConstant() && 
+                binary->_argRight->isConstant()
+            ) {
+                return Constant<T>::create(binary->evaluate(Bounder()));
+            } else {
+                return binary;
+            }
+        }
+
+        /**
          * @Inherit
          */
         virtual inline std::string computeString()

@@ -45,6 +45,21 @@ class UnaryBase : public Term<T>
         }
 
         /**
+         * If the argument of given unary is constant, 
+         * a constant value is evaluated and return
+         * Else the original is return
+         */
+        static inline typename Term<T>::TermPtr checkCst
+            (UnaryBase<T,U>* unary)
+        {
+            if (unary->_arg->isConstant()) {
+                return Constant<T>::create(unary->evaluate(Bounder()));
+            } else {
+                return unary;
+            }
+        }
+
+        /**
          * @Inherit
          */
         virtual inline std::string computeString()

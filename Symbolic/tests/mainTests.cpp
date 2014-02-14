@@ -19,6 +19,9 @@ int main()
     assert(sym1->derivate(t)->toString() == "ZERO");
     assert(sym1->derivate(sym1)->toString() == "ONE");
     assert(sym1->substitute<int>(t, t)->toString() == "sym1");
+    assert(!sym1->isConstant());
+    assert(sym1->derivate(t)->isConstant());
+    assert(sym1->derivate(sym1)->isConstant());
 
     sym1->reset();
     sym1->depend(t);
@@ -82,6 +85,7 @@ int main()
     assert(cst1->derivate(t)->toString() == "ZERO");
     assert(cst1->evaluate(bounder) == 3.14);
     assert(cst1->substitute<double>(t, sym4)->toString() == "3.14");
+    assert(cst1->isConstant());
 
     Term<double>::TermPtr term5 = Frac<double>::create(cst1, sym4);
     assert(term5->toString() == "(3.14)/(sym4)");

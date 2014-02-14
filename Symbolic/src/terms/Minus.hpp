@@ -26,7 +26,7 @@ class Minus : public UnaryOperator<T,T>
             if (pt != NULL) {
                 return pt->UnaryOperator<T,T>::_arg;
             } else {
-                return typename Term<T>::TermPtr(
+                return UnaryBase<T,T>::checkCst(
                     new Minus<T>(term));
             }
         }

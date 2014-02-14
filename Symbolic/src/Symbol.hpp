@@ -50,6 +50,21 @@ class Symbol : public BaseSymbol, public Term<T>
                     *this));
             }
         }
+
+        /**
+         * @Inherit
+         */
+        virtual inline bool isConstant() const
+        {
+            if (
+                BaseSymbol::getName() == BaseSymbol::zero() ||
+                BaseSymbol::getName() == BaseSymbol::one()
+            ) {
+                return true;
+            } else {
+                return false;
+            }
+        }
         
     protected:
 

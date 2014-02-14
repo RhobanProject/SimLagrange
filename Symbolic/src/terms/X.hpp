@@ -21,7 +21,7 @@ class X : public UnaryOperator<T,U>
             if (term->toString() == BaseSymbol::zero()) {
                 return Symbol<T>::create(BaseSymbol::zero());
             } else {
-                return typename Term<T>::TermPtr(
+                return UnaryBase<T,U>::checkCst(
                     new X<T,U>(term));
             }
         }

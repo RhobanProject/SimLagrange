@@ -27,7 +27,7 @@ class Pow : public UnaryFunction<T,T>
             } else if (power == 1) {
                 return term;
             } else {
-                return typename Term<T>::TermPtr(
+                return UnaryBase<T,T>::checkCst(
                     new Pow<T>(term, power));
             }
         }

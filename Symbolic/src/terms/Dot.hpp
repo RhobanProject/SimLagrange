@@ -25,7 +25,7 @@ class Dot : public BinaryFunction<T,U,V>
             } else if (termRight->toString() == BaseSymbol::zero()) {
                 return Symbol<T>::create(BaseSymbol::zero());
             } else {
-                return typename Term<T>::TermPtr(
+                return BinaryFunction<T,U,V>::checkCst(
                     new Dot<T,U,V>(termLeft, termRight));
             }
         }

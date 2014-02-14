@@ -24,7 +24,7 @@ class Sub : public BinaryFunction<T,T,T>
             } else if (termRight->toString() == BaseSymbol::zero()) {
                 return termLeft;
             } else {
-                return typename Term<T>::TermPtr(
+                return BinaryFunction<T,T,T>::checkCst(
                     new Sub<T>(termLeft, termRight));
             }
         }
