@@ -63,6 +63,13 @@ inline Vector::Vector2D<double> PolarInv<Vector::Vector2D<double>, double>::
     return Vector::Vector2D<double>(sin(argVal), cos(argVal));
 }
 
+template <>
+inline double PolarInv<double, double>::
+    functionEvaluation(const double& argVal) const
+{
+    return sin(argVal);
+}
+
 }
 }
 
