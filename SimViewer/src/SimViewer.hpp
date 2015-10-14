@@ -360,7 +360,7 @@ class SimViewer
             double x, double y, sf::Color color)
         {
             sf::Font font;
-            if (!font.loadFromFile("DS-DIGII.TTF")) {
+            if (!font.loadFromFile("../Assets/DS-DIGII.TTF")) {
                 throw std::runtime_error("SimViewer unable to load font");
             }
             
