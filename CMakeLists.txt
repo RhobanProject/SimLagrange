@@ -4,7 +4,7 @@ project(These)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 #Tests to compile
-set (TESTS_DIRECTORIES
+set(TESTS_DIRECTORIES
     SmartPointer
     Symbolic
     Any
@@ -13,6 +13,7 @@ set (TESTS_DIRECTORIES
     Vector
     SimViewer
     VectorMap
+    SymOptim
     SimMecha
 )
 
@@ -33,6 +34,11 @@ endforeach(f)
 
 #Link libraries
 target_link_libraries(testsSimViewer 
+    sfml-graphics 
+    sfml-window 
+    sfml-system
+)
+target_link_libraries(testsSimMecha
     sfml-graphics 
     sfml-window 
     sfml-system

@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include "Symbolic/src/Term.hpp"
+#include "Constant.hpp"
 
 namespace Leph {
 namespace Symbolic {

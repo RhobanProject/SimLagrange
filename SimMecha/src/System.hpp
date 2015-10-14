@@ -37,6 +37,7 @@ class System
             _joints(),
             _time(Symbol::create("t")),
             _dofs(),
+            _velDofs(),
             _lagrangian(),
             _dynamics(),
             _statePosition(),
@@ -61,6 +62,7 @@ class System
             _joints(),
             _time(Symbol::create("t")),
             _dofs(),
+            _velDofs(),
             _lagrangian(),
             _dynamics(),
             _statePosition(),
@@ -207,6 +209,11 @@ class System
 
                 _dynamics.push(_dofs[i]->toString(), dynamic);
             }
+            //Build velocity degree of freedom container
+            for (size_t i=0;i<_dofs.size();i++) {
+                _velDofs.push(_dofs.getKey(i), 
+                    _dofs[i]->derivate(_time));
+            }
         }
 
         /**
@@ -301,6 +308,51 @@ class System
         }
 
         /**
+         * Return the Symbolic derivates degrees 
+         * of freedom container
+         */
+        inline const DofContainer& getVelocityDofs() const
+        {
+            return _velDofs;
+        }
+
+        /**
+         * Return a Symbolic lagrangian with all degrees
+         * of freedom (not theirs derivatives) substituate
+         * with current state position
+         */
+        inline TermPtr getBindedLagrangian()
+        {
+            return bindStatePosition(_lagrangian);
+        }
+
+        /**
+         * Return the given Symbolic expression with all
+         * position degrees of freedom Symbol substituated
+         * by current state values
+         */
+        inline TermPtr bindStatePosition(TermPtr term)
+        {
+            TermPtr termTmp = term;
+            for (size_t i=0;i<_dofs.size();i++) {
+                termTmp = termTmp->substitute<scalar>(_dofs[i], 
+                    Constant::create(_statePosition[i]));
+            }
+
+            return termTmp;
+        }
+        inline TermVectorPtr bindStatePosition(TermVectorPtr term)
+        {
+            TermVectorPtr termTmp = term;
+            for (size_t i=0;i<_dofs.size();i++) {
+                termTmp = termTmp->substitute<scalar>(_dofs[i], 
+                    Constant::create(_statePosition[i]));
+            }
+
+            return termTmp;
+        }
+
+        /**
          * Draw the system on given SimViewer
          */
         inline void draw(SimViewer::SimViewer& viewer)
@@ -361,6 +413,12 @@ class System
          * The index is associated with Joint index
          */
         DofContainer _dofs;
+
+        /**
+         * Symbolic Derivates of degrees of freedom 
+         * container with respect to time
+         */
+        DofContainer _velDofs;
 
         /**
          * Total lagrangian Symbolic expression

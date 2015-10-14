@@ -58,7 +58,7 @@ class Body
         }
 
         /**
-         * Return the Joint linkd to the Base root
+         * Return the Joint linked to the Base root
          */
         inline Joint* getJointRoot()
         {
@@ -99,7 +99,7 @@ class Body
 
         /**
          * Build and return the Symbolic position and
-         * velocity expression of given point 
+         * velocity expression in global frame of given point 
          * in Body coordinate
          */
         inline TermVectorPtr buildSymPosition(const Vector2D& point)
@@ -109,6 +109,10 @@ class Body
                 Symbolic::Rotation<Vector2D, scalar>::create(
                     ConstantVector::create(point),
                     _symAngle));
+        }
+        inline TermVectorPtr buildSymPositionVel(const Vector2D& point)
+        {
+            return buildSymPosition(point)->derivate(_time);
         }
 
         /**
@@ -249,7 +253,7 @@ class Body
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(tmp1, squaredVel);
                 //Potential energy
-                TermPtr gravitySym = Constant::create(9.81);
+                TermPtr gravitySym = Constant::create(9.81); //TODO
                 TermPtr height = 
                     Symbolic::Y<scalar, Vector2D>::
                     create(posMass);
