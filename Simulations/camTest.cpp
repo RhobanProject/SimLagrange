@@ -11,23 +11,26 @@
 
 #include "SimMecha/src/HeightUnaryContraint.hpp"
 
+#include <stdio.h>
+
 using namespace std;
 using namespace Leph::SimMecha;
 
 int main()
 {
-    Leph::SimViewer::SimViewer viewer(800, 600);
+    Leph::SimViewer::SimViewer viewer(1024, 800);
 
-    System system(Vector2D(-1.0, 1.0));
+    System system(Vector2D(-1.0, 0.0));
     //System system(Vector2D(-1.0, 1.0), Vector2D());
-    system.getBase().addMass(1.0, Vector2D(0.0, 0.0));
+    system.getBase().addMass(1, Vector2D(0.0, 0.0));
 
     Body& b1 = system.addCamJoint(
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.0, 0.0, 0.2, 0.033, 0.029, 0.1);
-    b1.addMass(1.0, Vector2D(1.0, 0.0));
+        0.0, 6, 0.29, 0.0, 0.1, 0.0);
+    b1.addMass(1.0, Vector2D(0.0, 1.0));
+
 
     // Body& b2 = system.addAngularJoint(
     //     b1,

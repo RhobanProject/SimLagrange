@@ -41,7 +41,7 @@ class SimViewer
         static const double BASE_THICK = 0.01;
 
         /**
-         * Initialization with windows 
+         * Initialization with windows
          * width and height resolution
          */
         SimViewer(unsigned int width, unsigned int height) :
@@ -97,9 +97,9 @@ class SimViewer
                 //Close event
                 if (
                     event.type == sf::Event::Closed ||
-                    (event.type == sf::Event::KeyPressed && 
+                    (event.type == sf::Event::KeyPressed &&
                     event.key.code == sf::Keyboard::Escape) ||
-                    (event.type == sf::Event::KeyPressed && 
+                    (event.type == sf::Event::KeyPressed &&
                     event.key.code == sf::Keyboard::Q)
                 ) {
                     _window.close();
@@ -109,7 +109,7 @@ class SimViewer
                 }
                 //Space event
                 if (
-                    event.type == sf::Event::KeyPressed && 
+                    event.type == sf::Event::KeyPressed &&
                     event.key.code == sf::Keyboard::Space
                 ) {
                     if (_onSpaceHandler != NULL) {
@@ -125,7 +125,7 @@ class SimViewer
          * Draw a reference frame at the origine or
          * at given coordinate and angle (in degree)
          */
-        inline void drawFrame(double scale = 1.0, 
+        inline void drawFrame(double scale = 1.0,
             double x = 0.0, double y = 0.0, double angle = 0.0)
         {
             double endX = x + scale*cos(angle*M_PI/180.0);
@@ -133,9 +133,9 @@ class SimViewer
             double endX2 = x + scale*cos((angle+90.0)*M_PI/180.0);
             double endY2 = y + scale*sin((angle+90.0)*M_PI/180.0);
 
-            drawLineByEnds(x, y, endX, endY, 
+            drawLineByEnds(x, y, endX, endY,
                 FRAME_SIZE, sf::Color::Red);
-            drawLineByEnds(x, y, endX2, endY2, 
+            drawLineByEnds(x, y, endX2, endY2,
                 FRAME_SIZE, sf::Color::Green);
             drawText("X", endX, endY, sf::Color(255, 0, 0, 100));
             drawText("Y", endX2, endY2, sf::Color(0, 255, 0, 100));
@@ -153,7 +153,7 @@ class SimViewer
             if (val > 0) {
                 std::ostringstream oss;
                 oss << val;
-                drawText(oss.str(), x, y, 
+                drawText(oss.str(), x, y,
                     sf::Color(0, 0, 255, 100));
             }
         }
@@ -166,18 +166,19 @@ class SimViewer
          * Draw a segment (link) from given position, length
          * and angle or from current chain position and angle
          */
-        inline void drawSegment(double x, double y, 
-            double length, double angle)
+        inline void drawSegment(double x, double y,
+                                double length, double angle, double size=SEGMENT_SIZE, sf::Color color=sf::Color::Green)
         {
-            drawLineByPolar(x, y, length, angle, 
-                SEGMENT_SIZE, sf::Color::Green);
+            drawLineByPolar(x, y, length, angle,
+                            size, color);
         }
-        inline void drawSegmentByEnd(double x1, double y1, 
-            double x2, double y2)
+        inline void drawSegmentByEnd(double x1, double y1,
+                                     double x2, double y2, double size=SEGMENT_SIZE, sf::Color color=sf::Color(0, 255, 0, 50))
         {
-            drawLineByEnds(x1, y1, x2, y2, 
-                SEGMENT_SIZE, sf::Color(0, 255, 0, 50));
+            drawLineByEnds(x1, y1, x2, y2,
+                size, color);
         }
+
         inline void drawSegment(double length)
         {
             drawSegment(_chainPos.x, _chainPos.y, length, _chainAngle);
@@ -193,11 +194,11 @@ class SimViewer
         inline void drawJoint(double x, double y, double angle, double theta)
         {
             drawCircle(x, y, JOINT_RADIUS, sf::Color::White);
-            drawLineByPolar(x, y, JOINT_LENGTH, angle, 
+            drawLineByPolar(x, y, JOINT_LENGTH, angle,
                 1.5*JOINT_SIZE, sf::Color::White);
-            drawLineByPolar(x, y, JOINT_LENGTH, angle+theta, 
+            drawLineByPolar(x, y, JOINT_LENGTH, angle+theta,
                 JOINT_SIZE, sf::Color::White);
-           
+
             //Print joint position
             std::ostringstream oss;
             oss.precision(3);
@@ -214,15 +215,15 @@ class SimViewer
          * Draw a linear joint at given end position
          * with given value
          */
-        inline void drawLinearJoint(double x1, double y1, 
+        inline void drawLinearJoint(double x1, double y1,
             double x2, double y2, double value)
         {
             drawCircle(x1, y1, JOINT_RADIUS, sf::Color::White);
             drawCircle(x2, y2, JOINT_RADIUS, sf::Color::White);
-            
-            drawLineByEnds(x1, y1, x2, y2, 
+
+            drawLineByEnds(x1, y1, x2, y2,
                 JOINT_SIZE, sf::Color::White);
-            
+
             //Print joint value
             std::ostringstream oss;
             oss.precision(3);
@@ -232,15 +233,15 @@ class SimViewer
 
         inline void drawBase(double x = 0.0, double y = 0.0)
         {
-            drawRect(x, y, BASE_SIZE, BASE_SIZE, 
+            drawRect(x, y, BASE_SIZE, BASE_SIZE,
                 BASE_THICK, sf::Color::White);
-            drawLineByEnds(x-BASE_SIZE/2.0, y-BASE_SIZE/2.0, 
-                x+BASE_SIZE/2.0, y+BASE_SIZE/2.0, 
+            drawLineByEnds(x-BASE_SIZE/2.0, y-BASE_SIZE/2.0,
+                x+BASE_SIZE/2.0, y+BASE_SIZE/2.0,
                 BASE_THICK, sf::Color::White);
-            drawLineByEnds(x-BASE_SIZE/2.0, y+BASE_SIZE/2.0, 
-                x+BASE_SIZE/2.0, y-BASE_SIZE/2.0, 
+            drawLineByEnds(x-BASE_SIZE/2.0, y+BASE_SIZE/2.0,
+                x+BASE_SIZE/2.0, y-BASE_SIZE/2.0,
                 BASE_THICK, sf::Color::White);
-            
+
             //Print Base position
             std::ostringstream oss;
             oss.precision(3);
@@ -276,6 +277,18 @@ class SimViewer
             }
         }
 
+        /**
+         * Draw a circle of given center, radius and color
+         */
+        inline void drawCircle(double x, double y,
+            double radius, sf::Color color)
+        {
+            sf::CircleShape circle(radius);
+            circle.setPosition(x-radius, -y-radius);
+            circle.setFillColor(color);
+            _window.draw(circle);
+        }
+
     private:
 
         /**
@@ -304,29 +317,17 @@ class SimViewer
         double _chainAngle;
 
         /**
-         * Draw a circle of given center, radius and color
-         */
-        inline void drawCircle(double x, double y, 
-            double radius, sf::Color color)
-        {
-            sf::CircleShape circle(radius);
-            circle.setPosition(x-radius, -y-radius);
-            circle.setFillColor(color);
-            _window.draw(circle);
-        }
-
-        /**
-         * Draw a line of given ends or polation position, 
+         * Draw a line of given ends or polation position,
          * its thickness and color
          */
-        inline void drawLineByEnds(double x1, double y1, 
+        inline void drawLineByEnds(double x1, double y1,
             double x2, double y2, double size, sf::Color color)
         {
             double length = sqrt(pow(x2-x1, 2)+pow(y2-y1, 2));
             double angle = atan2(y2-y1, x2-x1)*180.0/M_PI;
             drawLineByPolar(x1, y1, length, angle, size, color);
         }
-        inline void drawLineByPolar(double x, double y, 
+        inline void drawLineByPolar(double x, double y,
             double length, double angle, double size, sf::Color color)
         {
             sf::RectangleShape rectangle(sf::Vector2f(length, size));
@@ -341,7 +342,7 @@ class SimViewer
          * Draw a rectangle shape og given size with its center
          * at given position
          */
-        inline void drawRect(double x, double y, 
+        inline void drawRect(double x, double y,
             double width, double height, double size, sf::Color color)
         {
             sf::RectangleShape rectangle(sf::Vector2f(width, height));
@@ -356,14 +357,14 @@ class SimViewer
         /**
          * Draw the given text at given position and color
          */
-        inline void drawText(const std::string& str, 
+        inline void drawText(const std::string& str,
             double x, double y, sf::Color color)
         {
             sf::Font font;
             if (!font.loadFromFile("../Assets/DS-DIGII.TTF")) {
                 throw std::runtime_error("SimViewer unable to load font");
             }
-            
+
             sf::Text text;
             text.setFont(font);
             text.setString(str);
@@ -397,4 +398,3 @@ class SimViewer
 }
 
 #endif
-

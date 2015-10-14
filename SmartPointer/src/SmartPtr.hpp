@@ -163,7 +163,7 @@ class SmartPtr
         {
             return SmartPtr<U>(*this);
         }
-        
+
 
     private:
 
@@ -212,4 +212,3 @@ inline bool operator==(const SmartPtr<T>& ptr1, const SmartPtr<T>& ptr2)
 }
 
 #endif
-

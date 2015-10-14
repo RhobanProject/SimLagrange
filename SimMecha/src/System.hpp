@@ -182,8 +182,7 @@ class System
          * Initial position and velocity are given
          */
         inline Body& addCamJoint(Body& root,
-            const Vector2D& posRoot, scalar angleRoot,
-                                 const Vector2D& posLeaf, scalar angleLeaf, scalar a, scalar b, scalar H, scalar phi,
+            const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, scalar a, scalar b, scalar H, scalar phi,
             scalar statePos, scalar stateVel)
         {
             Body* leaf = new Body(_time);
