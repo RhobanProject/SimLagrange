@@ -1,31 +1,55 @@
-#ifndef LEPH_SIMMECHA_LINEARJOINT_HPP
-#define LEPH_SIMMECHA_LINEARJOINT_HPP
+#ifndef LEPH_SIMMECHA_CAMJOINT_HPP
+#define LEPH_SIMMECHA_CAMJOINT_HPP
 
-#include <cmath>
 #include "SimMecha/src/Joint.hpp"
+
+//Let's annoy Leph
+#define COS(x) Symbolic::Polar<scalar, scalar>::create(x)
+#define SIN(x) Symbolic::PolarInv<scalar, scalar>::create(x)
 
 namespace Leph {
 namespace SimMecha {
 
 /**
- * LinearJoint
+ * CamJoint
  */
-class LinearJoint : public Joint
+class CamJoint : public Joint
 {
     public:
 
+
+    SymbolPtr _a, _b, _phi, _H;
+
         /**
          * Initialization with Joint position on the two
-         * given Bodies and reference orientation angles
+         * given Bodies and reference (zero) angles
          * and Symbolic degree of freedom
          */
-        LinearJoint(
+        CamJoint(
             Body& bodyRoot, const Vector2D& posRoot, scalar angleRoot,
             Body& bodyLeaf, const Vector2D& posLeaf, scalar angleLeaf,
-            SymbolPtr dof) :
+            SymbolPtr dof, scalar a, scalar b, scalar H, scalar phi) :
             Joint(bodyRoot, posRoot, angleRoot,
                 bodyLeaf, posLeaf, angleLeaf, dof)
         {
+            _a=Constant::create(a);
+            _b=Constant::create(b);
+            _H=Constant::create(H);
+            _phi=Constant::create(phi);
+        }
+
+
+        /**
+         *
+         * Function F describing the cam shape in cartesian
+         *
+         */
+
+        SymbolPtr F(SymbolPtr x)
+        {
+            return Symbolic::Add<scalar>::create(Symbolic::Mult<scalar, scalar, scalar>::create(_a,x),Symbolic::Mult<scalar, scalar, scalar>::create(_b,Symbolic::Pow<scalar>::create(x,2)));
+
+
         }
 
         /**
@@ -58,27 +82,35 @@ class LinearJoint : public Joint
 
             //Sum up angle
             TermPtr angle1 = Symbolic::Add<scalar>::create(
-                root.getSymAngle(), //absolute
-                angleRootSym);
-            //Build up the Leaf Body orientation
+                root.getSymAngle(),
+                Symbolic::Add<scalar>::create(
+                    dof,
+                    angleRootSym));
+
+                //Build up Leaf Body orientation
             TermPtr resultAngle = Symbolic::Add<scalar>::create(
                 angle1,
-                Constant::create(M_PI-angleLeaf));
+                Symbolic::Add<scalar>::create(Constant::create(-angleLeaf),_phi)); //Offset
 
-            //Joint anchor on Root Body
+            //Joint anchor on Root Body and Leaf Body
             TermVectorPtr p1 = Symbolic::Add<Vector2D>::create(
-                root.getSymPosition(), //absolute
+                root.getSymPosition(),
                 Symbolic::Rotation<Vector2D, scalar>::create(
                     posRootSym,
                     root.getSymAngle()));
-            //Joint anchor on Leaf Body
+
+            SymbolPtr z=Symbolic::Add<scalar>::create(F(Symbolic::Mult<scalar, scalar, scalar>::create(_H,SIN(dof))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(dof)));
+
+
+                //Joint anchor on Leaf Body
             TermVectorPtr p2 = Symbolic::Add<Vector2D>::create(
                 p1,
                 Symbolic::Mult<Vector2D, scalar, Vector2D>::create(
-                    dof,
+                    z,
                     Symbolic::Rotation<Vector2D, scalar>::create(
                         unitySym,
                         angle1)));
+
             //Build up center of Leaf Body
             TermVectorPtr resultPos = Symbolic::Add<Vector2D>::create(
                 p2,
@@ -105,13 +137,12 @@ class LinearJoint : public Joint
             Joint::draw(viewer, posRoot, angleRoot,
                 posLeaf, angleLeaf, value);
 
-            Vector2D pos1 = posRoot + Vector2D::rotate(
+            Vector2D pos = posRoot + Vector2D::rotate(
                 Joint::getPosRoot(), angleRoot);
-            Vector2D pos2 = posLeaf + Vector2D::rotate(
-                Joint::getPosLeaf(), angleLeaf);
 
-            viewer.drawLinearJoint(pos1.x(), pos1.y(),
-                pos2.x(), pos2.y(), value);
+            viewer.drawJoint(pos.x(), pos.y(),
+                (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
+                (value)*180.0/M_PI);
         }
 };
 

@@ -8,6 +8,7 @@
 #include "SimMecha/src/Joint.hpp"
 #include "SimMecha/src/AngularJoint.hpp"
 #include "SimMecha/src/LinearJoint.hpp"
+#include "SimMecha/src/CamJoint.hpp"
 #include "SimMecha/src/Body.hpp"
 #include "SimMecha/src/Base.hpp"
 #include "SimMecha/src/FixedBase.hpp"
@@ -121,7 +122,7 @@ class System
          * coordinates system
          * Initial position and velocity are given
          */
-        inline Body& addAngularJoint(Body& root, 
+        inline Body& addAngularJoint(Body& root,
             const Vector2D& posRoot, scalar angleRoot,
             const Vector2D& posLeaf, scalar angleLeaf,
             scalar statePos, scalar stateVel)
@@ -142,7 +143,7 @@ class System
 
             return *leaf;
         }
-        
+
         /**
          * Create and return a new Body linked to the given
          * Body with a linear Joint
@@ -150,9 +151,9 @@ class System
          * coordinates system
          * Initial position and velocity are given
          */
-        inline Body& addLinearJoint(Body& root, 
+        inline Body& addLinearJoint(Body& root,
             const Vector2D& posRoot, scalar angleRoot,
-            const Vector2D& posLeaf, scalar angleLeaf, 
+            const Vector2D& posLeaf, scalar angleLeaf,
             scalar statePos, scalar stateVel)
         {
             Body* leaf = new Body(_time);
@@ -172,12 +173,43 @@ class System
             return *leaf;
         }
 
+
         /**
-         * Build for all Bodies 
+         * Create and return a new Body linked to the given
+         * Body with a cam Joint
+         * Joint position and angle are given within Bodies
+         * coordinates system
+         * Initial position and velocity are given
+         */
+        inline Body& addCamJoint(Body& root,
+            const Vector2D& posRoot, scalar angleRoot,
+                                 const Vector2D& posLeaf, scalar angleLeaf, scalar a, scalar b, scalar H, scalar phi,
+            scalar statePos, scalar stateVel)
+        {
+            Body* leaf = new Body(_time);
+            Joint* joint = new CamJoint(
+                root, posRoot, angleRoot,
+                *leaf, posLeaf, angleLeaf,
+                createDof(), a, b, H, phi);
+            leaf->setJointRoot(joint);
+            root.addLeafJoint(joint);
+
+            _bodies.push_back(leaf);
+            _joints.push_back(joint);
+            _statePosition.push_back(statePos);
+            _stateVelocity.push_back(stateVel);
+            _stateTorque.push_back(0.0);
+
+            return *leaf;
+        }
+
+
+        /**
+         * Build for all Bodies
          * position and velocity Symbolic expressions
          * Compute lagrangian expression and compute
          * all dynamic equations
-         * (Must to be called right after System 
+         * (Must to be called right after System
          * structure declaration)
          */
         inline void initSymbols()
@@ -193,7 +225,7 @@ class System
             _lagrangian = _base->getLagrangian();
             for (size_t i=0;i<_bodies.size();i++) {
                 _lagrangian = Symbolic::Add<scalar>::create(
-                    _lagrangian, 
+                    _lagrangian,
                     _bodies[i]->getLagrangian());
             }
             //Compute dynamic equations
@@ -204,14 +236,14 @@ class System
                     ->derivate(_dofs[i]->derivate(_time));
                 TermPtr dL_ddq_dt = dL_ddq
                     ->derivate(_time);
-                TermPtr dynamic = 
+                TermPtr dynamic =
                     Symbolic::Sub<scalar>::create(dL_ddq_dt, dL_dq);
 
                 _dynamics.push(_dofs[i]->toString(), dynamic);
             }
             //Build velocity degree of freedom container
             for (size_t i=0;i<_dofs.size();i++) {
-                _velDofs.push(_dofs.getKey(i), 
+                _velDofs.push(_dofs.getKey(i),
                     _dofs[i]->derivate(_time));
             }
         }
@@ -308,7 +340,7 @@ class System
         }
 
         /**
-         * Return the Symbolic derivates degrees 
+         * Return the Symbolic derivates degrees
          * of freedom container
          */
         inline const DofContainer& getVelocityDofs() const
@@ -335,7 +367,7 @@ class System
         {
             TermPtr termTmp = term;
             for (size_t i=0;i<_dofs.size();i++) {
-                termTmp = termTmp->substitute<scalar>(_dofs[i], 
+                termTmp = termTmp->substitute<scalar>(_dofs[i],
                     Constant::create(_statePosition[i]));
             }
 
@@ -345,7 +377,7 @@ class System
         {
             TermVectorPtr termTmp = term;
             for (size_t i=0;i<_dofs.size();i++) {
-                termTmp = termTmp->substitute<scalar>(_dofs[i], 
+                termTmp = termTmp->substitute<scalar>(_dofs[i],
                     Constant::create(_statePosition[i]));
             }
 
@@ -379,7 +411,7 @@ class System
                     _joints[i]->getBodyLeaf());
                 size_t index = _dofs.getIndex(
                     _joints[i]->getName());
-                _joints[i]->draw(viewer, 
+                _joints[i]->draw(viewer,
                     posRoot, angleRoot, posLeaf, angleLeaf,
                     _statePosition[index]);
             }
@@ -415,7 +447,7 @@ class System
         DofContainer _dofs;
 
         /**
-         * Symbolic Derivates of degrees of freedom 
+         * Symbolic Derivates of degrees of freedom
          * container with respect to time
          */
         DofContainer _velDofs;
@@ -446,7 +478,7 @@ class System
         std::vector<scalar> _stateTorque;
 
         /**
-         * Create a new degree of freedom 
+         * Create a new degree of freedom
          * and return it
          */
         inline SymbolPtr createDof()
@@ -490,4 +522,3 @@ class System
 }
 
 #endif
-

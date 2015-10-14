@@ -17,6 +17,7 @@ set(TESTS_DIRECTORIES
     SimMecha
 )
 
+
 #Include Eigen (linear algebra template library)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Eigen)
 
@@ -30,17 +31,29 @@ foreach(f ${TESTS_DIRECTORIES})
         tests${f}
         ${f}/tests/mainTests.cpp
     )
-endforeach(f) 
+endforeach(f)
+
+
+add_executable(
+	testCam
+        Simulations/camTest.cpp
+)
+
 
 #Link libraries
-target_link_libraries(testsSimViewer 
-    sfml-graphics 
-    sfml-window 
+target_link_libraries(testsSimViewer
+    sfml-graphics
+    sfml-window
     sfml-system
 )
 target_link_libraries(testsSimMecha
-    sfml-graphics 
-    sfml-window 
+    sfml-graphics
+    sfml-window
     sfml-system
 )
 
+target_link_libraries(testCam
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
