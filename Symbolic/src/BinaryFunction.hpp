@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include "Symbolic/src/Term.hpp"
+#include "Constant.hpp"
 
 namespace Leph {
 namespace Symbolic {
@@ -35,6 +36,24 @@ class BinaryFunction : public Term<T>
             _argLeft(termLeft),
             _argRight(termRight)
         {
+        }
+
+        /**
+         * If the arguments of given binary are constant, 
+         * a constant value is evaluated and return
+         * Else the original is return
+         */
+        static inline typename Term<T>::TermPtr checkCst
+            (BinaryFunction<T,U,V>* binary)
+        {
+            if (
+                binary->_argLeft->isConstant() && 
+                binary->_argRight->isConstant()
+            ) {
+                return Constant<T>::create(binary->evaluate(Bounder()));
+            } else {
+                return binary;
+            }
         }
 
         /**

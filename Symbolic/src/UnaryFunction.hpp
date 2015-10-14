@@ -35,7 +35,7 @@ class UnaryFunction : public UnaryBase<T,U>
         {
             return Mult<T,U,T>::create(
                 UnaryBase<T,U>::_arg->derivate(sym), 
-                functionderivative(UnaryBase<T,U>::_arg));
+                this->functionDerivative(UnaryBase<T,U>::_arg));
         }
 };
 

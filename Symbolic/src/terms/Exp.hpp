@@ -18,7 +18,7 @@ class Exp : public UnaryFunction<T,U>
         static inline typename Term<T>::TermPtr create(
             typename Term<U>::TermPtr term)
         {
-            return typename Term<T>::TermPtr(
+            return UnaryBase<T,U>::checkCst(
                 new Exp<T,U>(term));
         }
 
@@ -34,7 +34,7 @@ class Exp : public UnaryFunction<T,U>
             return "exp";
         }
 
-        virtual inline typename Term<T>::TermPtr functionderivative
+        virtual inline typename Term<T>::TermPtr functionDerivative
             (const typename Term<U>::TermPtr& arg) const
         {
             return Exp<T,U>::create(arg);

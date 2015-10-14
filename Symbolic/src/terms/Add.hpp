@@ -23,7 +23,7 @@ class Add : public BinaryFunction<T,T,T>
             } else if (termRight->toString() == BaseSymbol::zero()) {
                 return termLeft;
             } else {
-                return typename Term<T>::TermPtr(
+                return BinaryFunction<T,T,T>::checkCst(
                     new Add<T>(termLeft, termRight));
             }
         }

@@ -97,6 +97,36 @@ class Vector2D
         }
 
         /**
+         * Compute and return the Vector rotated by given angle
+         */
+        inline static Vector2D<scalar> rotate
+            (const Vector2D<scalar>& v, scalar angle)
+        {
+            return Vector2D<scalar>(
+                v.x()*cos(angle)-v.y()*sin(angle), 
+                v.x()*sin(angle)+v.y()*cos(angle));
+        }
+
+        /**
+         * Compute and return the normal vector
+         * (Rotation by +90°)
+         */
+        inline static Vector2D<scalar> normal
+            (const Vector2D<scalar> v)
+        {
+            return Vector2D<scalar>(-v.y(), v.x());
+        }
+
+        /**
+         * Return the normalized given vector
+         */
+        inline static Vector2D<scalar> normalize
+            (const Vector2D<scalar> v)
+        {
+            return (1.0/v.norm())*v;
+        }
+
+        /**
          * Display
          */
         inline void print() const
@@ -129,10 +159,10 @@ inline Vector2D<scalar> operator-
     return Vector2D<scalar>(v1.x()-v2.x(), v1.y()-v2.y());
 }
 template <class scalar>
-inline scalar operator*
+inline Vector2D<scalar> operator*
     (const Vector2D<scalar>& v1, const Vector2D<scalar>& v2)
 {
-    return Vector2D<scalar>::dot(v1, v2);
+    return Vector2D<scalar>(v1.x()*v2.x(), v1.y()*v2.y());
 }
 
 /**
@@ -193,6 +223,26 @@ inline std::ostream& operator<<
 {
     stream << "[" << v.x() << " " << v.y() << "]";
     return stream;
+}
+
+/**
+ * Dot operator
+ */
+template <class scalar>
+inline scalar dot
+    (const Vector2D<scalar>& v1, const Vector2D<scalar>& v2)
+{
+    return Vector2D<scalar>::dot(v1, v2);
+}
+
+/**
+ * Equality operator
+ */
+template <class scalar>
+inline bool operator==
+    (const Vector2D<scalar>& v1, const Vector2D<scalar>& v2)
+{
+    return (v1.x() == v2.x()) && (v1.y() == v2.y());
 }
 
 }

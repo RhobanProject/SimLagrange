@@ -8,7 +8,7 @@
 namespace Leph {
 namespace Symbolic {
 
-template <class t,class U>
+template <class T,class U>
 class PolarInv;
 
 /**
@@ -22,7 +22,7 @@ class Polar : public UnaryFunction<T,U>
         static inline typename Term<T>::TermPtr create(
             typename Term<U>::TermPtr term)
         {
-            return typename Term<T>::TermPtr(
+            return UnaryBase<T,U>::checkCst(
                 new Polar<T,U>(term));
         }
 
@@ -38,7 +38,7 @@ class Polar : public UnaryFunction<T,U>
             return "Polar";
         }
 
-        virtual inline typename Term<T>::TermPtr functionderivative
+        virtual inline typename Term<T>::TermPtr functionDerivative
             (const typename Term<U>::TermPtr& arg) const
         {
             return PolarInv<T,U>::create(Minus<U>::create(arg));

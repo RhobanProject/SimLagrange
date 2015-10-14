@@ -45,6 +45,21 @@ class UnaryBase : public Term<T>
         }
 
         /**
+         * If the argument of given unary is constant, 
+         * a constant value is evaluated and return
+         * Else the original is return
+         */
+        static inline typename Term<T>::TermPtr checkCst
+            (UnaryBase<T,U>* unary)
+        {
+            if (unary->_arg->isConstant()) {
+                return Constant<T>::create(unary->evaluate(Bounder()));
+            } else {
+                return unary;
+            }
+        }
+
+        /**
          * @Inherit
          */
         virtual inline std::string computeString()
@@ -74,7 +89,7 @@ class UnaryBase : public Term<T>
          * given the argument value argVal
          */
         virtual std::string functionString() const = 0;
-        virtual typename Term<T>::TermPtr functionderivative
+        virtual typename Term<T>::TermPtr functionDerivative
             (const typename Term<U>::TermPtr& arg) const = 0;
         virtual T functionEvaluation(const U& argVal) const = 0;
 

@@ -19,6 +19,9 @@ int main()
     assert(sym1->derivate(t)->toString() == "ZERO");
     assert(sym1->derivate(sym1)->toString() == "ONE");
     assert(sym1->substitute<int>(t, t)->toString() == "sym1");
+    assert(!sym1->isConstant());
+    assert(sym1->derivate(t)->isConstant());
+    assert(sym1->derivate(sym1)->isConstant());
 
     sym1->reset();
     sym1->depend(t);
@@ -82,10 +85,12 @@ int main()
     assert(cst1->derivate(t)->toString() == "ZERO");
     assert(cst1->evaluate(bounder) == 3.14);
     assert(cst1->substitute<double>(t, sym4)->toString() == "3.14");
+    assert(cst1->isConstant());
 
     Term<double>::TermPtr term5 = Frac<double>::create(cst1, sym4);
     assert(term5->toString() == "(3.14)/(sym4)");
-    assert(term5->derivate(t)->toString() == "(-((3.14)*(d(sym4)/dt)))/((sym4)^2)");
+    assert(term5->derivate(t)->toString() 
+        == "(-((3.14)*(d(sym4)/dt)))/((sym4)^2)");
     assert(term5->substitute<double>(sym4, term3)->toString()
         == "(3.14)/(exp(sym4))");
 
@@ -95,16 +100,16 @@ int main()
     bounder.setValue(sym5, Leph::Vector::Vector2D<double>(1.0, 2.0));
 
     Term<double>::TermPtr term6 = 
-        Re<double,Leph::Vector::Vector2D<double> >::create(sym5);
-    assert(term6->toString() == "Re(vect1)");
+        X<double,Leph::Vector::Vector2D<double> >::create(sym5);
+    assert(term6->toString() == "X(vect1)");
     assert(term6->evaluate(bounder) == 1.0);
-    assert(term6->derivate(t)->toString() == "Re(d(vect1)/dt)");
+    assert(term6->derivate(t)->toString() == "X(d(vect1)/dt)");
 
     Term<double>::TermPtr term7 = 
-        Im<double,Leph::Vector::Vector2D<double> >::create(sym5);
-    assert(term7->toString() == "Im(vect1)");
+        Y<double,Leph::Vector::Vector2D<double> >::create(sym5);
+    assert(term7->toString() == "Y(vect1)");
     assert(term7->evaluate(bounder) == 2.0);
-    assert(term7->derivate(t)->toString() == "Im(d(vect1)/dt)");
+    assert(term7->derivate(t)->toString() == "Y(d(vect1)/dt)");
 
     Term<double>::TermPtr term8 = Minus<double>::create(sym4);
     Term<double>::TermPtr term9 = Minus<double>::create(term8);
@@ -123,6 +128,27 @@ int main()
     assert(term11->toString() == "PolarInv(sym4)");
     assert(term11->derivate(t)->toString() 
         == "(d(sym4)/dt)*(Polar(-(sym4)))");
+    
+    Term<double>::TermPtr term12 = 
+        Dot<double,Leph::Vector::Vector2D<double>,
+            Leph::Vector::Vector2D<double> >::create(sym5, sym5);
+    assert(term12->toString() == "(vect1).(vect1)");
+    assert(term12->derivate(sym1)->toString() == "ZERO");
+    assert(term12->derivate(t)->toString() 
+        == "((d(vect1)/dt).(vect1))+((vect1).(d(vect1)/dt))");
+    assert(term12->evaluate(bounder) == 5.0);
+    
+    Term<Leph::Vector::Vector2D<double> >::TermPtr term13 = 
+        Rotation<Leph::Vector::Vector2D<double>, double>::
+        create(sym5, sym4);
+    assert(term13->toString() 
+        == "((X(vect1))*(Polar(sym4)))+((Y(vect1))*(PolarInv(-(sym4))))");
+
+    Term<Leph::Vector::Vector2D<double> >::TermPtr term14 = 
+        Vect<Leph::Vector::Vector2D<double>, double>::
+        create(sym4, sym4);
+    assert(term14->toString() 
+        == "((sym4)*([1 0]))+((sym4)*([0 1]))");
 
     sym4->reset();
     bounder.setValue(sym4, 0.0);

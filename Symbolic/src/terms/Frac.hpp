@@ -28,7 +28,7 @@ class Frac : public BinaryFunction<T,T,T>
             } else if (termRight->toString() == BaseSymbol::one()) {
                 return termLeft;
             } else {
-                return typename Term<T>::TermPtr(
+                return BinaryFunction<T,T,T>::checkCst(
                     new Frac<T>(termLeft, termRight));
             }
         }
