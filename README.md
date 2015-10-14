@@ -2,4 +2,4 @@
 Leph Symbolic Euler-Lagrange Simulation and more
 
 # Build
-- requires gcc >=4.8
+- requires gcc >=4.9
