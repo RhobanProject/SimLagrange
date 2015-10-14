@@ -62,8 +62,8 @@ int main()
     penalty.runOptimization();
     //cout << "Gradient Iteration: " << penalty.getDescentCount() << endl;
     //cout << "Penalty Iteration: " << penalty.getPenaltyCount() << endl;
-    assert(penalty.state("x") > 1.999 && 
-        penalty.state("x") < 2.001);
+    assert(penalty.state("x") > 1.99 && 
+        penalty.state("x") < 2.01);
     assert(penalty.state("y") > -0.0001 && 
         penalty.state("y") < 0.0001);
 
