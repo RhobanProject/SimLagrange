@@ -45,7 +45,7 @@ class CamJoint : public Joint
          *
          */
 
-        SymbolPtr F(SymbolPtr x)
+        TermPtr F(TermPtr x)
         {
             return Symbolic::Add<scalar>::create(Symbolic::Mult<scalar, scalar, scalar>::create(_a,x),Symbolic::Mult<scalar, scalar, scalar>::create(_b,Symbolic::Pow<scalar>::create(x,2)));
 
@@ -99,7 +99,7 @@ class CamJoint : public Joint
                     posRootSym,
                     root.getSymAngle()));
 
-            SymbolPtr z=Symbolic::Add<scalar>::create(F(Symbolic::Mult<scalar, scalar, scalar>::create(_H,SIN(dof))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(dof)));
+            TermPtr z=Symbolic::Add<scalar>::create(F(Symbolic::Mult<scalar, scalar, scalar>::create(_H,SIN(dof))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(dof)));
 
 
                 //Joint anchor on Leaf Body
