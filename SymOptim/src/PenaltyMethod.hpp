@@ -52,9 +52,9 @@ class PenaltyMethod
          */
         PenaltyMethod(TermPtr targetFunction, 
             const VariableContainer& variables) :
-            INITIAL_EQUALITY_COEF(0.001),
+            INITIAL_EQUALITY_COEF(0.01), //TODO
             EQUALITY_COEF_GAIN(10.0),
-            EQUALITY_EPSILON(0.001),
+            EQUALITY_EPSILON(0.01), //TODO
             MAX_LOOP(100),
             _targetFunction(targetFunction),
             _variables(variables),
@@ -143,7 +143,11 @@ class PenaltyMethod
                     gradientDescent.state(_values.getKey(i)) = _values[i];
                 }
                 //Do optimization
-                _values = gradientDescent.runOptimization(debug);
+                try {//TODO
+                    gradientDescent.runOptimization(false/*debug*/); //TODO
+                } catch (std::runtime_error& e) { //TODO
+                }
+                _values = gradientDescent.state();
                 //Check if constrainted are enforced
                 isConverged = true;
                 for (size_t i=0;i<_equalityConstraints.size();i++) {
@@ -173,8 +177,8 @@ class PenaltyMethod
                     }
                     std::cout << "Constraints state:" << std::endl;
                     for (size_t i=0;i<_equalityConstraints.size();i++) {
-                        std::cout << _equalityConstraints[i]->toString();
-                        std::cout << " " << _equalityCoefficients[i];
+                        std::cout << i;
+                        std::cout << ": " << _equalityCoefficients[i];
                         std::cout << " (";
                         std::cout << evalConstraint(
                             penaltyEqualityFunction(_equalityConstraints[i]));

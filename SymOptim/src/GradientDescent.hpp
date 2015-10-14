@@ -69,9 +69,9 @@ class GradientDescent
             (TermPtr targetFunction, const VariableContainer& variables) :
             INITIAL_STEP(0.0001),
             STEP_ADAPTIVE_GAIN(1.5),
-            STOP_EPSILON(0.0001),
+            STOP_EPSILON(0.01), //TODO
             MAX_INCR_STEP(100),
-            MAX_GRADIENT_STEP(10000),
+            MAX_GRADIENT_STEP(500), //TODO
             _targetFunction(targetFunction),
             _variables(variables),
             _countIteration(0),
@@ -106,6 +106,14 @@ class GradientDescent
         inline unsigned int getIterationCount() const
         {
             return _countIteration;
+        }
+
+        /**
+         * Return current state
+         */
+        inline const ValueContainer& state() const
+        {
+            return _currentState;
         }
 
         /**
@@ -177,7 +185,7 @@ class GradientDescent
                 gradient = computeGradient(_currentState);
                 //Verbose debug
                 if (debug) {
-                    std::cout << "Iteration " << _countIteration;
+                    std::cout << "Gradient iteration " << _countIteration;
                     std::cout << " with step: " << step << std::endl;
                     std::cout << "State:" << std::endl;
                     for (size_t i=0;i<_variables.size();i++) {
