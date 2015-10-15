@@ -166,22 +166,35 @@ class CamJoint : public Joint
                 (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
                 (value)*180.0/M_PI);
 
+            double ori=(Joint::getAngleRoot()+angleRoot);
+
+            Vector2D rot;
 
                 //Draw the cam
             Vector2D pos_r=pos;
             Vector2D pos_l=pos;
             double x=0.0;
             double y=0.0;
+
+
+
             for(int i=0;i<100;i++)
             {
                 x+=.3/100.0;
                 y=F(x);
-                viewer.drawSegmentByEnd(pos_r.x(),pos_r.y(), pos.x()+x,pos.y()+y ,0.01,sf::Color(127,127,127,100));
-                pos_r=Vector2D(pos.x()+x, pos.y()+y);
+
+                rot=Vector2D::rotate(Vector2D(x,y),ori);
+
+                viewer.drawSegmentByEnd(pos_r.x(),pos_r.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(127,127,127,100));
+                pos_r=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
 
                 y=F(-x);
-                viewer.drawSegmentByEnd(pos_l.x(),pos_l.y(), pos.x()-x,pos.y()+y ,0.01,sf::Color(127,127,127,100));
-                pos_l=Vector2D(pos.x()-x, pos.y()+y);
+                rot=Vector2D::rotate(Vector2D(-x,y),ori);
+
+                viewer.drawSegmentByEnd(pos_l.x(),pos_l.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(127,127,127,100));
+                pos_l=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
+
+
             }
 
                 //Draw the lever

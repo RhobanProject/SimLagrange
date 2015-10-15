@@ -29,7 +29,14 @@ int main()
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
         0.0, 6, 0.29, 0.0, 0.1, 0.0);
-    b1.addMass(1.0, Vector2D(0.0, 1.0));
+    b1.addMass(0.1, Vector2D(0.0, 0.3));
+
+    Body& b2 = system.addCamJoint(
+        b1,
+        Vector2D(0.0, 0.0), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        0.0, 6, 0.29, 0.0, 0.0, 0.0);
+    b2.addMass(0.1, Vector2D(0.0, 0.3));
 
 
     // Body& b2 = system.addAngularJoint(
