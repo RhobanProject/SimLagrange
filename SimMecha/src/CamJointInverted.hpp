@@ -1,5 +1,5 @@
-#ifndef LEPH_SIMMECHA_CAMJOINT_HPP
-#define LEPH_SIMMECHA_CAMJOINT_HPP
+#ifndef LEPH_SIMMECHA_CAMJOINTINVERTED_HPP
+#define LEPH_SIMMECHA_CAMJOINTINVERTED_HPP
 
 #include "SimMecha/src/Joint.hpp"
 
@@ -13,9 +13,9 @@ namespace Leph {
 namespace SimMecha {
 
 /**
- * CamJoint
+ * CamJointInverted
  */
-class CamJoint : public Joint
+class CamJointInverted : public Joint
 {
     public:
 
@@ -28,7 +28,7 @@ class CamJoint : public Joint
          * given Bodies and reference (zero) angles
          * and Symbolic degree of freedom
          */
-        CamJoint(
+        CamJointInverted(
             Body& bodyRoot, const Vector2D& posRoot, scalar angleRoot,
             Body& bodyLeaf, const Vector2D& posLeaf, scalar angleLeaf,
             SymbolPtr dof, scalar a, scalar b, scalar H, scalar phi) :
@@ -121,17 +121,26 @@ class CamJoint : public Joint
                     root.getSymAngle()));
 
 
-            TermPtr z=Symbolic::Add<scalar>::create(F(Symbolic::Mult<scalar, scalar, scalar>::create(_H,SIN(dof))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(dof)));
+            TermPtr z=Symbolic::Add<scalar>::create(F(Symbolic::Mult<scalar, scalar, scalar>::create(Symbolic::Minus<scalar>::create(_H),SIN(Symbolic::Add<scalar>::create(dof,_phi)))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(Symbolic::Add<scalar>::create(dof,_phi))));
 
 
                 //Joint anchor on Leaf Body
+            // TermVectorPtr p2 = Symbolic::Add<Vector2D>::create(
+            //     p1,
+            //     Symbolic::Mult<Vector2D, scalar, Vector2D>::create(
+            //         z,
+            //         Symbolic::Rotation<Vector2D, scalar>::create(
+            //             unitySym,
+            //             angle_root)));
+
             TermVectorPtr p2 = Symbolic::Add<Vector2D>::create(
                 p1,
                 Symbolic::Mult<Vector2D, scalar, Vector2D>::create(
                     z,
                     Symbolic::Rotation<Vector2D, scalar>::create(
                         unitySym,
-                        angle_root)));
+                        angle1)));
+
 
             //Build up center of Leaf Body
             TermVectorPtr resultPos = Symbolic::Add<Vector2D>::create(
@@ -143,7 +152,8 @@ class CamJoint : public Joint
             //Set up Leaf Symbols
             leaf.initSymbols(
                 resultPos,
-                Symbolic::Add<scalar>::create(resultAngle,_phi),
+                // Symbolic::Add<scalar>::create(resultAngle,_phi),
+                resultAngle,
                 resultPos->derivate(time),
                 resultAngle->derivate(time));
         }
@@ -159,14 +169,16 @@ class CamJoint : public Joint
             Joint::draw(viewer, posRoot, angleRoot,
                 posLeaf, angleLeaf, value);
 
-            Vector2D pos = posRoot + Vector2D::rotate(
-                Joint::getPosRoot(), angleRoot);
+            // Vector2D pos = posRoot + Vector2D::rotate(
+            //     Joint::getPosRoot(), angleRoot);
+            Vector2D pos = posLeaf + Vector2D::rotate(
+                Joint::getPosLeaf(), angleLeaf);
 
             viewer.drawJoint(pos.x(), pos.y(),
                 (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
                 (value)*180.0/M_PI);
 
-            double ori=(Joint::getAngleRoot()+angleRoot);
+            double ori=(Joint::getAngleLeaf()+angleLeaf);
 
             Vector2D rot;
 
@@ -183,13 +195,13 @@ class CamJoint : public Joint
                 x+=.3/100.0;
                 y=F(x);
 
-                rot=Vector2D::rotate(Vector2D(x,y),ori);
+                rot=Vector2D::rotate(Vector2D(x,y),ori+M_PI);
 
                 viewer.drawSegmentByEnd(pos_r.x(),pos_r.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(127,127,127,100));
                 pos_r=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
 
                 y=F(-x);
-                rot=Vector2D::rotate(Vector2D(-x,y),ori);
+                rot=Vector2D::rotate(Vector2D(-x,y),ori+M_PI);
 
                 viewer.drawSegmentByEnd(pos_l.x(),pos_l.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(127,127,127,100));
                 pos_l=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
@@ -198,9 +210,8 @@ class CamJoint : public Joint
             }
 
                 //Draw the lever
-            viewer.drawSegment(posLeaf.x(),posLeaf.y(),_sH,(angleLeaf-M_PI/2.0)*180.0/M_PI,0.01,sf::Color(255,0,255,100));
-            viewer.drawCircle(posLeaf.x()+_sH*cos(angleLeaf-M_PI/2.0),posLeaf.y()+_sH*sin(angleLeaf-M_PI/2.0),0.03,sf::Color(100,0,100,100));
-            viewer.drawCircle(posLeaf.x(),posLeaf.y(),0.03,sf::Color(255,255,255,255));
+            viewer.drawSegment(posRoot.x(),posRoot.y(),_sH,(angleRoot+M_PI/2.0-_sphi)*180.0/M_PI,0.01,sf::Color(255,0,255,100));
+            viewer.drawCircle(posRoot.x()+_sH*cos(angleRoot+M_PI/2.0-_sphi),posRoot.y()+_sH*sin(angleRoot+M_PI/2.0-_sphi),0.03,sf::Color(100,0,100,100));
 
         }
 };

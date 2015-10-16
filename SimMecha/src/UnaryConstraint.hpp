@@ -18,7 +18,7 @@ namespace SimMecha {
  * Base class for representing
  * mechanical constraint between one Body
  * and one static Body
- * (Collision response do not preserve 
+ * (Collision response do not preserve
  * linear and angular momentum, only one
  * Body state is update)
  */
@@ -30,7 +30,7 @@ class UnaryConstraint : public Constraint
          * Initialization with the Body and System involved
          * and collision parameters
          */
-        UnaryConstraint(Body& body, System& system, 
+        UnaryConstraint(Body& body, System& system,
             scalar restitutionCoef, bool isFriction) :
             Constraint(restitutionCoef, isFriction),
             _body(&body),
@@ -82,21 +82,21 @@ class UnaryConstraint : public Constraint
         /**
          * TODO
          */
-        inline void propagateImpulse(const Vector2D& impulse, 
+        inline void propagateImpulse(const Vector2D& impulse,
             const Vector2D& point, const Vector2D& posInBody)
         {
             //Get global coordinate Symbolic velocity of
             //collision point
-            TermVectorPtr currentVelSym = 
+            TermVectorPtr currentVelSym =
                 _body->buildSymPositionVel(posInBody);
             //Bind position Symbol
-            currentVelSym = 
+            currentVelSym =
                 _system->bindStatePosition(currentVelSym);
             //Get binded system lagrangian
-            TermPtr lagrangian = 
+            TermPtr lagrangian =
                 _system->getBindedLagrangian();
             //Get velocity degrees of freedom Symbols
-            const DofContainer& dofs = 
+            const DofContainer& dofs =
                 _system->getVelocityDofs();
 
             //Build impulse constraint
@@ -131,13 +131,13 @@ class UnaryConstraint : public Constraint
             for (size_t i=0;i<dofs.size();i++) {
                 std::cout << dofs.getKey(i) << " " <<
                     penaltyOptim.state(dofs.getKey(i)) << std::endl;
-                _system->stateVelocity(dofs.getKey(i)) += 
+                _system->stateVelocity(dofs.getKey(i)) +=
                     penaltyOptim.state(dofs.getKey(i));
             }
         }
 
     protected:
-        
+
         /**
          * The Body involved in the
          * Constraint
@@ -149,13 +149,13 @@ class UnaryConstraint : public Constraint
          * is belonging to
          */
         System* _system;
-        
+
         /**
-         * Check if the constraint against 
+         * Check if the constraint against
          * current system state.
          * Return false is the constraint is tied
-         * Return true in case of violation of the 
-         * constraint and set for the Body 
+         * Return true in case of violation of the
+         * constraint and set for the Body
          * the position and normal direction of
          * detected collision
          * The position is given in global frame
@@ -184,13 +184,13 @@ class UnaryConstraint : public Constraint
             Vector2D centerPos = _system->evalPosition(*_body);
             Vector2D centerVel = _system->evalPositionVel(*_body);
             scalar centerAngleVel = _system->evalAngleVel(*_body);
-            Vector2D vel = centerVel 
+            Vector2D vel = centerVel
                 + centerAngleVel*Vector2D::normal(point - centerPos);
 
             //Declare normal and tangent unit vector
             Vector2D n = dir;
             Vector2D t = Vector2D::normal(dir);
-            
+
             //Build impulse
             Vector2D impulse(0.0, 0.0);
             //Tangent (friction) component
@@ -209,4 +209,3 @@ class UnaryConstraint : public Constraint
 }
 
 #endif
-

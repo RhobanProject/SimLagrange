@@ -9,6 +9,7 @@
 #include "SimMecha/src/AngularJoint.hpp"
 #include "SimMecha/src/LinearJoint.hpp"
 #include "SimMecha/src/CamJoint.hpp"
+#include "SimMecha/src/CamJointInverted.hpp"
 #include "SimMecha/src/Body.hpp"
 #include "SimMecha/src/Base.hpp"
 #include "SimMecha/src/FixedBase.hpp"
@@ -183,7 +184,7 @@ class System
          */
         inline Body& addCamJoint(Body& root,
             const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, scalar a, scalar b, scalar H, scalar phi,
-            scalar statePos, scalar stateVel)
+                                 scalar statePos, scalar stateVel)
         {
             Body* leaf = new Body(_time);
             Joint* joint = new CamJoint(
@@ -202,6 +203,26 @@ class System
             return *leaf;
         }
 
+            inline Body& addCamJointInverted(Body& root,
+            const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, scalar a, scalar b, scalar H, scalar phi,
+                                 scalar statePos, scalar stateVel)
+        {
+            Body* leaf = new Body(_time);
+            Joint* joint = new CamJointInverted(
+                root, posRoot, angleRoot,
+                *leaf, posLeaf, angleLeaf,
+                createDof(), a, b, H, phi);
+            leaf->setJointRoot(joint);
+            root.addLeafJoint(joint);
+
+            _bodies.push_back(leaf);
+            _joints.push_back(joint);
+            _statePosition.push_back(statePos);
+            _stateVelocity.push_back(stateVel);
+            _stateTorque.push_back(0.0);
+
+            return *leaf;
+        }
 
         /**
          * Build for all Bodies

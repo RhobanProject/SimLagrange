@@ -28,23 +28,42 @@ int main()
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.0, 6, 0.29, 0.0, 0.1, 0.0);
-    b1.addMass(0.1, Vector2D(0.0, 0.3));
+        0.0, 8, 0.29, 0.0, 0.2, 0.0);
+    b1.addMass(0.5, Vector2D(0.0, 0.2));
 
-    Body& b2 = system.addCamJoint(
+
+    Body& b2 = system.addCamJointInverted(
         b1,
+        Vector2D(0.0, 0.4), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        Vector2D(0.0, 0.0), 0.0,
-        0.0, 6, 0.29, 0.0, 0.0, 0.0);
-    b2.addMass(0.1, Vector2D(0.0, 0.3));
+        0.0, 8, 0.29, 0.0, 0.0, 0.0);
+    b2.addMass(0.5, Vector2D(0.0, 0.2));
+
+
+    // Body& b2 = system.addCamJoint(
+    //     b1,
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     0.0, 8, 0.29, 0.0, 0.0, 0.0);
+    // b2.addMass(0.5, Vector2D(0.0, 0.2));
 
 
     // Body& b2 = system.addAngularJoint(
     //     b1,
-    //     Vector2D(1.0, 0.0), 0.0,
+    //     Vector2D(0.0, 0.8), 0.0,
     //     Vector2D(0.0, 0.0), 0.0,
     //     0.2, 0.0);
-    // b2.addMass(1.0, Vector2D(1.0, 0.0));
+    // b2.addMass(0.1, Vector2D(0.0, 0.4));
+
+
+
+    // Body& b3 = system.addCamJointInverted(
+    //     b2,
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     0.0, 8, 0.29, 0.0, 0.0, 0.0);
+    // b2.addMass(0.5, Vector2D(0.0, 0.2));
+
 
     // Body& b3 = system.addAngularJoint(
     //     b2,

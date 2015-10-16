@@ -84,6 +84,16 @@ class Joint
         {
             return _posLeaf;
         }
+
+        inline Vector2D& getPosRoot()
+        {
+            return _posRoot;
+        }
+        inline Vector2D& getPosLeaf()
+        {
+            return _posLeaf;
+        }
+
         inline scalar getAngleRoot() const
         {
             return _angleRoot;
@@ -111,8 +121,8 @@ class Joint
 
         /**
          * Build Symbolic transformation (position and angle)
-         * of Body center from root Body to leaf Body 
-         * and then update Symbolic leaf Body 
+         * of Body center from root Body to leaf Body
+         * and then update Symbolic leaf Body
          * internal expressions
          */
         virtual void computeSymTransformation(SymbolPtr time) = 0;
@@ -122,7 +132,7 @@ class Joint
          * center and angle coordinates for both linked
          * Bodies and dof value
          */
-        virtual void draw(SimViewer::SimViewer& viewer, 
+        virtual void draw(SimViewer::SimViewer& viewer,
             const Vector2D& posRoot, scalar angleRoot,
             const Vector2D& posLeaf, scalar angleLeaf,
             scalar value)
@@ -138,7 +148,7 @@ class Joint
     private:
 
         /**
-         * The linked Body 
+         * The linked Body
          * connected to the Base root
          */
         Body* _bodyRoot;
@@ -173,4 +183,3 @@ class Joint
 }
 
 #endif
-
