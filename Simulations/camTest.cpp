@@ -15,45 +15,74 @@
 
 using namespace std;
 using namespace Leph::SimMecha;
+using namespace Leph::SimViewer;
+
+
+bool simu_pause=false;
+
+void* space_cb(Leph::Any::Any param)
+{
+    if(simu_pause){
+        std::cout<<"PAUSE: off"<<std::endl;
+        simu_pause=false;
+    }
+    else
+    {
+        std::cout<<"PAUSE: on"<<std::endl;
+        simu_pause=true;
+    }
+}
+
+
 
 int main()
 {
     Leph::SimViewer::SimViewer viewer(1024, 800);
 
+    Leph::Any::Any param;
+
+    viewer.setSpaceHandler((SimViewer::HandlerFunction)space_cb, param);
+
+
     System system(Vector2D(-1.0, 0.0));
     //System system(Vector2D(-1.0, 1.0), Vector2D());
     system.getBase().addMass(1, Vector2D(0.0, 0.0));
 
-    Body& b1 = system.addCamJoint(
+
+    Body& b1 = system.addCamJointInverted(
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.0, 8, 0.29, 0.0, 0.2, 0.0);
+        0.0, 8, 0.29, 0.0, 0, 0.0);
     b1.addMass(0.5, Vector2D(0.0, 0.2));
 
 
-    Body& b2 = system.addCamJointInverted(
-        b1,
-        Vector2D(0.0, 0.4), 0.0,
-        Vector2D(0.0, 0.0), 0.0,
-        0.0, 8, 0.29, 0.0, 0.0, 0.0);
-    b2.addMass(0.5, Vector2D(0.0, 0.2));
-
-
-    // Body& b2 = system.addCamJoint(
+    // Body& b2 = system.addCamJointInverted(
     //     b1,
     //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     0.0, 8, 0.29, 0.0, 0.1, 0.0);
+    // b2.addMass(0.5, Vector2D(0.0, 0.2));
+
+
+    // Body& b2 = system.addCamJointInverted(
+    //     b1,
+    //     Vector2D(0.0, 0.0), 0.0,
     //     Vector2D(0.0, 0.0), 0.0,
     //     0.0, 8, 0.29, 0.0, 0.0, 0.0);
     // b2.addMass(0.5, Vector2D(0.0, 0.2));
 
 
+
+    ////
+
+
     // Body& b2 = system.addAngularJoint(
     //     b1,
-    //     Vector2D(0.0, 0.8), 0.0,
+    //     Vector2D(0.0, 0.4), 0.0,
     //     Vector2D(0.0, 0.0), 0.0,
-    //     0.2, 0.0);
-    // b2.addMass(0.1, Vector2D(0.0, 0.4));
+    //     M_PI-0.3, 0.0);
+    // b2.addMass(0.1, Vector2D(0.0, 0.2));
 
 
 
@@ -61,7 +90,7 @@ int main()
     //     b2,
     //     Vector2D(0.0, 0.4), 0.0,
     //     Vector2D(0.0, 0.0), 0.0,
-    //     0.0, 8, 0.29, 0.0, 0.0, 0.0);
+    //     0.0, 8, 0.29, 0.0, 0, 0.0);
     // b2.addMass(0.5, Vector2D(0.0, 0.2));
 
 
@@ -91,8 +120,14 @@ int main()
         system.draw(viewer);
         viewer.endDraw(10);
 
-        system.runSimulationStep(0.01);
-
+        try{
+            if(!simu_pause)
+                system.runSimulationStep(0.01);
+        }
+        catch(const std::exception & e)
+        {
+            std::cerr << e.what()<<std::endl;
+        }
         /*
         c1.handle();
         c2.handle();

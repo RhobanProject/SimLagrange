@@ -52,14 +52,24 @@ class SimViewer
             _window(),
             _view(),
             _chainPos(0.0, 0.0),
-            _chainAngle(0.0)
+            _chainAngle(0.0),
+            _width(width),
+            _height(height),
+            _zoom(1.0),
+            _button(false)
         {
             //Initiating windows
             _window.create(sf::VideoMode(width, height), "SimViewer");
             //Initialiting camera
-            double ratio = (double)width/(double)height;
+            _ratio = (double)width/(double)height;
             _view.setCenter(sf::Vector2f(0, 0));
-            _view.setSize(sf::Vector2f(CAMERA_WIDTH, CAMERA_WIDTH/ratio));
+            _view.setSize(sf::Vector2f(CAMERA_WIDTH, CAMERA_WIDTH/_ratio));
+
+
+            // _view.setSize(sf::Vector2f(CAMERA_WIDTH/_zoom, CAMERA_WIDTH/_ratio/_zoom));
+            // _view.zoom(_zoom);
+
+
             _window.setView(_view);
         }
 
@@ -116,9 +126,80 @@ class SimViewer
                         _onSpaceHandler(_onSpaceParam);
                     }
                 }
+
+                    //mouse
+                if (event.type == sf::Event::MouseMoved)
+                {
+                    // std::cout<<"X: "<<event.mouseMove.x<<" Y: "<<event.mouseMove.y<<std::endl;
+                    if(_button)
+                    {
+                        afterCoord=_window.mapPixelToCoords(sf::Vector2i(event.mouseMove.x,event.mouseMove.y));
+                        const sf::Vector2f offsetCoords(beforeCoord - afterCoord);
+                        sf::View view(_window.getView());
+                        view.move(offsetCoords);
+                        _window.setView(view);
+                        beforeCoord=afterCoord;
+
+                    }
+
+                }
+
+                if (event.type == sf::Event::MouseButtonPressed)
+                {
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                    {
+
+                        beforeCoord=_window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x,event.mouseButton.y));
+                        // _view.move(0.0,1.0);
+                        _button=true;
+                        // std::cout<<"BUTTON LEFT "<<event.mouseButton.x<<" "<<event.mouseButton.y<<std::endl;
+                    }
+                }
+                if (event.type == sf::Event::MouseButtonReleased)
+                {
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                    {
+
+                        // std::cout<<"BUTTON LEFT RELEASED "<<event.mouseButton.x<<" "<<event.mouseButton.y<<std::endl;
+                        afterCoord=_window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x,event.mouseButton.y));
+                        // _view.move(0.0,1.0);
+                        if(_button)
+                        {
+                            _button=false;
+                            const sf::Vector2f offsetCoords(beforeCoord - afterCoord);
+                            sf::View view(_window.getView());
+                            view.move(offsetCoords);
+                            _window.setView(view);
+                        }
+                    }
+                }
+
+                if (event.type == sf::Event::MouseWheelScrolled)
+                {
+                    if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel)
+                    {
+                        _zoom=1.f+event.mouseWheelScroll.delta*0.1f;
+
+                        // std::cout<<"SCROLL: "<<event.mouseWheelScroll.delta<<" zoom: "<<_zoom<<std::endl;
+                        // _view.setCenter(sf::Vector2f(0, 0));
+                        sf::View view(_window.getView());
+                        // view.setSize(sf::Vector2f((float)CAMERA_WIDTH/_zoom, (float)CAMERA_WIDTH/_ratio/_zoom));
+                        view.zoom(_zoom);
+                        _window.setView(view);
+                    }
+                }
             }
+
+
             //Clear screen background
             _window.clear(sf::Color::Black);
+            // _view.setSize(sf::Vector2f((float)CAMERA_WIDTH/_zoom, (float)CAMERA_WIDTH/_ratio/_zoom));
+            // _view.zoom(_zoom);
+            // _window.setView(_view);
+
+            // _view.setCenter(sf::Vector2f(0, 0));
+            // _view.setSize(sf::Vector2f(CAMERA_WIDTH/_zoom, CAMERA_WIDTH/_ratio/_zoom));
+            // _view.zoom(_zoom);
         }
 
         /**
@@ -266,6 +347,8 @@ class SimViewer
          */
         inline void endDraw(long millis = -1)
         {
+
+
             //Display (double buffering)
             _window.display();
             //Reset chain
@@ -309,6 +392,14 @@ class SimViewer
          */
         sf::RenderWindow _window;
         sf::View _view;
+
+        /**
+         * To handle mouse scroll zooming
+         */
+        double _zoom, _ratio;
+        bool _button ;
+        int _width, _height;
+        sf::Vector2f beforeCoord, afterCoord;
 
         /**
          * Position and angle of chain end for segment drawing
