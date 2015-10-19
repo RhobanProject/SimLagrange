@@ -47,8 +47,10 @@ class SimViewer
         SimViewer(unsigned int width, unsigned int height) :
             _onCloseHandler(NULL),
             _onSpaceHandler(NULL),
+            _onRHandler(NULL),
             _onCloseParam(),
             _onSpaceParam(),
+            _onRParam(),
             _window(),
             _view(),
             _chainPos(0.0, 0.0),
@@ -86,6 +88,12 @@ class SimViewer
         {
             _onSpaceHandler = handler;
             _onSpaceParam = param;
+        }
+
+        inline void setRHandler(HandlerFunction handler, Any::Any param)
+        {
+            _onRHandler = handler;
+            _onRParam = param;
         }
 
         /**
@@ -126,6 +134,16 @@ class SimViewer
                         _onSpaceHandler(_onSpaceParam);
                     }
                 }
+
+                if (
+                    event.type == sf::Event::KeyPressed &&
+                    event.key.code == sf::Keyboard::R
+                ) {
+                    if (_onRHandler != NULL) {
+                        _onRHandler(_onRParam);
+                    }
+                }
+
 
                     //mouse
                 if (event.type == sf::Event::MouseMoved)
@@ -380,12 +398,14 @@ class SimViewer
          */
         HandlerFunction _onCloseHandler;
         HandlerFunction _onSpaceHandler;
+        HandlerFunction _onRHandler;
 
         /**
          * Parameter for close and space event
          */
         Any::Any _onCloseParam;
         Any::Any _onSpaceParam;
+        Any::Any _onRParam;
 
         /**
          * SFML windows and camera

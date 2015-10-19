@@ -159,12 +159,18 @@ class CamJoint : public Joint
             Joint::draw(viewer, posRoot, angleRoot,
                 posLeaf, angleLeaf, value);
 
-            Vector2D pos = posRoot + Vector2D::rotate(
-                Joint::getPosRoot(), angleRoot);
+            // Vector2D pos = posRoot + Vector2D::rotate(
+            //     Joint::getPosRoot(), angleRoot);
+
+            Vector2D pos = posLeaf + Vector2D::rotate(
+                Joint::getPosLeaf(), angleLeaf);
 
             viewer.drawJoint(pos.x(), pos.y(),
                 (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
                 (value)*180.0/M_PI);
+
+            pos = posRoot + Vector2D::rotate(
+                Joint::getPosRoot(), angleRoot);
 
             double ori=(Joint::getAngleRoot()+angleRoot);
 
@@ -199,8 +205,8 @@ class CamJoint : public Joint
 
                 //Draw the lever
             viewer.drawSegment(posLeaf.x(),posLeaf.y(),_sH,(angleLeaf-M_PI/2.0)*180.0/M_PI,0.01,sf::Color(255,0,255,100));
-            viewer.drawCircle(posLeaf.x()+_sH*cos(angleLeaf-M_PI/2.0),posLeaf.y()+_sH*sin(angleLeaf-M_PI/2.0),0.03,sf::Color(100,0,100,100));
-            viewer.drawCircle(posLeaf.x(),posLeaf.y(),0.03,sf::Color(255,255,255,255));
+            viewer.drawCircle(posLeaf.x()+_sH*cos(angleLeaf-M_PI/2.0),posLeaf.y()+_sH*sin(angleLeaf-M_PI/2.0),0.03,sf::Color(255,0,255,100));
+            viewer.drawCircle(pos.x(),pos.y(),0.03,sf::Color(255,255,255,255));
 
         }
 };

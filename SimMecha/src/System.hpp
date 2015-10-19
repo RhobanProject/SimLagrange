@@ -44,7 +44,8 @@ class System
             _dynamics(),
             _statePosition(),
             _stateVelocity(),
-            _stateTorque()
+            _stateTorque(),
+            _is_init(true)
         {
             //Init lagrangian to null
             _lagrangian = Symbol::create(
@@ -69,7 +70,8 @@ class System
             _dynamics(),
             _statePosition(),
             _stateVelocity(),
-            _stateTorque()
+            _stateTorque(),
+            _is_init(true)
         {
             //Init lagrangian to null
             _lagrangian = Symbol::create(
@@ -276,12 +278,27 @@ class System
          */
         inline void runSimulationStep(scalar dt)
         {
+            if(_is_init)
+            {
+                _init_statePosition=_statePosition;
+                _init_stateVelocity=_stateVelocity;
+                _init_stateTorque=_stateTorque;
+                _is_init=false;
+            }
+
             simulationComputeStep(
                 _statePosition,
                 _stateVelocity,
                 _stateTorque,
                 dt, _dofs,
                 _dynamics, _time);
+        }
+
+        inline void stateReset()
+        {
+            _statePosition=_init_statePosition;
+            _stateVelocity=_init_stateVelocity;
+            _stateTorque=_init_stateTorque;
         }
 
         /**
@@ -501,6 +518,21 @@ class System
          * Create a new degree of freedom
          * and return it
          */
+
+
+        /**
+         * Keep memory of the initial state
+         */
+
+        std::vector<scalar> _init_statePosition;
+        std::vector<scalar> _init_stateVelocity;
+        std::vector<scalar> _init_stateTorque;
+        bool _is_init;
+
+    // DofContainer _init_dofs;
+    // TermContainer _init_dynamics;
+    // SymbolPtr _init_time;
+
         inline SymbolPtr createDof()
         {
             size_t index = _joints.size() + 1;

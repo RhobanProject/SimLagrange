@@ -19,6 +19,7 @@ using namespace Leph::SimViewer;
 
 
 bool simu_pause=false;
+bool simu_reset=false;
 
 void* space_cb(Leph::Any::Any param)
 {
@@ -33,6 +34,12 @@ void* space_cb(Leph::Any::Any param)
     }
 }
 
+void* R_cb(Leph::Any::Any param)
+{
+    simu_reset=true;
+    std::cout<<"RESET"<<std::endl;
+}
+
 
 
 int main()
@@ -42,6 +49,7 @@ int main()
     Leph::Any::Any param;
 
     viewer.setSpaceHandler((SimViewer::HandlerFunction)space_cb, param);
+    viewer.setRHandler((SimViewer::HandlerFunction)R_cb, param);
 
 
     System system(Vector2D(-1.0, 0.0));
@@ -49,12 +57,12 @@ int main()
     system.getBase().addMass(1, Vector2D(0.0, 0.0));
 
 
-    Body& b1 = system.addCamJointInverted(
+    Body& b1 = system.addCamJoint(
         system.getBase(),
+        Vector2D(0.0, 0.4), 0.,
         Vector2D(0.0, 0.0), 0.0,
-        Vector2D(0.0, 0.0), 0.0,
-        0.0, 8, 0.29, 0.0, 0, 0.0);
-    b1.addMass(0.5, Vector2D(0.0, 0.2));
+        0.0, 8, 0.29, 0.0, 0.0, 0.0);
+    b1.addMass(0.1, Vector2D(0.0, 0.4));
 
 
     // Body& b2 = system.addCamJointInverted(
@@ -77,21 +85,22 @@ int main()
     ////
 
 
-    // Body& b2 = system.addAngularJoint(
-    //     b1,
-    //     Vector2D(0.0, 0.4), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     M_PI-0.3, 0.0);
-    // b2.addMass(0.1, Vector2D(0.0, 0.2));
+    Body& b2 = system.addAngularJoint(
+        b1,
+
+        Vector2D(0.0, 0.4), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        M_PI+0.2, 0.0);
+    b2.addMass(0.1, Vector2D(0.0, 0.4));
 
 
 
-    // Body& b3 = system.addCamJointInverted(
-    //     b2,
-    //     Vector2D(0.0, 0.4), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.0, 8, 0.29, 0.0, 0, 0.0);
-    // b2.addMass(0.5, Vector2D(0.0, 0.2));
+    Body& b3 = system.addCamJointInverted(
+        b2,
+        Vector2D(0.0, 0.8), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        0.0, 8, 0.29, 0.0, 0, 0.0);
+    b3.addMass(0.1, Vector2D(0.0, 0.4));
 
 
     // Body& b3 = system.addAngularJoint(
@@ -121,6 +130,10 @@ int main()
         viewer.endDraw(10);
 
         try{
+            if(simu_reset){
+                system.stateReset();
+                simu_reset=false;
+            }
             if(!simu_pause)
                 system.runSimulationStep(0.01);
         }
