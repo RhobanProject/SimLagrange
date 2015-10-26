@@ -8,10 +8,14 @@
 #include "SimMecha/src/Constraint.hpp"
 #include "SimMecha/src/UnaryConstraint.hpp"
 #include "SimMecha/src/BinaryConstraint.hpp"
+#include "Symbolic/src/Term.hpp"
+#include "Symbolic/src/terms.h"
+#include "SimMecha/src/Simulation.h"
 
 #include "SimMecha/src/HeightUnaryContraint.hpp"
 
 #include <stdio.h>
+#include <functional>
 
 using namespace std;
 using namespace Leph::SimMecha;
@@ -44,7 +48,7 @@ void* R_cb(Leph::Any::Any param)
 
 int main()
 {
-    Leph::SimViewer::SimViewer viewer(1024, 800);
+    Leph::SimViewer::SimViewer viewer(1280, 1024);
 
     Leph::Any::Any param;
 
@@ -52,20 +56,76 @@ int main()
     viewer.setRHandler((SimViewer::HandlerFunction)R_cb, param);
 
 
+    TermPtr a=Constant::create(0.001);
+    TermPtr b=Constant::create(0.1);
+    TermPtr c=Constant::create(6.0);
+
+    //parabolic
+    // auto F = [&a, &b](TermPtr x) -> TermPtr
+    //     {
+    //         return Leph::Symbolic::Add<scalar>::create(Leph::Symbolic::Mult<scalar, scalar, scalar>::create(a,x),Leph::Symbolic::Mult<scalar, scalar, scalar>::create(b,Leph::Symbolic::Pow<scalar>::create(x,2)));
+    //     };
+
+    //hyperbolic
+    auto F = [&a, &b, &c](TermPtr x) -> TermPtr
+        {
+
+            return Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) );
+
+        };
+
+
+    auto mF = [&a, &b, &c](TermPtr x) -> TermPtr
+        {
+
+            return Leph::Symbolic::Minus<scalar>::create(Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) ));
+
+        };
+
+
     System system(Vector2D(-1.0, 0.0));
     //System system(Vector2D(-1.0, 1.0), Vector2D());
     system.getBase().addMass(1, Vector2D(0.0, 0.0));
 
 
-    Body& b1 = system.addCamJoint(
+
+    Body& b1 = system.addAngularJoint(
         system.getBase(),
-        Vector2D(0.0, 0.4), 0.,
+        Vector2D(0.0, 0.4), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.0, 8, 0.29, 0.0, 0.0, 0.0);
+        M_PI+0.2, 0.0);
     b1.addMass(0.1, Vector2D(0.0, 0.4));
 
 
-    // Body& b2 = system.addCamJointInverted(
+
+    Body& b2 = system.addCamJointInverted(
+        b1,
+        Vector2D(0.0, 0.4), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        mF,0.29, 0.0, 0.3, -0.8);
+    b2.addMass(0.1, Vector2D(0.0, 0.4));
+
+
+    // Body& b2 = system.addLinearJoint(
+    //     b1,
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     0.0, 0.0);
+    // b2.addMass(0.1, Vector2D(0.0, 0.4));
+
+
+
+
+
+    // Body& b1 = system.addCamJoint(
+    //     system.getBase(),
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     F,0.29, 0.0, 0.3, -0.8);
+    // b1.addMass(0.1, Vector2D(0.0, 0.4));
+
+
+    // Body& b2 = system.addCamJoint(
     //     b1,
     //     Vector2D(0.0, 0.4), 0.0,
     //     Vector2D(0.0, 0.0), 0.0,
@@ -85,22 +145,31 @@ int main()
     ////
 
 
-    Body& b2 = system.addAngularJoint(
-        b1,
+    // Body& b2 = system.addAngularJoint(
+    //     b1,
 
-        Vector2D(0.0, 0.4), 0.0,
-        Vector2D(0.0, 0.0), 0.0,
-        M_PI+0.2, 0.0);
-    b2.addMass(0.1, Vector2D(0.0, 0.4));
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     M_PI+0.2, 0.0);
+    // b2.addMass(0.1, Vector2D(0.0, 0.4));
+
+
+    // Body& b3 = system.addCamJointInverted(
+    //     b2,
+    //     Vector2D(0.0, 0.4), 0.,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     F,0.29, 0.0, 0.3, -0.6);
+    // b3.addMass(0.1, Vector2D(0.0, 0.4));
 
 
 
-    Body& b3 = system.addCamJointInverted(
-        b2,
-        Vector2D(0.0, 0.8), 0.0,
-        Vector2D(0.0, 0.0), 0.0,
-        0.0, 8, 0.29, 0.0, 0, 0.0);
-    b3.addMass(0.1, Vector2D(0.0, 0.4));
+
+    // Body& b3 = system.addCamJointInverted(
+    //     b2,
+    //     Vector2D(0.0, 0.8), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     0.0, 8, 0.29, 0.0, 0, 0.0);
+    // b3.addMass(0.1, Vector2D(0.0, 0.4));
 
 
     // Body& b3 = system.addAngularJoint(

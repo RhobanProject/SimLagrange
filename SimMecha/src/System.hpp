@@ -15,6 +15,7 @@
 #include "SimMecha/src/FixedBase.hpp"
 #include "SimMecha/src/FloatingBase.hpp"
 #include "SimViewer/src/SimViewer.hpp"
+#include <functional>
 
 namespace Leph {
 namespace SimMecha {
@@ -185,14 +186,14 @@ class System
          * Initial position and velocity are given
          */
         inline Body& addCamJoint(Body& root,
-            const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, scalar a, scalar b, scalar H, scalar phi,
+            const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, std::function<TermPtr(TermPtr)> F, scalar H, scalar phi,
                                  scalar statePos, scalar stateVel)
         {
             Body* leaf = new Body(_time);
             Joint* joint = new CamJoint(
                 root, posRoot, angleRoot,
                 *leaf, posLeaf, angleLeaf,
-                createDof(), a, b, H, phi);
+                createDof(), F, H, phi);
             leaf->setJointRoot(joint);
             root.addLeafJoint(joint);
 
@@ -206,14 +207,14 @@ class System
         }
 
             inline Body& addCamJointInverted(Body& root,
-            const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, scalar a, scalar b, scalar H, scalar phi,
+            const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, std::function<TermPtr(TermPtr)> F, scalar H, scalar phi,
                                  scalar statePos, scalar stateVel)
         {
             Body* leaf = new Body(_time);
             Joint* joint = new CamJointInverted(
                 root, posRoot, angleRoot,
                 *leaf, posLeaf, angleLeaf,
-                createDof(), a, b, H, phi);
+                createDof(), F, H, phi);
             leaf->setJointRoot(joint);
             root.addLeafJoint(joint);
 

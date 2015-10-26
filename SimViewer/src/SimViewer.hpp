@@ -29,16 +29,16 @@ class SimViewer
         /**
          * Configuation constant
          */
-        static const double MASS_RADIUS = 0.1;
-        static const double SEGMENT_SIZE = 0.05;
-        static const double CAMERA_WIDTH = 7.0;
-        static const double JOINT_RADIUS = 0.05;
-        static const double JOINT_LENGTH = 0.2;
-        static const double JOINT_SIZE = 0.02;
-        static const double TEXT_SIZE = 0.01;
-        static const double FRAME_SIZE = 0.02;
-        static const double BASE_SIZE = 0.25;
-        static const double BASE_THICK = 0.01;
+        static constexpr double MASS_RADIUS = 0.1;
+        static constexpr double SEGMENT_SIZE = 0.05;
+        static constexpr double CAMERA_WIDTH = 7.0;
+        static constexpr double JOINT_RADIUS = 0.05;
+        static constexpr double JOINT_LENGTH = 0.2;
+        static constexpr double JOINT_SIZE = 0.02;
+        static constexpr double TEXT_SIZE = 0.01;
+        static constexpr double FRAME_SIZE = 0.02;
+        static constexpr double BASE_SIZE = 0.25;
+        static constexpr double BASE_THICK = 0.01;
 
         /**
          * Initialization with windows

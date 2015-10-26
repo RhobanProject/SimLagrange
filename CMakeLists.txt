@@ -25,6 +25,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Eigen)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/lib)
 
+#Enable C++11
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+
 #Build tests
 foreach(f ${TESTS_DIRECTORIES})
     add_executable(
@@ -37,6 +41,12 @@ endforeach(f)
 add_executable(
 	testCam
         Simulations/camTest.cpp
+)
+
+
+add_executable(
+	testCompass
+        Simulations/compassTest.cpp
 )
 
 
@@ -53,6 +63,12 @@ target_link_libraries(testsSimMecha
 )
 
 target_link_libraries(testCam
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+target_link_libraries(testCompass
     sfml-graphics
     sfml-window
     sfml-system

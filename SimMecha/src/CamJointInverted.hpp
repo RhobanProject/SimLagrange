@@ -2,6 +2,8 @@
 #define LEPH_SIMMECHA_CAMJOINTINVERTED_HPP
 
 #include "SimMecha/src/Joint.hpp"
+#include "Symbolic/src/Bounder.hpp"
+#include <functional>
 
 #include <stdio.h>
 
@@ -20,8 +22,9 @@ class CamJointInverted : public Joint
     public:
 
 
-    TermPtr _a, _b, _phi, _H;
-    scalar _sa, _sb, _sphi, _sH;
+    TermPtr _phi, _H;
+    scalar _sphi, _sH;
+    std::function<TermPtr(TermPtr)> _F;
 
         /**
          * Initialization with Joint position on the two
@@ -31,18 +34,19 @@ class CamJointInverted : public Joint
         CamJointInverted(
             Body& bodyRoot, const Vector2D& posRoot, scalar angleRoot,
             Body& bodyLeaf, const Vector2D& posLeaf, scalar angleLeaf,
-            SymbolPtr dof, scalar a, scalar b, scalar H, scalar phi) :
+            SymbolPtr dof, std::function<TermPtr(TermPtr)> F, scalar H, scalar phi) :
             Joint(bodyRoot, posRoot, angleRoot,
                 bodyLeaf, posLeaf, angleLeaf, dof)
         {
 
-            _a=Constant::create(a);
-            _b=Constant::create(b);
+            // _a=Constant::create(a);
+            // _b=Constant::create(b);
             _H=Constant::create(H);
             _phi=Constant::create(phi);
 
-            _sa=a;
-            _sb=b;
+            _F=F;
+            // _sa=a;
+            // _sb=b;
             _sH=H;
             _sphi=phi;
         }
@@ -54,6 +58,7 @@ class CamJointInverted : public Joint
          *
          */
 
+    /*
         TermPtr F(TermPtr x)
         {
             return Symbolic::Add<scalar>::create(Symbolic::Mult<scalar, scalar, scalar>::create(_a,x),Symbolic::Mult<scalar, scalar, scalar>::create(_b,Symbolic::Pow<scalar>::create(x,2)));
@@ -65,6 +70,7 @@ class CamJointInverted : public Joint
         {
             return _sa*x+_sb*x*x;
         }
+*/
 
         /**
          * @Inherit
@@ -121,7 +127,7 @@ class CamJointInverted : public Joint
                     root.getSymAngle()));
 
 
-            TermPtr z=Symbolic::Add<scalar>::create(F(Symbolic::Mult<scalar, scalar, scalar>::create(Symbolic::Minus<scalar>::create(_H),SIN(Symbolic::Add<scalar>::create(dof,_phi)))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(Symbolic::Add<scalar>::create(dof,_phi))));
+            TermPtr z=Symbolic::Add<scalar>::create(_F(Symbolic::Mult<scalar, scalar, scalar>::create(Symbolic::Minus<scalar>::create(_H),SIN(Symbolic::Add<scalar>::create(dof,_phi)))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(Symbolic::Add<scalar>::create(dof,_phi))));
 
 
                 //Joint anchor on Leaf Body
@@ -194,27 +200,39 @@ class CamJointInverted : public Joint
             double x=0.0;
             double y=0.0;
 
+            Leph::Symbolic::Bounder bounder;
+            SymbolPtr xs = Symbol::create("x");
 
 
             for(int i=0;i<100;i++)
             {
                 x+=.3/100.0;
-                y=F(x);
+                xs->reset();
+                bounder.setValue(xs,x);
+                // y=F(x);
+                y=_F(xs)->evaluate(bounder);
+
+
 
                 rot=Vector2D::rotate(Vector2D(x,y),ori+M_PI);
 
-                viewer.drawSegmentByEnd(pos_r.x(),pos_r.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(127,127,127,100));
+                viewer.drawSegmentByEnd(pos_r.x(),pos_r.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(200,200,200,100));
                 pos_r=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
-
-                y=F(-x);
+                xs->reset();
+                bounder.setValue(xs,-x);
+                y=_F(xs)->evaluate(bounder);
+                // y=F(-x);
                 rot=Vector2D::rotate(Vector2D(-x,y),ori+M_PI);
 
-                viewer.drawSegmentByEnd(pos_l.x(),pos_l.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(127,127,127,100));
+                viewer.drawSegmentByEnd(pos_l.x(),pos_l.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(200,200,200,100));
                 pos_l=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
 
 
             }
 
+
+
+            viewer.drawSegment(pos.x(),pos.y(),_sH*2.0,(Joint::getAngleLeaf()+angleLeaf-M_PI/2.0)*180.0/M_PI,0.05,sf::Color(255,255,255,100));
 
 
             viewer.drawSegment(pos_j.x(),pos_j.y(),_sH,((Joint::getAngleRoot()+angleRoot)+M_PI/2.0-_sphi)*180.0/M_PI,0.01,sf::Color(255,0,255,100));
