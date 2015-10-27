@@ -68,6 +68,21 @@ class UnaryConstraint : public Constraint
             std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
             _system->runSimulationStep(currentTime-timeMax);
             computeCheckConstraint(point, dir, posInBody);
+
+                //TODO: Resting contact
+                //FIXME: moving bodies?
+                /*
+            Vector2D centerPos = _system->evalPosition(*_body);
+            Vector2D centerVel = _system->evalPositionVel(*_body);
+            scalar centerAngleVel = _system->evalAngleVel(*_body);
+            Vector2D vel = centerVel
+                + centerAngleVel*Vector2D::normal(point - centerPos);
+
+            if(vel.norm()<_CONTACT_THRES)
+            {
+
+            }
+                */
             //
 
             std::cout << "pouet" << std::endl;
@@ -75,7 +90,7 @@ class UnaryConstraint : public Constraint
 
             Vector2D impulse = computeImpulsion(
                 point, dir);
-            std::cout << impulse << std::endl;
+            std::cout << "Impulse: "<<impulse<<"Direction: "<<dir << std::endl;
             propagateImpulse(impulse, point, posInBody);
         }
 
@@ -187,12 +202,15 @@ class UnaryConstraint : public Constraint
             Vector2D vel = centerVel
                 + centerAngleVel*Vector2D::normal(point - centerPos);
 
-            //Declare normal and tangent unit vector
-            Vector2D n = dir;
-            Vector2D t = Vector2D::normal(dir);
+                //FIXME: between moving bodies?
+
 
             //Build impulse
             Vector2D impulse(0.0, 0.0);
+
+            //Declare normal and tangent unit vector
+            Vector2D n = dir;
+            Vector2D t = Vector2D::normal(dir);
             //Tangent (friction) component
             if (Constraint::isFriction()) {
                 impulse += -Vector2D::dot(vel, t)*t;

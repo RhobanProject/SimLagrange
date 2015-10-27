@@ -12,7 +12,7 @@
 #include "Symbolic/src/terms.h"
 #include "SimMecha/src/Simulation.h"
 
-#include "SimMecha/src/HeightUnaryContraint.hpp"
+#include "SimMecha/src/HeightUnaryConstraint.hpp"
 
 #include <stdio.h>
 #include <functional>
@@ -73,6 +73,18 @@ int main()
             return Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) );
 
         };
+
+
+
+    double ga=-0.2;
+    double gb=-1.3;
+
+    auto F_ground = [&ga, &gb](double x) -> double
+        {
+            // gb+=0.000001;
+            return ga*x+gb;
+        };
+
 
 
     System system(Vector2D(-1.0, 0.0));
@@ -172,14 +184,18 @@ int main()
 
     system.initSymbols();
 
+
+    Ground g(b2, system, 0.9, false, F_ground, Vector2D(0.0, 1.0));
+
+
     /*
-    HeightUnaryContraint c1(
+    HeightUnaryConstraint c1(
         b3, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryContraint c2(
+    HeightUnaryConstraint c2(
         b2, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryContraint c3(
+    HeightUnaryConstraint c3(
         b1, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryContraint c4(
+    HeightUnaryConstraint c4(
         system.getBase(), system, 0.90, false, 0.0, Vector2D(0.0, 0.0));
     */
 
@@ -187,6 +203,8 @@ int main()
         viewer.beginDraw();
         viewer.drawFrame();
         system.draw(viewer);
+        g.draw(viewer);
+
         viewer.endDraw(10);
 
         try{
@@ -207,6 +225,8 @@ int main()
         c3.handle();
         c4.handle();
         */
+
+        g.handle();
     }
 
     return 0;
