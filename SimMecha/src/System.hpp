@@ -7,6 +7,7 @@
 #include "SimMecha/src/Simulation.h"
 #include "SimMecha/src/Joint.hpp"
 #include "SimMecha/src/AngularJoint.hpp"
+#include "SimMecha/src/AngularSpring.hpp"
 #include "SimMecha/src/LinearJoint.hpp"
 #include "SimMecha/src/LinearSpring.hpp"
 #include "SimMecha/src/CamJoint.hpp"
@@ -211,6 +212,55 @@ class System
         {
             Body* leaf = new Body(_time);
             Joint* joint = new LinearSpring(
+                root, posRoot, angleRoot,
+                *leaf, posLeaf, angleLeaf,
+                createDof(),K, l0);
+            leaf->setJointRoot(joint);
+            root.addLeafJoint(joint);
+
+            _bodies.push_back(leaf);
+            _joints.push_back(joint);
+            _statePosition.push_back(statePos);
+            _stateVelocity.push_back(stateVel);
+            _stateTorque.push_back(0.0);
+
+            return *leaf;
+        }
+
+
+
+       inline Body& addAngularSpring(Body& root,
+            const Vector2D& posRoot, scalar angleRoot,
+            const Vector2D& posLeaf, scalar angleLeaf,
+                                    std::function<TermPtr(TermPtr)> F,
+            scalar statePos, scalar stateVel)
+        {
+            Body* leaf = new Body(_time);
+            Joint* joint = new AngularSpring(
+                root, posRoot, angleRoot,
+                *leaf, posLeaf, angleLeaf,
+                createDof(),F);
+            leaf->setJointRoot(joint);
+            root.addLeafJoint(joint);
+
+            _bodies.push_back(leaf);
+            _joints.push_back(joint);
+            _statePosition.push_back(statePos);
+            _stateVelocity.push_back(stateVel);
+            _stateTorque.push_back(0.0);
+
+            return *leaf;
+        }
+
+
+       inline Body& addAngularSpring(Body& root,
+            const Vector2D& posRoot, scalar angleRoot,
+            const Vector2D& posLeaf, scalar angleLeaf,
+                                        scalar K, scalar l0,
+            scalar statePos, scalar stateVel)
+        {
+            Body* leaf = new Body(_time);
+            Joint* joint = new AngularSpring(
                 root, posRoot, angleRoot,
                 *leaf, posLeaf, angleLeaf,
                 createDof(),K, l0);

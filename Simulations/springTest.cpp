@@ -87,10 +87,19 @@ int main()
 
     Body& b1 = system.addLinearSpring(
         system.getBase(),
-        Vector2D(0.0, 0.4), M_PI/2.0,
+        Vector2D(0.0, 0.0), M_PI/2.0,
         Vector2D(0.0, 0.0), 0.0,
-            1.0, 0.1, 0.0, 0.0);
+            2.0, 0.0, 0.0, 0.0);
     b1.addMass(0.1, Vector2D(0.4, 0.0));
+
+
+
+    Body& b2 = system.addAngularSpring(
+    system.getBase(),
+        Vector2D(0.0, 0.0), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+            2.0, 0.0, 0.3, 0.0);
+    b2.addMass(0.1, Vector2D(0.0, 0.4));
 
 
     // Body& b2 = system.addAngularJoint(
