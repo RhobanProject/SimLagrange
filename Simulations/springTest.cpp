@@ -90,7 +90,7 @@ int main()
         Vector2D(0.0, 0.4), M_PI/2.0,
         Vector2D(0.0, 0.0), 0.0,
             1.0, 0.1, 0.0, 0.0);
-    b1.addMass(0.1, Vector2D(0.0, 0.8));
+    b1.addMass(0.1, Vector2D(0.4, 0.0));
 
 
     // Body& b2 = system.addAngularJoint(
