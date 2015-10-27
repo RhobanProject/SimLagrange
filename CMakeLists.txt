@@ -50,6 +50,12 @@ add_executable(
 )
 
 
+add_executable(
+	testSpring
+        Simulations/springTest.cpp
+)
+
+
 #Link libraries
 target_link_libraries(testsSimViewer
     sfml-graphics
@@ -69,6 +75,13 @@ target_link_libraries(testCam
 )
 
 target_link_libraries(testCompass
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+
+target_link_libraries(testSpring
     sfml-graphics
     sfml-window
     sfml-system

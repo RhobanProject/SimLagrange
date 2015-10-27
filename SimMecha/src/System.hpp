@@ -8,6 +8,7 @@
 #include "SimMecha/src/Joint.hpp"
 #include "SimMecha/src/AngularJoint.hpp"
 #include "SimMecha/src/LinearJoint.hpp"
+#include "SimMecha/src/LinearSpring.hpp"
 #include "SimMecha/src/CamJoint.hpp"
 #include "SimMecha/src/CamJointInverted.hpp"
 #include "SimMecha/src/Body.hpp"
@@ -178,6 +179,55 @@ class System
         }
 
 
+       inline Body& addLinearSpring(Body& root,
+            const Vector2D& posRoot, scalar angleRoot,
+            const Vector2D& posLeaf, scalar angleLeaf,
+                                    std::function<TermPtr(TermPtr)> F,
+            scalar statePos, scalar stateVel)
+        {
+            Body* leaf = new Body(_time);
+            Joint* joint = new LinearSpring(
+                root, posRoot, angleRoot,
+                *leaf, posLeaf, angleLeaf,
+                createDof(),F);
+            leaf->setJointRoot(joint);
+            root.addLeafJoint(joint);
+
+            _bodies.push_back(leaf);
+            _joints.push_back(joint);
+            _statePosition.push_back(statePos);
+            _stateVelocity.push_back(stateVel);
+            _stateTorque.push_back(0.0);
+
+            return *leaf;
+        }
+
+
+           inline Body& addLinearSpring(Body& root,
+            const Vector2D& posRoot, scalar angleRoot,
+            const Vector2D& posLeaf, scalar angleLeaf,
+                                        scalar K, scalar l0,
+            scalar statePos, scalar stateVel)
+        {
+            Body* leaf = new Body(_time);
+            Joint* joint = new LinearSpring(
+                root, posRoot, angleRoot,
+                *leaf, posLeaf, angleLeaf,
+                createDof(),K, l0);
+            leaf->setJointRoot(joint);
+            root.addLeafJoint(joint);
+
+            _bodies.push_back(leaf);
+            _joints.push_back(joint);
+            _statePosition.push_back(statePos);
+            _stateVelocity.push_back(stateVel);
+            _stateTorque.push_back(0.0);
+
+            return *leaf;
+        }
+
+
+
         /**
          * Create and return a new Body linked to the given
          * Body with a cam Joint
@@ -251,6 +301,19 @@ class System
                     _lagrangian,
                     _bodies[i]->getLagrangian());
             }
+
+                //Add Joint's Lagrangian (springs)
+            for (size_t i=0;i<_joints.size();i++) {
+                _joints[i]->initSymbols();
+                // std::cout<<"DEBUG: "<<_joints[i]->getLagrangian()->toString()<<std::endl;
+
+                _lagrangian = Symbolic::Add<scalar>::create(
+                    _lagrangian,
+                    _joints[i]->getLagrangian());
+            }
+
+
+
             //Compute dynamic equations
             for (size_t i=0;i<_dofs.size();i++) {
                 TermPtr dL_dq = _lagrangian

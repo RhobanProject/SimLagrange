@@ -127,6 +127,39 @@ class Joint
          */
         virtual void computeSymTransformation(SymbolPtr time) = 0;
 
+
+
+
+        /**
+         * Recompute lagrangian expression
+         */
+        inline void initSymbols()
+        {
+            computeLagrangian();
+        }
+
+        /**
+         * Default virtual Lagrangian.
+         * To be redefined
+         */
+        virtual void computeLagrangian()
+        {
+            _lagrangian = Constant::create(0.0);
+        }
+
+        /**
+         * Return the Symbolic lagrangian
+         */
+        inline TermPtr getLagrangian()
+        {
+            return _lagrangian;
+        }
+
+        inline void setLagrangian(TermPtr L)
+        {
+            _lagrangian=L;
+        }
+
         /**
          * Draw the Joint on given SimViewer with given
          * center and angle coordinates for both linked
@@ -177,6 +210,12 @@ class Joint
          * Joint Symbolic degree of freedom
          */
         SymbolPtr _dof;
+
+        /**
+         * Joint lagrangian Symbolic expression
+         */
+        TermPtr _lagrangian;
+
 };
 
 }
