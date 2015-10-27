@@ -88,6 +88,22 @@ class AngularSpring : public AngularJoint
             viewer.drawJoint(pos.x(), pos.y(),
                 (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
                 (value)*180.0/M_PI);
+
+
+                //let's draw a rotational spring
+            Vector2D tmppos=pos;
+            Vector2D tmpnew=tmppos;
+            scalar angle=Joint::getAngleRoot()+angleRoot+M_PI/2.0;
+            scalar r=0.0;
+
+            for(int i=0;i<100;i++)
+            {
+                r+=0.25/100.0;
+                angle+=2.0*(2.0*M_PI+value/2.0)/100.0;
+                tmpnew=Vector2D(pos.x()+r*cos(angle),pos.y()+r*sin(angle));
+                viewer.drawSegmentByEnd(tmppos.x(),tmppos.y(), tmpnew.x(),tmpnew.y(),0.01,sf::Color(200,200,200,100));
+                tmppos=tmpnew;
+            }
         }
 
 

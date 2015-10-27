@@ -88,6 +88,42 @@ class LinearSpring : public LinearJoint
 
             viewer.drawLinearJoint(pos1.x(), pos1.y(),
                 pos2.x(), pos2.y(), value);
+
+
+
+                //let's draw a spring :)
+
+            scalar tmp=value/10.0;
+            scalar sig=1.0;
+            Vector2D tmppos=pos1;
+            scalar angle=atan2(pos2.y()-pos1.y(),pos2.x()-pos1.x());
+
+            Vector2D tmpnew=tmppos+Vector2D::rotate(Vector2D(0.1*sig,tmp), angle+M_PI/2.0);
+
+            viewer.drawSegmentByEnd(tmppos.x(),tmppos.y(), tmpnew.x(),tmpnew.y(),0.01,sf::Color(200,200,200,100));
+
+            tmppos=tmpnew;
+            sig*=-1.0;
+
+            tmp=value/5.0;
+
+
+            for(int i=1;i<5;i++)
+            {
+                tmpnew=tmppos+Vector2D::rotate(Vector2D(0.2*sig,tmp), angle+M_PI/2.0);
+
+                viewer.drawSegmentByEnd(tmppos.x(),tmppos.y(), tmpnew.x(),tmpnew.y(),0.01,sf::Color(200,200,200,100));
+
+                tmppos=tmpnew;
+                sig*=-1.0;
+
+            }
+            tmp=value/10.0;
+
+            tmpnew=tmppos+Vector2D::rotate(Vector2D(0.1*sig,tmp), angle+M_PI/2.0);
+            viewer.drawSegmentByEnd(tmppos.x(),tmppos.y(), tmpnew.x(),tmpnew.y(),0.01,sf::Color(200,200,200,100));
+
+
         }
 
 
