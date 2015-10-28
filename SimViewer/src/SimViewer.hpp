@@ -25,7 +25,6 @@ class SimViewer
          * Typedef for handler function
          */
         typedef void (*HandlerFunction)(Any::Any param);
-
         /**
          * Configuation constant
          */
@@ -102,6 +101,17 @@ class SimViewer
         inline bool isOpen() const
         {
             return _window.isOpen();
+        }
+
+        inline void moveCam(float x, float y)
+        {
+            // afterCoord=_window.mapPixelToCoords(sf::Vector2i(pos.x(),pos.y()));
+            afterCoord=sf::Vector2f(x,y);
+            const sf::Vector2f offsetCoords(beforeCoord - afterCoord);
+            sf::View view(_window.getView());
+            view.move(offsetCoords);
+            _window.setView(view);
+            beforeCoord=afterCoord;
         }
 
         /**

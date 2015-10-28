@@ -364,6 +364,9 @@ class System
 
 
 
+            _dynamics.clear();
+            _velDofs.clear();
+
             //Compute dynamic equations
             for (size_t i=0;i<_dofs.size();i++) {
                 TermPtr dL_dq = _lagrangian
@@ -413,6 +416,12 @@ class System
             _statePosition=_init_statePosition;
             _stateVelocity=_init_stateVelocity;
             _stateTorque=_init_stateTorque;
+        }
+
+
+        inline std::vector<Joint*>& getJoints()
+        {
+            return _joints;
         }
 
         /**

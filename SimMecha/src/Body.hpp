@@ -77,7 +77,7 @@ class Body
 
         /**
          * Return the Symbolic position, angle
-         * and their velocity of center in 
+         * and their velocity of center in
          * Body coordinate system
          */
         inline TermVectorPtr getSymPosition()
@@ -99,7 +99,7 @@ class Body
 
         /**
          * Build and return the Symbolic position and
-         * velocity expression in global frame of given point 
+         * velocity expression in global frame of given point
          * in Body coordinate
          */
         inline TermVectorPtr buildSymPosition(const Vector2D& point)
@@ -170,21 +170,27 @@ class Body
             computeLagrangian();
         }
 
+        inline void setPos(const Vector2D& pos)
+        {
+            _symPos =ConstantVector::create(pos);
+            computeLagrangian();
+        }
+
         /**
          * Draw the Body on given SimViewer with given
          * center coordinates and angle
          */
-        inline virtual void draw(SimViewer::SimViewer& viewer, 
+        inline virtual void draw(SimViewer::SimViewer& viewer,
             const Vector2D& pos, scalar angle)
         {
             //Draw a scale on center
-            viewer.drawFrame(0.3, 
+            viewer.drawFrame(0.3,
                 pos.x(), pos.y(), angle*180.0/M_PI);
             //Draw masses
             for (size_t i=0;i<_massPositions.size();i++) {
-                Vector2D posMass = pos 
+                Vector2D posMass = pos
                     + Vector2D::rotate(_massPositions[i], angle);
-                viewer.drawMass(posMass.x(), posMass.y(), 
+                viewer.drawMass(posMass.x(), posMass.y(),
                     _massValues[i]);
             }
         }
@@ -227,7 +233,7 @@ class Body
          */
         std::vector<scalar> _massValues;
         std::vector<Vector2D> _massPositions;
-        
+
         /**
          * Compute lagrangian Symbolic expression
          */
@@ -236,31 +242,31 @@ class Body
             //Compute lagrangian for all masses
             for (size_t i=0;i<_massPositions.size();i++) {
                 //Mass position
-                TermVectorPtr posMass = 
+                TermVectorPtr posMass =
                     buildSymPosition(_massPositions[i]);
                 //Mass velocity
                 TermVectorPtr velMass = posMass->derivate(_time);
                 //Kinetic energy
                 TermPtr halfSym = Constant::create(0.5);
                 TermPtr massSym = Constant::create(_massValues[i]);
-                TermPtr squaredVel = 
+                TermPtr squaredVel =
                     Symbolic::Dot<scalar, Vector2D, Vector2D>::
                     create(velMass, velMass);
-                TermPtr tmp1 = 
+                TermPtr tmp1 =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(halfSym, massSym);
-                TermPtr kinetic = 
+                TermPtr kinetic =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(tmp1, squaredVel);
                 //Potential energy
                 TermPtr gravitySym = Constant::create(9.81); //TODO
-                TermPtr height = 
+                TermPtr height =
                     Symbolic::Y<scalar, Vector2D>::
                     create(posMass);
-                TermPtr tmp2 = 
+                TermPtr tmp2 =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(massSym, gravitySym);
-                TermPtr potential = 
+                TermPtr potential =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(tmp2, height);
                 //Mass lagrangian
@@ -277,4 +283,3 @@ class Body
 }
 
 #endif
-

@@ -75,6 +75,22 @@ class Ground: public HeightUnaryConstraint
     public:
 
         /**
+         * Function describing the ground (in global frame)
+         *
+         */
+
+        std::function<float(float)> _F;
+        /**
+         * Position in Body coordinate
+         * system of refence point used
+         * to check the Constraint
+         */
+
+        Vector2D _posInBody;
+        Vector2D _currentpos;
+        bool _contact;
+
+        /**
          * Initialization
          */
         Ground(Body& body, System& system,
@@ -88,7 +104,7 @@ class Ground: public HeightUnaryConstraint
             _posInBody=posInBody;
         }
 
-        void draw(Leph::SimViewer::SimViewer& viewer)
+        virtual void draw(Leph::SimViewer::SimViewer& viewer)
         {
             Vector2D pos_r=_currentpos;
             Vector2D pos_l=_currentpos;
@@ -141,21 +157,6 @@ class Ground: public HeightUnaryConstraint
         }
 
     private:
-
-        /**
-         * Function describing the ground (in global frame)
-         *
-         */
-
-        std::function<float(float)> _F;
-        /**
-         * Position in Body coordinate
-         * system of refence point used
-         * to check the Constraint
-         */
-        Vector2D _posInBody;
-        Vector2D _currentpos;
-        bool _contact;
 
 };
 

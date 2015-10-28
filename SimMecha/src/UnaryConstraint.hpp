@@ -38,24 +38,18 @@ class UnaryConstraint : public Constraint
         {
         }
 
-        /**
-         * TODO TODO TODO
-         */
-        inline void handle()
-        {
-            Vector2D point;
-            Vector2D dir;
-            Vector2D posInBody;
 
+        inline bool getConstraint(Vector2D& point, Vector2D& dir, Vector2D& posInBody)
+        {
             if (!computeCheckConstraint(point, dir, posInBody)) {
-                return;
+                return false;
             }
 
             //TODO Bijection
             scalar timeMin = 0.0;
             scalar timeMax = 0.01;
             scalar currentTime = 0.0;
-            for (int i=0;i<10;i++) {
+            for (int i=0;i<10;i++) { //FIXME?
                 scalar t = (timeMax-timeMin)/2.0;
                 _system->runSimulationStep(currentTime-t);
                 currentTime = t;
@@ -68,6 +62,43 @@ class UnaryConstraint : public Constraint
             std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
             _system->runSimulationStep(currentTime-timeMax);
             computeCheckConstraint(point, dir, posInBody);
+            return true;
+        }
+
+        /**
+         * TODO TODO TODO
+         */
+        inline virtual void handle()
+        {
+            Vector2D point;
+            Vector2D dir;
+            Vector2D posInBody;
+
+                /*
+            if (!computeCheckConstraint(point, dir, posInBody)) {
+                return;
+            }
+
+            //TODO Bijection
+            scalar timeMin = 0.0;
+            scalar timeMax = 0.01;
+            scalar currentTime = 0.0;
+            for (int i=0;i<10;i++) { //FIXME?
+                scalar t = (timeMax-timeMin)/2.0;
+                _system->runSimulationStep(currentTime-t);
+                currentTime = t;
+                if (computeCheckConstraint(point, dir, posInBody)) {
+                    timeMin = t;
+                } else {
+                    timeMax = t;
+                }
+            }
+            std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
+            _system->runSimulationStep(currentTime-timeMax);
+            computeCheckConstraint(point, dir, posInBody);
+                */
+
+
 
                 //TODO: Resting contact
                 //FIXME: moving bodies?
@@ -84,6 +115,12 @@ class UnaryConstraint : public Constraint
             }
                 */
             //
+
+
+            if (!getConstraint(point, dir, posInBody)) {
+                return;
+            }
+
 
             std::cout << "pouet" << std::endl;
             std::cout << point << std::endl;

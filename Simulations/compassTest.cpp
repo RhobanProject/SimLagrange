@@ -44,7 +44,114 @@ void* R_cb(Leph::Any::Any param)
     std::cout<<"RESET"<<std::endl;
 }
 
+class SimpleWalkerGround: public Ground
+{
+    bool postCollision;
+    int collision_delay;
+    public:
+        SimpleWalkerGround(Body& body, System& system,
+                 scalar restitutionCoef, bool isFriction,
+                 std::function<float(float)> F, const Vector2D& posInBody):
+            Ground(body, system, restitutionCoef, isFriction, F, posInBody)
+        {
+            postCollision=false;
+            collision_delay=10;
+        }
 
+    inline void handle()
+        {
+            Vector2D point;
+            Vector2D dir;
+            Vector2D posInBody;
+
+            // std::cout<<"C: "<<postCollision<<" "<<collision_delay<<std::endl;
+
+            if(_system->statePosition("q2")<0.0)
+            {
+                std::cout<<"SWING"<<std::endl;
+                // std::cout<<"Q2: "<<_system->statePosition("q2")<<std::endl;
+
+                postCollision=true;
+                collision_delay=10;
+
+                Vector2D centerPos = UnaryConstraint::_system
+                    ->evalPosition(*UnaryConstraint::_body);
+                scalar centerAngle = UnaryConstraint::_system
+                    ->evalAngle(*UnaryConstraint::_body);
+
+                Vector2D pos = centerPos
+                    + Vector2D::rotate(_posInBody, centerAngle);
+
+                _currentpos=pos;
+
+                return;
+            }
+
+            if (!getConstraint(point, dir, posInBody) || postCollision) {
+
+                if(collision_delay-- == 0)
+                {
+                    collision_delay=10;
+                    postCollision=false;
+                }
+
+                return;
+            }
+
+            postCollision=true;
+            std::cout<<"Collision"<<std::endl;
+
+                //manage the Heelstrike
+            _system->getBase().setPos(point); //get the base to the new contact pos
+
+                //velocities
+
+            scalar gamma=atan2(_F(1.0),1.0); //FIXME ground angle
+            scalar theta=_system->statePosition("q1")-gamma;
+            scalar theta_dot=_system->stateVelocity("q1");
+            scalar psi_dot=cos(2.0*theta)*(1.0-cos(2.0*theta))*theta_dot;
+
+            theta_dot=cos(2.0*theta)*theta_dot;
+
+            _system->stateVelocity("q1")=theta_dot;
+            _system->stateVelocity("q2")=psi_dot;
+
+            std::cout<<"Q2: "<<_system->statePosition("q2")<<std::endl;
+            _system->statePosition("q1")=_system->evalAngle(*_body);
+            _system->statePosition("q2")=-_system->statePosition("q2");
+
+
+            _system->initSymbols();
+
+
+        }
+
+        void draw(Leph::SimViewer::SimViewer& viewer)
+        {
+            Vector2D pos_r=_currentpos;
+            Vector2D pos_l=_currentpos;
+
+            for(double xi=0.0; xi<5.0;xi+=0.01)
+            {
+                viewer.drawSegmentByEnd(pos_r.x(),_F(pos_r.x()), xi+pos_r.x(),_F(xi+pos_r.x()) ,0.02,sf::Color(255,255,255,255));
+                pos_r=Vector2D(pos_r.x()+xi, _F(xi+pos_r.x()));
+                viewer.drawSegmentByEnd(pos_l.x(),_F(pos_l.x()), pos_l.x()-xi,_F(pos_l.x()-xi) ,0.02,sf::Color(255,255,255,255));
+                pos_l=Vector2D(pos_l.x()-xi, _F(pos_l.x()-xi));
+            }
+
+            if(_contact) //FIXME
+            {
+                viewer.drawCircle(_currentpos.x(),_currentpos.y(),0.05,sf::Color(255,0,0,255));
+            }
+            else
+                viewer.drawCircle(_currentpos.x(),_currentpos.y(),0.05,sf::Color(255,0,0,100));
+
+
+                //the leg
+            viewer.drawSegmentByEnd(_currentpos.x(),_currentpos.y(),_system->evalPosition(*_body).x() ,_system->evalPosition(*_body).y() ,0.05,sf::Color(0,255,0,50));
+
+        }
+};
 
 int main()
 {
@@ -56,28 +163,8 @@ int main()
     viewer.setRHandler((SimViewer::HandlerFunction)R_cb, param);
 
 
-    TermPtr a=Constant::create(0.001);
-    TermPtr b=Constant::create(0.1);
-    TermPtr c=Constant::create(6.0);
-
-    //parabolic
-    // auto F = [&a, &b](TermPtr x) -> TermPtr
-    //     {
-    //         return Leph::Symbolic::Add<scalar>::create(Leph::Symbolic::Mult<scalar, scalar, scalar>::create(a,x),Leph::Symbolic::Mult<scalar, scalar, scalar>::create(b,Leph::Symbolic::Pow<scalar>::create(x,2)));
-    //     };
-
-    //hyperbolic
-    auto F = [&a, &b, &c](TermPtr x) -> TermPtr
-        {
-
-            return Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) );
-
-        };
-
-
-
-    double ga=-0.2;
-    double gb=-1.3;
+    double ga=-0.21;
+    double gb=0.0;//-1.3;
 
     auto F_ground = [&ga, &gb](double x) -> double
         {
@@ -87,9 +174,9 @@ int main()
 
 
 
-    System system(Vector2D(-1.0, 0.0));
+    System system(Vector2D(0.0, 0.0));
     //System system(Vector2D(-1.0, 1.0), Vector2D());
-    system.getBase().addMass(1, Vector2D(0.0, 0.0));
+    system.getBase().addMass(0.1, Vector2D(0.0, 0.0));
 
 
 
@@ -97,16 +184,18 @@ int main()
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        -0.2, 0.0);
-    b1.addMass(0.1, Vector2D(0.0, 0.8));
+        -0.3, 0.0);
+    b1.addMass(0.5, Vector2D(0.0, 0.8));
 
 
     Body& b2 = system.addAngularJoint(
         b1,
         Vector2D(0.0, 1.6), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.0, 0.0);
-    b2.addMass(0.1, Vector2D(0.0, 0.8));
+        0.8, 0.0);
+    b2.addMass(0.5, Vector2D(0.0, -0.8));
+
+    // b2.addMass(0.1, Vector2D(0.0, 0.0));
 
 
     // Body& b2 = system.addLinearJoint(
@@ -185,7 +274,7 @@ int main()
     system.initSymbols();
 
 
-    Ground g(b2, system, 0.9, false, F_ground, Vector2D(0.0, 1.0));
+    SimpleWalkerGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -1.6));
 
 
     /*
@@ -204,7 +293,7 @@ int main()
         viewer.drawFrame();
         system.draw(viewer);
         g.draw(viewer);
-
+        viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
         viewer.endDraw(10);
 
         try{
