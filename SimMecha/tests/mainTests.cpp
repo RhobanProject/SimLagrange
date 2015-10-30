@@ -18,7 +18,7 @@ int main()
 {
     Leph::SimViewer::SimViewer viewer(800, 600);
 
-    System system(Vector2D(-1.0, 1.0));
+    System system(Vector2D(-1.0, 0.0));
     //System system(Vector2D(-1.0, 1.0), Vector2D());
     system.getBase().addMass(1.0, Vector2D(0.0, 0.0));
 
@@ -60,15 +60,16 @@ int main()
         viewer.beginDraw();
         viewer.drawFrame();
         system.draw(viewer);
+        viewer.moveCam(-system.evalPosition(system.getBase()).x(),system.evalPosition(system.getBase()).y());
         viewer.endDraw(10);
 
         system.runSimulationStep(0.01);
 
 
-        c1.handle();
-        c2.handle();
-        c3.handle();
-        c4.handle();
+        // c1.handle();
+        // c2.handle();
+        // c3.handle();
+        // c4.handle();
 
     }
 

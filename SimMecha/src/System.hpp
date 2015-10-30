@@ -12,6 +12,7 @@
 #include "SimMecha/src/LinearSpring.hpp"
 #include "SimMecha/src/CamJoint.hpp"
 #include "SimMecha/src/CamJointInverted.hpp"
+#include "SimMecha/src/RoundFoot.hpp"
 #include "SimMecha/src/Body.hpp"
 #include "SimMecha/src/Base.hpp"
 #include "SimMecha/src/FixedBase.hpp"
@@ -306,7 +307,7 @@ class System
             return *leaf;
         }
 
-            inline Body& addCamJointInverted(Body& root,
+        inline Body& addCamJointInverted(Body& root,
             const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, std::function<TermPtr(TermPtr)> F, scalar H, scalar phi,
                                  scalar statePos, scalar stateVel)
         {
@@ -326,6 +327,28 @@ class System
 
             return *leaf;
         }
+
+        inline Body& addRoundFoot(Body& root,
+            const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, scalar r, scalar gamma,
+                                 scalar statePos, scalar stateVel)
+        {
+            Body* leaf = new Body(_time);
+            Joint* joint = new RoundFoot(
+                root, posRoot, angleRoot,
+                *leaf, posLeaf, angleLeaf,
+                createDof(), r, gamma, statePos);
+            leaf->setJointRoot(joint);
+            root.addLeafJoint(joint);
+
+            _bodies.push_back(leaf);
+            _joints.push_back(joint);
+            _statePosition.push_back(statePos);
+            _stateVelocity.push_back(stateVel);
+            _stateTorque.push_back(0.0);
+
+            return *leaf;
+        }
+
 
         /**
          * Build for all Bodies
@@ -400,6 +423,8 @@ class System
                 _init_statePosition=_statePosition;
                 _init_stateVelocity=_stateVelocity;
                 _init_stateTorque=_stateTorque;
+                _init_basePosition= evalPosition(getBase()); //TODO
+
                 _is_init=false;
             }
 
@@ -411,11 +436,18 @@ class System
                 _dynamics, _time);
         }
 
+        /**
+         * Yep, just reset the system...
+         *
+         */
+
         inline void stateReset()
         {
             _statePosition=_init_statePosition;
             _stateVelocity=_init_stateVelocity;
             _stateTorque=_init_stateTorque;
+            getBase().setPos(_init_basePosition);
+            initSymbols();
         }
 
 
@@ -650,6 +682,8 @@ class System
         std::vector<scalar> _init_statePosition;
         std::vector<scalar> _init_stateVelocity;
         std::vector<scalar> _init_stateTorque;
+        Vector2D _init_basePosition;
+
         bool _is_init;
 
     // DofContainer _init_dofs;

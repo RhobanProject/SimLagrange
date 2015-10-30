@@ -58,8 +58,9 @@ class UnaryConstraint : public Constraint
                 } else {
                     timeMax = t;
                 }
+                // std::cout<<"DEBUG Col: "<<t<<" "<<timeMin<<" "<<timeMax<<std::endl;
             }
-            std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
+            // std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
             _system->runSimulationStep(currentTime-timeMax);
             computeCheckConstraint(point, dir, posInBody);
             return true;

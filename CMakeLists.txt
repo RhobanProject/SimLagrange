@@ -28,6 +28,9 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/lib)
 #Enable C++11
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+#Special flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
 
 #Build tests
 foreach(f ${TESTS_DIRECTORIES})
@@ -51,9 +54,22 @@ add_executable(
 
 
 add_executable(
+	SimpleWalkerOptim
+        Simulations/SimpleWalkerOptim.cpp
+)
+
+
+add_executable(
 	testSpring
         Simulations/springTest.cpp
 )
+
+
+add_executable(
+	testRoundFoot
+        Simulations/roundFootTest.cpp
+)
+
 
 
 #Link libraries
@@ -85,4 +101,19 @@ target_link_libraries(testSpring
     sfml-graphics
     sfml-window
     sfml-system
+)
+
+
+target_link_libraries(testRoundFoot
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+
+target_link_libraries(SimpleWalkerOptim
+    sfml-graphics
+    sfml-window
+    sfml-system
+    cmaes
 )
