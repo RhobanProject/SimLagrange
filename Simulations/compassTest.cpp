@@ -64,11 +64,77 @@ int main()
     // double init_swingangle=0.783498;
     // double init_swingvel=0.0920029;
 
-    double slope=-0.133003;
-    double init_angle=-0.376547;
-    double init_vel=0.274255;
-    double init_swingangle=0.783498;
-    double init_swingvel=0.0920026;
+ //   pas mal
+    // double slope=-0.133003;
+    // double init_angle=-0.376547;
+    // double init_vel=0.274255;
+    // double init_swingangle=0.783498;
+    // double init_swingvel=0.0920026;
+
+    // double slope=-0.35723;
+    // double init_angle=0.0296499;
+    // double init_vel=0.0302701;
+    // double init_swingangle=1.45022e-05;
+    // double init_swingvel=1.45022e-05;
+
+
+    //pas mal
+    // double init_vel=-0.518444;
+    // double init_swingangle=-0.613237;
+    // double init_swingvel=0.0205823;
+    // double slope=-0.1;
+
+    //fixed point
+    // double init_vel=-0.394568;
+    // double init_swingangle=-0.353006;
+    // double init_swingvel=-0.0249299;
+    // double slope=-0.00515664;
+
+
+    //fixed point
+    double init_vel=-0.318324391427563;
+    double init_swingangle=-0.280009715614562;
+    double init_swingvel=-0.0127821587541628;
+    double slope=-0.00204763028992204;
+
+    // //fixed point
+    // double init_vel=-0.556258268721377;
+    // double init_swingangle=-0.525716604307055;
+    // double init_swingvel=-0.0757577623630868;
+    // double slope=-0.02;
+
+        //fixed point 10e-10
+    // double init_vel=-0.556258304656607;
+    // double init_swingangle=-0.525716634797992;
+    // double init_swingvel=-0.0757577151745346;
+    // double slope=-0.02;
+
+
+
+
+    // double init_vel=-0.661016;
+    // double init_swingangle=-0.702991;
+    // double init_swingvel=0.45054;
+
+
+    // double slope=-0.1;
+
+
+
+    //test with 0.1 and 1 mass
+    // double init_vel=-0.46557571316247;
+    // double init_swingangle=-0.402591267965758;
+    // double init_swingvel=-0.04077794269305;
+    // double slope=-0.02;
+
+
+
+
+    double init_angle=(M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0;
+
+
+
+
 
 
     // double slope=-0.1;
@@ -114,21 +180,6 @@ int main()
         init_swingangle, init_swingvel);
     b2.addMass(0.001, Vector2D(0.0, -2.0));
 
-    // Body& b1 = system.addAngularJoint(
-    //     system.getBase(),
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     atan2(-0.1,1)-0.2, -0.2);
-    // b1.addMass(0.001, Vector2D(0.0, 2.0));
-
-
-    // Body& b2 = system.addAngularJoint(
-    //     b1,
-    //     Vector2D(0.0, 2.0), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.8, 0.0);
-    // b2.addMass(0.001, Vector2D(0.0, -2.0));
-
     b2.addMass(1, Vector2D(0.0, 0.0));
 
     system.initSymbols();
@@ -148,8 +199,9 @@ int main()
             if(simu_reset){
                 system.stateReset();
                 simu_reset=false;
+                g.hasFallen=false;
             }
-            if(!simu_pause)
+            if(!simu_pause && !g.hasFallen)
                 system.runSimulationStep(0.01);
         }
         catch(const std::exception & e)
@@ -158,6 +210,8 @@ int main()
         }
 
         g.handle();
+        if(g.hasFallen)
+            std::cout<<"FALL, nbStep: "<<g.nbStep<<std::endl;
     }
 
     return 0;

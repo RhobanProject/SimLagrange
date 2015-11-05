@@ -142,12 +142,14 @@ class Ground: public HeightUnaryConstraint
                 + Vector2D::rotate(_posInBody, centerAngle);
 
             point = pos;
-            dir = Vector2D(0.0, 1.0);
+            dir = Vector2D(0.0, 1.0); //TODO normal
             posInBody = _posInBody;
             _currentpos=pos;
 
 
             if (pos.y() <= _F(pos.x())) {
+            // if ((pos.y()-_F(pos.x())) <=0.0 && fabs(pos.y()-_F(pos.x()))<0.01 ) {
+            // if ((pos.y()-_F(pos.x())) <=0.0) {
                 _contact=true;
                 return true;
             } else {
