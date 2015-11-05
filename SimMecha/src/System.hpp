@@ -360,6 +360,11 @@ class System
          */
         inline void initSymbols()
         {
+
+            _lagrangian = Symbol::create(
+                Symbolic::BaseSymbol::zero()); //reset Lagrangian
+
+
             //We assume that Joints in the container are ordered
             //by dependencies (true by construction)
             for (size_t i=0;i<_joints.size();i++) {
@@ -500,6 +505,11 @@ class System
         inline bool isDof(const std::string& name) const
         {
             return _dofs.isKey(name);
+        }
+
+        inline DofContainer getDof() const
+        {
+            return _dofs;
         }
 
         /**

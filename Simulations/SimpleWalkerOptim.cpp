@@ -98,9 +98,9 @@ FitFunc walk=[](const double *x, const int N)
     // double init_swingvel=1.76594e-10;
 
 
-    // double slope=x[3];
+    double slope=x[3];
 
-    double slope=-0.02;
+    // double slope=-0.02;
     double init_angle=(M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0;
 
 
@@ -162,8 +162,33 @@ FitFunc walk=[](const double *x, const int N)
 
     system.initSymbols();
 
-
     SimpleWalkerGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
+
+
+
+//small
+    /*
+    Body& b1 = system.addAngularJoint(
+        system.getBase(),
+        Vector2D(0.0, 0.0), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        init_angle, init_vel);
+    b1.addMass(0.001, Vector2D(0.0, 1.0));
+
+
+    Body& b2 = system.addAngularJoint(
+        b1,
+        Vector2D(0.0, 1.0), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        init_swingangle, init_swingvel);
+    b2.addMass(0.001, Vector2D(0.0, -1.0));
+
+    b2.addMass(1, Vector2D(0.0, 0.0));
+
+    system.initSymbols();
+
+    SimpleWalkerGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -1.0));
+*/
 
     double t=0.0;
     // while (viewer.isOpen() && t<10.0 && !g.hasFallen) {
@@ -184,7 +209,7 @@ FitFunc walk=[](const double *x, const int N)
                 simu_reset=false;
             }
             if(!simu_pause)
-                system.runSimulationStep(0.01);
+                system.runSimulationStep(0.001);
         }
         catch(const std::exception & e)
         {
@@ -270,10 +295,10 @@ int main(int argc, char *argv[])
 
 
 
-    int dim = 3; // problem dimensions.
+    int dim = 4; // problem dimensions.
         // std::vector<double> x0(dim,0.0);
-    // std::vector<double> x0({-0.4,-0.35,-0.025,-0.005});
-    std::vector<double> x0({-0.4,-0.35,-0.025});
+    std::vector<double> x0({-0.4,-0.35,-0.025,-0.005});
+    // std::vector<double> x0({-0.4,-0.35,-0.025});
     // std::vector<double> x0({-0.6,-0.3,0.3});
     double sigma = 0.1;
         //int lambda = 100; // offsprings at each generation.

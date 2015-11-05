@@ -87,7 +87,6 @@ class SimpleWalkerGround: public Ground
             Vector2D dir;
             Vector2D posInBody;
 
-            // std::cout<<"C: "<<postCollision<<" "<<collision_delay<<std::endl;
 
 
                     //draw
@@ -107,22 +106,10 @@ class SimpleWalkerGround: public Ground
             if((prev_isFootUpGround != isFootUpGround) ) //edge
             {
                 isContactEnabled=true;
-                // if(!supportChanged)
-                //     isContactEnabled=!isContactEnabled;
-                // std::cout<<"CONTACT TRIGGER: "<<isContactEnabled<<std::endl;
-                // supportChanged=false;
+
             }
             else
                 isContactEnabled=false;
-            // supportChanged=false;
-            // if(prev_isFootUpGround && !isFootUpGround )
-            // {
-            //     isContactEnabled=!isContactEnabled;
-            //     std::cout<<"CONTACT TRIGGER: "<<isContactEnabled<<std::endl;
-
-            //     // std::cout<<"CONTACT DISABLED"<<std::endl;
-            //     // isContactEnabled=false;
-            // }
 
             prev_isFootUpGround=isFootUpGround;
 
@@ -156,176 +143,19 @@ class SimpleWalkerGround: public Ground
             }
 
 
-            // if(pos.y()<_F(pos.x()) && !isContactEnabled)
-            //     return;
-
-
             if(fabs(_system->statePosition("q1")) > M_PI/2.0)
             {
                 hasFallen=true;
                 return;
             }
 
-                //ERROR
-            // if(_system->statePosition("q2")<0.0 && _system->stateVelocity("q2") < 0.0)
-            // {
-            //     hasFallen=true;
-            //     return;
-            // }
-
-            /*
-
-            if(_system->statePosition("q2")<0.0 && _system->stateVelocity("q2") > 0.0)
-                {
-                // std::cout<<"Q2: "<<_system->statePosition("q2")<<std::endl;
-
-                postCollision=true;
-                collision_delay=_COLLISION_COOLDOWN;
-
-                //     //draw
-                // Vector2D centerPos = UnaryConstraint::_system
-                //     ->evalPosition(*UnaryConstraint::_body);
-                // scalar centerAngle = UnaryConstraint::_system
-                //     ->evalAngle(*UnaryConstraint::_body);
-
-                // Vector2D pos = centerPos
-                //     + Vector2D::rotate(_posInBody, centerAngle);
-
-                // _currentpos=pos;
-
-                return;
-            }
-            */
-            /*
-            // if (!getConstraint(point, dir, posInBody) || postCollision)
-            if (computeCheckConstraint(point, dir, posInBody) && postCollision)
-            // if (postCollision)
-            {
-
-
-                if(collision_delay-- == 0)
-                {
-                    collision_delay=_COLLISION_COOLDOWN;
-                    postCollision=false;
-                }
-
-                std::cout<<"COLLISION COOLDOWN"<<std::endl;
-                                    //draw
-                // Vector2D centerPos = UnaryConstraint::_system
-                //     ->evalPosition(*UnaryConstraint::_body);
-                // scalar centerAngle = UnaryConstraint::_system
-                //     ->evalAngle(*UnaryConstraint::_body);
-
-                // Vector2D pos = centerPos
-                //     + Vector2D::rotate(_posInBody, centerAngle);
-
-                // _currentpos=pos;
-
-                return;
-            }
-            */
-
-            /*
-            if (computeCheckConstraint(point, dir, posInBody))
-            {
-                    //draw
-                Vector2D centerPos = UnaryConstraint::_system
-                ->evalPosition(*UnaryConstraint::_body);
-                scalar centerAngle = UnaryConstraint::_system
-                    ->evalAngle(*UnaryConstraint::_body);
-
-                Vector2D pos = centerPos
-                    + Vector2D::rotate(_posInBody, centerAngle);
-
-                // _currentpos=pos;
-
-                std::cout<<"pos: "<<pos.y()<<" ground: "<<_F(pos.x())<<" "<<(pos.y()-_F(pos.x()))<<std::endl;
-
-
-                // if(fabs(pos.y()-_F(pos.x()))>0.01)
-                // {
-                //     std::cout<<"FALL: under ground"<<std::endl;
-                //     hasFallen=true;
-                //     return;
-                // }
-
-
-
-                // if(fabs(_system->statePosition("q1")-gamma)>1.0 )
-                // {
-                //     hasFallen=true;
-                //     return;
-                // }
-
-                // //allow to go under ground
-                // if(point.y()<_F(point.x()) && fabs(_system->statePosition("q2"))<0.3)
-                // {
-                //     if(fabs(_system->stateVelocity("q2"))>0.01)
-                //     {
-                //         std::cout<<"under ground"<<std::endl;
-                //         return;
-                //     }
-                //     else
-                //     {
-                //         hasFallen=true;
-                //         std::cout<<"FALL UNDER GROUND"<<std::endl;
-                //         return;
-                //     }
-
-                // }
-
-
-                // if(fabs(pos.y()-_F(pos.x()))<0.01 && _system->statePosition("q2")>=0.3)
-                // {
-                //     std::cout<<"FALL"<<std::endl;
-                //     hasFallen=true;
-                //     return;
-                // }
-
-
-                if(!isContactEnabled)
-                {
-                    std::cout<<"CONTACT DISABLED"<<std::endl;
-
-                    return;
-                }
-
-
-
-            }
-            */
-
-            // std::cout<<"Q2: "<<_system->statePosition("q2")<<std::endl;
-
-            /*
-            if(fabs(_system->statePosition("q2")) < 0.01 || _system->statePosition("q2")<0.0)
-            {
-                hasFallen=true;
-                return;
-            }
-            */
-
             if (!computeCheckConstraint(point, dir, posInBody))
                 return;
 
-            // std::cout<<"CONTACT: "<<isContactEnabled<<" phase: "<<phase<<std::endl;
 
 
             if(isContactEnabled)
             {
-                /*
-                if(phase<2)
-                {
-                    contactActivated=false;
-                    phase++;
-                    return;
-                }
-                else
-                {
-                    contactActivated=true;
-                    phase=0;
-                }
-                */
 
                 if(_system->statePosition("q2")<0.0)
                     return;
@@ -342,8 +172,6 @@ class SimpleWalkerGround: public Ground
 
             postCollision=true;
 
-            // std::cout<<"Collision"<<std::endl;
-
 
             nbStep++;
             stepDist+=(_currentpos.x()-fabs(prevStep));
@@ -355,34 +183,6 @@ class SimpleWalkerGround: public Ground
             _system->getBase().setPos(point); //get the base to the new contact pos
 
 
-            // if(point.y()- _F(point.x())<-0.01)
-            // {
-            //     std::cout<<"FALL UNDER GROUND "<<point.y()<<" "<<_F(point.x())<<std::endl;
-            //     hasFallen=true;
-            //     return;
-            // }
-
-
-
-            //     //velocities
-
-            // impactAngle+=_system->statePosition("q1");
-            // impactVel+=_system->statePosition("q1");
-
-            // impactAngleQ2+=_system->statePosition("q2");
-            // impactVelQ2+=_system->statePosition("q2");
-
-
-            // meanImpactAngle=impactAngle/nbStep;
-            // if(nbStep>1)
-            //     devImpactAngle=0.0;
-            // else
-            //     devImpactAngle=1.0;
-            // devImpactAngle+=fabs(meanImpactAngle-_system->statePosition("q1"));
-
-
-            // scalar gamma=atan2(-0.21,1.0); //FIXME ground angle
-
             scalar theta=_system->statePosition("q1")-gamma;
             scalar theta_dot=_system->stateVelocity("q1");
             scalar psi_dot=cos(2.0*theta)*(1.0-cos(2.0*theta))*theta_dot;
@@ -392,7 +192,7 @@ class SimpleWalkerGround: public Ground
             _system->stateVelocity("q1")=theta_dot;
             _system->stateVelocity("q2")=psi_dot;
 
-            std::cout<<"COLLISION Q1: "<<_system->statePosition("q1")<<" dQ1: "<<_system->stateVelocity("q1")<<" Q2: "<<_system->statePosition("q2")<<" dQ2: "<<_system->stateVelocity("q2")<<" POS: "<<_currentpos.x()<<std::endl;
+            std::cout<<"COLLISION Q1: "<<_system->statePosition("q1")<<" dQ1: "<<_system->stateVelocity("q1")<<" Q2: "<<_system->statePosition("q2")<<" dQ2: "<<_system->stateVelocity("q2")<<" POS: "<<_currentpos.x()<<" STEP: "<<nbStep<<std::endl;
 
 
             _system->statePosition("q1")=_system->evalAngle(*_body);
@@ -419,9 +219,6 @@ class SimpleWalkerGround: public Ground
 
             _system->initSymbols();
 
-            // isContactEnabled=false;
-            // prev_isFootUpGround=false;
-            // isFootUpGround=false;
             supportChanged=true;
 
         }

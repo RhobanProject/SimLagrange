@@ -158,6 +158,9 @@ class Body
             _symPosVel = symPosVel;
             _symAngleVel = symAngleVel;
 
+            _lagrangian = Symbol::create(
+                Symbolic::BaseSymbol::zero()); //reset Lagrangian
+
             //Compute lagrangian Symbolic expression
             computeLagrangian();
         }
@@ -239,6 +242,7 @@ class Body
          */
         inline void computeLagrangian()
         {
+
             //Compute lagrangian for all masses
             for (size_t i=0;i<_massPositions.size();i++) {
                 //Mass position

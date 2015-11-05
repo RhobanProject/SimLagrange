@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cassert>
 
 #include "SimMecha/src/Body.hpp"
@@ -17,6 +18,12 @@
 #include <stdio.h>
 #include <functional>
 #include "Simulations/SimpleWalkerGround.hpp"
+
+#define SKIP_FRAME 20
+
+// #define DRAW
+// #define LOG
+
 
 using namespace std;
 using namespace Leph::SimMecha;
@@ -50,12 +57,9 @@ void* R_cb(Leph::Any::Any param)
 
 int main()
 {
-    Leph::SimViewer::SimViewer viewer(1280, 1024);
+    // Leph::SimViewer::SimViewer viewer(1280, 1024);
 
     Leph::Any::Any param;
-
-    viewer.setSpaceHandler((SimViewer::HandlerFunction)space_cb, param);
-    viewer.setRHandler((SimViewer::HandlerFunction)R_cb, param);
 
         //6 steps
         // double slope=-0.133003;
@@ -92,10 +96,29 @@ int main()
 
 
     //fixed point
-    double init_vel=-0.318324391427563;
-    double init_swingangle=-0.280009715614562;
-    double init_swingvel=-0.0127821587541628;
-    double slope=-0.00204763028992204;
+    // double init_vel=-0.318324391427563;
+    // double init_swingangle=-0.280009715614562;
+    // double init_swingvel=-0.0127821587541628;
+    // double slope=-0.00204763028992204;
+
+    //best fixed point
+    double init_vel=-0.297119731718663;
+    double init_swingangle=-0.261985514082957;
+    double init_swingvel=-0.0101880039522822;
+    double slope=-0.00232116135922738;
+
+
+    // double init_vel=-0.565276211768901;
+    // double init_swingangle=-0.533851692013085;
+    // double init_swingvel=-0.0812830282307813;
+    // double slope=-0.02;
+
+    // double init_vel=-0.459707316675029;
+    // double init_swingangle=-0.420024613478308;
+    // double init_swingvel=-0.0402200727105516;
+    // double slope=-0.01;
+
+
 
     // //fixed point
     // double init_vel=-0.556258268721377;
@@ -187,13 +210,37 @@ int main()
 
     SimpleWalkerGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
 
+    int skip=0;
+
+    double time=0.0;
+
+#ifdef LOG
+    ofstream logfile;
+    logfile.open("log.dat");
+#endif
+
+#ifdef DRAW
+    Leph::SimViewer::SimViewer viewer(1280, 1024);
+    viewer.setSpaceHandler((SimViewer::HandlerFunction)space_cb, param);
+    viewer.setRHandler((SimViewer::HandlerFunction)R_cb, param);
     while (viewer.isOpen()) {
-        viewer.beginDraw();
-        viewer.drawFrame();
-        system.draw(viewer);
-        g.draw(viewer);
-        viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
-        viewer.endDraw(10); //TODO
+        if(skip==0)
+        {
+            viewer.beginDraw();
+            viewer.drawFrame();
+            system.draw(viewer);
+            g.draw(viewer);
+            viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
+            viewer.endDraw(); //TODO
+            skip=SKIP_FRAME;
+        }
+        else
+            skip--;
+
+#else
+    while (true) {
+#endif
+
 
         try{
             if(simu_reset){
@@ -202,7 +249,12 @@ int main()
                 g.hasFallen=false;
             }
             if(!simu_pause && !g.hasFallen)
-                system.runSimulationStep(0.01);
+            {
+#ifdef LOG
+                logfile<<time<<" "<<system.statePosition("q1")<<" "<<system.stateVelocity("q1")<<" "<<system.statePosition("q2")<<" "<<system.stateVelocity("q2")<<"\n";
+#endif
+                system.runSimulationStep(0.001);
+            }
         }
         catch(const std::exception & e)
         {
@@ -212,7 +264,9 @@ int main()
         g.handle();
         if(g.hasFallen)
             std::cout<<"FALL, nbStep: "<<g.nbStep<<std::endl;
+        time+=0.001;
     }
+
 
     return 0;
 }

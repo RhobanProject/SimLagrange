@@ -49,7 +49,7 @@ class UnaryConstraint : public Constraint
             scalar timeMin = 0.0;
             scalar timeMax = 0.01;
             scalar currentTime = 0.0;
-            for (int i=0;i<10;i++) { //FIXME?
+            for (int i=0;i<100;i++) { //FIXME?
                 scalar t = (timeMax-timeMin)/2.0;
                 _system->runSimulationStep(currentTime-t);
                 currentTime = t;

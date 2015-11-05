@@ -57,6 +57,7 @@ int main()
 
 
     while (viewer.isOpen()) {
+
         viewer.beginDraw();
         viewer.drawFrame();
         system.draw(viewer);
