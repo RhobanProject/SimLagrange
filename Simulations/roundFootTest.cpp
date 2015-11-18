@@ -82,7 +82,7 @@ int main()
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.2, atan2(-0.2,1.0) , 0.1, 0.0);
+        0.2, atan2(-0.2,1.0) , M_PI/4.0*0.2, 0.0);
     b1.addMass(0.1, Vector2D(0.0, 0.5));
 
 

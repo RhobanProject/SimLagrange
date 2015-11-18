@@ -58,6 +58,11 @@ add_executable(
         Simulations/SimpleWalkerOptim.cpp
 )
 
+add_executable(
+	RoundFootOptim
+        Simulations/RoundFootOptim.cpp
+)
+
 
 add_executable(
 	testSpring
@@ -68,6 +73,12 @@ add_executable(
 add_executable(
 	testRoundFoot
         Simulations/roundFootTest.cpp
+)
+
+
+add_executable(
+	testRoundFeetCompass
+        Simulations/roundFeetCompassTest.cpp
 )
 
 
@@ -112,6 +123,19 @@ target_link_libraries(testRoundFoot
 
 
 target_link_libraries(SimpleWalkerOptim
+    sfml-graphics
+    sfml-window
+    sfml-system
+    cmaes
+)
+
+target_link_libraries(testRoundFeetCompass
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+target_link_libraries(RoundFootOptim
     sfml-graphics
     sfml-window
     sfml-system

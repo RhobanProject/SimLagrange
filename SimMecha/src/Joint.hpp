@@ -18,6 +18,16 @@ class Joint
 {
     public:
 
+    /**
+     * very dirty hack thanks to c++
+     *
+     */
+
+/*
+    TermPtr _initposX;
+    TermPtr _initposY;
+*/
+
         /**
          * Default constructor
          * (Do not use)
@@ -158,6 +168,15 @@ class Joint
         inline void setLagrangian(TermPtr L)
         {
             _lagrangian=L;
+        }
+
+/**
+* stupid hack
+*/
+
+   inline virtual void setCustomScalar(scalar val)
+        {
+            std::cout<<"fuck"<<std::endl;
         }
 
         /**

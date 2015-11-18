@@ -24,12 +24,14 @@ class RoundFoot : public Joint
 
     scalar _sr; //radius
     scalar _sgamma; //ground slope
-    scalar _scontactPos; //coordinate of the contact point (angle/leg orientation)
     TermPtr _r;
     TermPtr _gamma;
+    scalar _scontactPos; //coordinate of the contact point (angle/leg orientation)
     TermPtr _contactPos;
-    TermPtr _initposX;
+
+    TermPtr _initposX; //TODO find a way to reset
     TermPtr _initposY;
+
 
         /**
          * Initialization with Joint position on the two
@@ -54,7 +56,25 @@ class RoundFoot : public Joint
             _initposX = Symbolic::Mult<scalar,scalar,scalar>::create(Symbolic::Minus<scalar>::create(_contactPos),COS(_gamma));
             _initposY = Symbolic::Mult<scalar,scalar,scalar>::create(Symbolic::Minus<scalar>::create(_contactPos),SIN(_gamma));
 
+
+
+
         }
+
+
+    void setCustomScalar(scalar val)
+        {
+
+            // std::cout<<"debug"<<std::endl;
+            TermPtr contactPos=Constant::create(val);
+            // std::cout<<"debug1"<<std::endl;
+            // _scontactPos=val;
+            // std::cout<<"debug2"<<std::endl;
+            _initposX = Symbolic::Mult<scalar,scalar,scalar>::create(Symbolic::Minus<scalar>::create(contactPos),COS(_gamma));
+            _initposY = Symbolic::Mult<scalar,scalar,scalar>::create(Symbolic::Minus<scalar>::create(contactPos),SIN(_gamma));
+
+        }
+
 
 
         /**

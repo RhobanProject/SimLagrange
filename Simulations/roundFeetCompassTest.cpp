@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <functional>
-#include "Simulations/SimpleWalkerGround.hpp"
+#include "Simulations/RoundFeetWalkerGround.hpp"
 
 #define SKIP_FRAME 20
 
@@ -102,10 +102,10 @@ int main()
     // double slope=-0.00204763028992204;
 
     //best fixed point
-    double init_vel=-0.297119731718663;
-    double init_swingangle=-0.261985514082957;
-    double init_swingvel=-0.0101880039522822;
-    double slope=-0.00232116135922738;
+    // double init_vel=-0.297119731718663;
+    // double init_swingangle=-0.261985514082957;
+    // double init_swingvel=-0.0101880039522822;
+    // double slope=-0.00232116135922738;
 
 
     // double init_vel=-0.565276211768901;
@@ -153,6 +153,13 @@ int main()
 
 
 
+    double init_vel=0.0;
+    double init_swingangle=-0.3;
+    double init_swingvel=-0.3;
+    double slope=-0.1;
+
+
+
     double init_angle=(M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0;
 
 
@@ -170,7 +177,7 @@ int main()
     // double ga=-0.21;
     double ga=slope;
     // double ga=0.0;
-    double gb=0.0;//-1.3;
+    double gb=-0.2;//-1.3;
 
 
 
@@ -187,12 +194,14 @@ int main()
     system.getBase().addMass(0.1, Vector2D(0.0, 0.0));
 
 
+    init_angle=0.0;
+    init_vel=0.0;
 
-    Body& b1 = system.addAngularJoint(
+    Body& b1 = system.addRoundFoot(
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        init_angle, init_vel);
+        0.2, atan2(slope,1.0) , init_angle, init_vel);
     b1.addMass(0.001, Vector2D(0.0, 2.0));
 
 
@@ -208,8 +217,8 @@ int main()
     system.initSymbols();
 
 
-    SimpleWalkerGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
-
+    RoundFeetGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
+    g.feetRadius=0.2;
     int skip=0;
 
     double time=0.0;
