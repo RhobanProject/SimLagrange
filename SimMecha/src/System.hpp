@@ -122,6 +122,12 @@ class System
             return *_base;
         }
 
+        inline std::vector<Body*> getBodies()
+        {
+            return _bodies;
+        }
+
+
         /**
          * Create and return a new Body linked to the given
          * Body with a rotational Joint

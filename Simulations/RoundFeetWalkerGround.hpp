@@ -53,6 +53,7 @@ class RoundFeetGround: public Ground
     int phase;
     bool supportChanged;
     bool contactActivated;
+    Vector2D contactPoint;
 
     double feetRadius; //FIXME
 
@@ -151,6 +152,7 @@ class RoundFeetGround: public Ground
             }
 
 
+
             if(fabs(_system->statePosition("q1")/feetRadius) > M_PI/2.0)
             {
 
@@ -189,6 +191,7 @@ class RoundFeetGround: public Ground
 
 
             Vector2D newbase=point;
+            Vector2D oldbase=_system->evalPosition(_system->getBase());
             // newbase.y()+=feetRadius; //FIXME!!!!!
 
                 //manage the Heelstrike
@@ -199,34 +202,43 @@ class RoundFeetGround: public Ground
             scalar theta=_system->statePosition("q1")/feetRadius-gamma;
             scalar theta_dot=_system->stateVelocity("q1")/feetRadius;
 
+                //get the hip
+            Vector2D hippos=_system->evalPosition(*(_system->getBodies()[1])); //should be the hip
 
-            scalar psi_dot=cos(2.0*theta)*(1.0-cos(2.0*theta))*theta_dot;
+                //TODO
+            scalar psi=(Vector2D::direction(hippos-contactPoint)-M_PI/2.0-gamma)*2.0;
 
-            theta_dot=cos(2.0*theta)*theta_dot;
+            // std::cout<<"DEBUG :"<<contactPoint<<" "<<hippos<<" "<<psi<<" "<<_system->statePosition("q2")<<" "<<(Vector2D::direction(hippos-newbase)-M_PI/2.0-gamma)*2.0<<std::endl;
+
+            // scalar psi=_system->statePosition("q2");
+
+
+            // std::cout<<"DEBUG test: "<<2.0*theta<<" "<<_system->statePosition("q2")<<std::endl;
+            //in fact at heelstrike, 2*theta=phi
+
+            // scalar psi_dot=cos(2.0*theta)*(1.0-cos(2.0*theta))*theta_dot;
+            // theta_dot=cos(2.0*theta)*theta_dot;
+
+            scalar psi_dot=cos(psi)*(1.0-cos(psi))*theta_dot;
+            theta_dot=cos(psi)*theta_dot;
+
+
 
             _system->stateVelocity("q1")=theta_dot*feetRadius;
             _system->stateVelocity("q2")=psi_dot;
 
-            std::cout<<"COLLISION Q1: "<<_system->statePosition("q1")<<" dQ1: "<<_system->stateVelocity("q1")<<" Q2: "<<_system->statePosition("q2")<<" dQ2: "<<_system->stateVelocity("q2")<<" POS: "<<_currentpos.x()<<" STEP: "<<nbStep<<std::endl;
 
 
+                //raz curvilign integral
             // Joint* j=_system->getBase().getJointRoot();
             Joint* j=_system->getJoints()[0];
-
-
-            // std::cout<<"debug1"<<std::endl;
             j->setCustomScalar(_system->evalAngle(*_body)*feetRadius);
 
-
-            // std::cout<<"test: "<<rf->_scontactPos<<std::endl;
-
-
-            // j.contactPos
-                //TODO FIXME!
             _system->statePosition("q1")=_system->evalAngle(*_body)*feetRadius;
-            // _system->statePosition("q1")=0.0;
+
             _system->statePosition("q2")=-_system->statePosition("q2");
 
+            std::cout<<"COLLISION Q1: "<<_system->statePosition("q1")<<" dQ1: "<<_system->stateVelocity("q1")<<" Q2: "<<_system->statePosition("q2")<<" dQ2: "<<_system->stateVelocity("q2")<<" POS: "<<_currentpos.x()<<" STEP: "<<nbStep<<std::endl;
 
 
                 //velocities
@@ -363,6 +375,7 @@ class RoundFeetGround: public Ground
             // if ((pos.y()-_F(pos.x())) <=0.0) {
                 _contact=true;
 
+                contactPoint=Vector2D(min((-B+sqrt(det))/(2*A),(-B-sqrt(det))/(2*A)),m*point.x()+c);
                 //sign=+ or -
                 // point.x()=(-B+sign*sqrt(det))/(2*A);
                 // point.y()=m*point.x()+c;

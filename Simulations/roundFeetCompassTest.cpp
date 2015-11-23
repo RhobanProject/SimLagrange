@@ -61,106 +61,31 @@ int main()
 
     Leph::Any::Any param;
 
-        //6 steps
-        // double slope=-0.133003;
-    // double init_angle=-0.376547;
-    // double init_vel=0.274254;
-    // double init_swingangle=0.783498;
-    // double init_swingvel=0.0920029;
 
- //   pas mal
-    // double slope=-0.133003;
-    // double init_angle=-0.376547;
-    // double init_vel=0.274255;
-    // double init_swingangle=0.783498;
-    // double init_swingvel=0.0920026;
+    // double init_vel=-0.25*0.2;
+    // double init_swingangle=-0.3;
+    // double init_swingvel=-0.3;
+    // double slope=-0.05;
 
-    // double slope=-0.35723;
-    // double init_angle=0.0296499;
-    // double init_vel=0.0302701;
-    // double init_swingangle=1.45022e-05;
-    // double init_swingvel=1.45022e-05;
+    // double init_vel=0.848809699067517 *0.2;
+    // double init_swingangle=-0.0125287420878489;
+    // double init_swingvel=0.108215801468413;
+    // double slope= -0.391331903396806;
+
+    // double init_vel=-4.46388647130933e-06 *0.2;
+    // double init_swingangle=2.01031524333551e-06;
+    // double init_swingvel=-7.77340078896863e-09;
+    // double slope= -0.000172640382141967;
 
 
-    //pas mal
-    // double init_vel=-0.518444;
-    // double init_swingangle=-0.613237;
-    // double init_swingvel=0.0205823;
-    // double slope=-0.1;
-
-    //fixed point
-    // double init_vel=-0.394568;
-    // double init_swingangle=-0.353006;
-    // double init_swingvel=-0.0249299;
-    // double slope=-0.00515664;
-
-
-    //fixed point
-    // double init_vel=-0.318324391427563;
-    // double init_swingangle=-0.280009715614562;
-    // double init_swingvel=-0.0127821587541628;
-    // double slope=-0.00204763028992204;
-
-    //best fixed point
-    // double init_vel=-0.297119731718663;
-    // double init_swingangle=-0.261985514082957;
-    // double init_swingvel=-0.0101880039522822;
-    // double slope=-0.00232116135922738;
-
-
-    // double init_vel=-0.565276211768901;
-    // double init_swingangle=-0.533851692013085;
-    // double init_swingvel=-0.0812830282307813;
-    // double slope=-0.02;
-
-    // double init_vel=-0.459707316675029;
-    // double init_swingangle=-0.420024613478308;
-    // double init_swingvel=-0.0402200727105516;
-    // double slope=-0.01;
+    double init_vel=-0.180775952444816 *0.2;
+    double init_swingangle=-0.178513250407527;
+    double init_swingvel=-1.95205970158943e-05;
+    double slope= -5.38636255033428e-09;
 
 
 
-    // //fixed point
-    // double init_vel=-0.556258268721377;
-    // double init_swingangle=-0.525716604307055;
-    // double init_swingvel=-0.0757577623630868;
-    // double slope=-0.02;
-
-        //fixed point 10e-10
-    // double init_vel=-0.556258304656607;
-    // double init_swingangle=-0.525716634797992;
-    // double init_swingvel=-0.0757577151745346;
-    // double slope=-0.02;
-
-
-
-
-    // double init_vel=-0.661016;
-    // double init_swingangle=-0.702991;
-    // double init_swingvel=0.45054;
-
-
-    // double slope=-0.1;
-
-
-
-    //test with 0.1 and 1 mass
-    // double init_vel=-0.46557571316247;
-    // double init_swingangle=-0.402591267965758;
-    // double init_swingvel=-0.04077794269305;
-    // double slope=-0.02;
-
-
-
-
-    double init_vel=0.0;
-    double init_swingangle=-0.3;
-    double init_swingvel=-0.3;
-    double slope=-0.1;
-
-
-
-    double init_angle=(M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0;
+    double init_angle=((M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0)*0.2;
 
 
 
@@ -189,13 +114,13 @@ int main()
 
 
 
+
+
     System system(Vector2D(0.0, 0.0));
     //System system(Vector2D(-1.0, 1.0), Vector2D());
     system.getBase().addMass(0.1, Vector2D(0.0, 0.0));
 
 
-    init_angle=0.0;
-    init_vel=0.0;
 
     Body& b1 = system.addRoundFoot(
         system.getBase(),
@@ -203,7 +128,6 @@ int main()
         Vector2D(0.0, 0.0), 0.0,
         0.2, atan2(slope,1.0) , init_angle, init_vel);
     b1.addMass(0.001, Vector2D(0.0, 2.0));
-
 
     Body& b2 = system.addAngularJoint(
         b1,
@@ -216,9 +140,13 @@ int main()
 
     system.initSymbols();
 
-
     RoundFeetGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
+
     g.feetRadius=0.2;
+
+
+
+
     int skip=0;
 
     double time=0.0;

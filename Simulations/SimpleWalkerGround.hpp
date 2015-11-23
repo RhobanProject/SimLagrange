@@ -187,6 +187,7 @@ class SimpleWalkerGround: public Ground
             scalar theta_dot=_system->stateVelocity("q1");
             scalar psi_dot=cos(2.0*theta)*(1.0-cos(2.0*theta))*theta_dot;
 
+            // std::cout<<"DEBUG test: "<<2.0*theta<<" "<<_system->statePosition("q2")<<" "<<gamma<<std::endl;
             theta_dot=cos(2.0*theta)*theta_dot;
 
             _system->stateVelocity("q1")=theta_dot;

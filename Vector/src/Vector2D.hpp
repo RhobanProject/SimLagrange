@@ -92,9 +92,26 @@ class Vector2D
         static inline scalar squaredDist
             (const Vector2D<scalar>& v1, const Vector2D<scalar>& v2)
         {
-            return (v1.x()-v2.x())*(v1.x()-v2.x()) 
+            return (v1.x()-v2.x())*(v1.x()-v2.x())
                 + (v1.y()-v2.y())*(v1.y()-v2.y());
         }
+
+/**
+ * Compute the directed angle between 2 vectors
+ */
+    static inline scalar angle(const Vector2D<scalar>& v1, const Vector2D<scalar>& v2)
+        {
+            return  atan2(v2.y(), v2.x()) - atan2(v1.y(), v1.x());
+        }
+
+/**
+ * Compute direction of a vector
+ */
+    static inline scalar direction(const Vector2D<scalar>& v)
+        {
+            return  atan2(v.y(), v.x());
+        }
+
 
         /**
          * Compute and return the Vector rotated by given angle
@@ -103,7 +120,7 @@ class Vector2D
             (const Vector2D<scalar>& v, scalar angle)
         {
             return Vector2D<scalar>(
-                v.x()*cos(angle)-v.y()*sin(angle), 
+                v.x()*cos(angle)-v.y()*sin(angle),
                 v.x()*sin(angle)+v.y()*cos(angle));
         }
 
@@ -249,4 +266,3 @@ inline bool operator==
 }
 
 #endif
-

@@ -25,6 +25,7 @@
 
 // #define DIST(x,y) (sqrt(pow((x-y),2)))
 #define DIST(x,y) (sqrt(pow((10.0*x-10*y),2)))
+#define SKIP_FRAME 20
 
 // #define DRAW
 
@@ -87,18 +88,22 @@ FitFunc walk=[](const double *x, const int N)
 
 
 
+
+
     // double slope=-0.1;
 
     double init_vel=x[0]*0.2;
     double init_swingangle=x[1];
     double init_swingvel=x[2];
-
-    // double init_vel=0.00243656;
-    // double init_swingangle=-0.000118239;
-    // double init_swingvel=1.76594e-10;
-
-
     double slope=x[3];
+
+
+    // double init_vel=0.848809699067517 *0.2;
+    // double init_swingangle=-0.0125287420878489;
+    // double init_swingvel=0.108215801468413;
+    // double slope= -0.391331903396806;
+
+
 
     // double slope=-0.02;
     double init_angle=((M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0)*0.2;
@@ -110,11 +115,15 @@ FitFunc walk=[](const double *x, const int N)
     if(slope<-0.5)
         score+=1000.0;
 
-    if(fabs(init_angle)>1.0)
+    if(fabs(init_angle)>1.0*0.2)
         score+=1000.0;
 
     if(fabs(init_vel)>2.0)
         score+=1000.0;
+
+    if(init_vel>0.0)
+        score+=1000.0;
+
 
     if(fabs(init_swingangle)>1.0)
         score+=1000.0;
@@ -190,16 +199,23 @@ FitFunc walk=[](const double *x, const int N)
 */
 
     double t=0.0;
+    int skip=0;
     // while (viewer.isOpen() && t<10.0 && !g.hasFallen) {
     while (t<10.0 && !g.hasFallen) { //5.5s is a bit long
     // while(true){
         #ifdef DRAW
-        viewer.beginDraw();
-        viewer.drawFrame();
-        system.draw(viewer);
-        g.draw(viewer);
-        viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
-        viewer.endDraw(); //TODO
+        if(skip==0)
+        {
+            viewer.beginDraw();
+            viewer.drawFrame();
+            system.draw(viewer);
+            g.draw(viewer);
+            viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
+            viewer.endDraw(); //TODO
+            skip=SKIP_FRAME;
+        }
+        else
+            skip--;
         #endif
 
         try{
@@ -207,24 +223,29 @@ FitFunc walk=[](const double *x, const int N)
                 system.stateReset();
                 simu_reset=false;
             }
-            if(!simu_pause)
+            if(!simu_pause){
                 system.runSimulationStep(0.001);
+                t+=0.001;
+                    // std::cout<<"TIME: "<<t<<std::endl;
+                g.handle();
+
+            }
         }
         catch(const std::exception & e)
         {
             std::cerr << e.what()<<std::endl;
         }
-        t+=0.01;
-        // std::cout<<"TIME: "<<t<<std::endl;
-        g.handle();
 
 
 
-        if(g.nbStep==1) //we made one step
+        if(g.nbStep>=1) //we made one step
         {
 
                 //Look is fixed point
-            std::cout<<"PARAMS: "<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<x[3]<<std::endl;
+            // std::cout<<"PARAMS: "<<x[0]*0.2<<" "<<x[1]<<" "<<x[2]<<" "<<x[3]<<std::endl;
+            std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<std::endl;
+
+
             // std::cout<<"PARAMS: "<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<std::endl;
             // std::cout<<"STATE: "<<g.impactAngle<<" "<<g.impactVel<<" "<<g.impactAngleQ2<<" "<<g.impactVelQ2<<std::endl;
             std::cout<<"STATE: "<<g.impactVel<<" "<<g.impactAngleQ2<<" "<<g.impactVelQ2<<std::endl;
@@ -233,21 +254,23 @@ FitFunc walk=[](const double *x, const int N)
             // score+=1.0/(fabs(g._currentpos.x()));
                 // score+=10.0/(1.0+10*t);
 
-            score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
+            // score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
+            score+= max( 1.0/(fabs(init_swingangle/(M_PI/24.0)))-1.0 , 0.0 );
 
 
 
             std::cout<<"SCORE: "<<RED<<score<<DEFAULT<<" nbStep: "<<BLUE<<g.nbStep<<DEFAULT<<std::endl;
             std::cout<<std::endl;
             return score;
-    }
+        }
 
         if(g.hasFallen)
         {
 
             std::cout<<"FALLEN"<<std::endl;
                 //Look is fixed point
-            std::cout<<"PARAMS: "<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<x[3]<<std::endl;
+            // std::cout<<"PARAMS: "<<x[0]*0.2<<" "<<x[1]<<" "<<x[2]<<" "<<x[3]<<std::endl;
+            std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<std::endl;
             // std::cout<<"PARAMS: "<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<std::endl;
             // std::cout<<"STATE: "<<g.impactAngle<<" "<<g.impactVel<<" "<<g.impactAngleQ2<<" "<<g.impactVelQ2<<std::endl;
             std::cout<<"STATE: "<<g.impactVel<<" "<<g.impactAngleQ2<<" "<<g.impactVelQ2<<std::endl;
@@ -258,8 +281,8 @@ FitFunc walk=[](const double *x, const int N)
             // score+=1.0/(fabs(g._currentpos.x()));
                 // score+=10.0/(1.0+10*t);
             // score+=1.0/(fabs(init_swingangle));
-            score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
-
+            // score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
+            score+= max( 1.0/(fabs(init_swingangle/(M_PI/24.0)))-1.0 , 0.0 );
             // if(g.nbStep==2)
             //     score+=100;
             // if(g.nbStep==1)
@@ -279,8 +302,11 @@ FitFunc walk=[](const double *x, const int N)
 
     }
 
+        std::cout<<"WTF "<<t<<std::endl;
 
+        //just in case
 
+        return 10000.0;
 //Limit cycle?
 
     // std::cout<<"PARAMS: "<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<x[3]<<" "<<x[4]<<std::endl;
