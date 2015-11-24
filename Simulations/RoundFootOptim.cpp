@@ -86,13 +86,19 @@ FitFunc walk=[](const double *x, const int N)
     // // double init_swingvel=0.0;
 
 
+    // double foot_radius=1.11956469704295;//0.2;
+    // // double slope=-0.1;
+    // double init_vel=-0.237516716283862*foot_radius;
+    // double init_swingangle=-0.299266047913129;
+    // double init_swingvel=-0.00427183120241122;
+    // double slope=-0.00887709411969127;
 
 
 
 
+    double foot_radius=x[4];//0.2;
     // double slope=-0.1;
-
-    double init_vel=x[0]*0.2;
+    double init_vel=x[0]*foot_radius;
     double init_swingangle=x[1];
     double init_swingvel=x[2];
     double slope=x[3];
@@ -106,8 +112,14 @@ FitFunc walk=[](const double *x, const int N)
 
 
     // double slope=-0.02;
-    double init_angle=((M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0)*0.2;
+    double init_angle=((M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0)*foot_radius;
 
+    if(foot_radius<0.001)
+        score+=1000.0;
+    if(foot_radius>0.5)
+        score+=1000.0;
+
+    score+=foot_radius;
 
         //check range
     if(slope>0.0)
@@ -115,8 +127,8 @@ FitFunc walk=[](const double *x, const int N)
     if(slope<-0.5)
         score+=1000.0;
 
-    if(fabs(init_angle)>1.0*0.2)
-        score+=1000.0;
+    // if(fabs(init_angle)>1.0*foot_radius)
+    //     score+=1000.0;
 
     if(fabs(init_vel)>2.0)
         score+=1000.0;
@@ -136,7 +148,7 @@ FitFunc walk=[](const double *x, const int N)
     // double ga=-0.21;
     double ga=slope;
     // double ga=0.0;
-    double gb=-0.2;//-1.3;
+    double gb=-foot_radius;//-1.3;
 
     auto F_ground = [&ga, &gb](double x) -> double
         {
@@ -156,7 +168,7 @@ FitFunc walk=[](const double *x, const int N)
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.2, atan2(slope,1.0) , init_angle, init_vel);
+        foot_radius, atan2(slope,1.0) , init_angle, init_vel);
     b1.addMass(0.001, Vector2D(0.0, 2.0));
 
     Body& b2 = system.addAngularJoint(
@@ -172,7 +184,7 @@ FitFunc walk=[](const double *x, const int N)
 
     RoundFeetGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
 
-    g.feetRadius=0.2;
+    g.feetRadius=foot_radius;
 
 //small
     /*
@@ -243,7 +255,8 @@ FitFunc walk=[](const double *x, const int N)
 
                 //Look is fixed point
             // std::cout<<"PARAMS: "<<x[0]*0.2<<" "<<x[1]<<" "<<x[2]<<" "<<x[3]<<std::endl;
-            std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<std::endl;
+            // std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<std::endl;
+            std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<" "<<foot_radius<<std::endl;
 
 
             // std::cout<<"PARAMS: "<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<std::endl;
@@ -254,8 +267,8 @@ FitFunc walk=[](const double *x, const int N)
             // score+=1.0/(fabs(g._currentpos.x()));
                 // score+=10.0/(1.0+10*t);
 
-            // score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
-            score+= max( 1.0/(fabs(init_swingangle/(M_PI/24.0)))-1.0 , 0.0 );
+            score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
+            // score+= max( 1.0/(fabs(init_swingangle/(M_PI/24.0)))-1.0 , 0.0 );
 
 
 
@@ -270,7 +283,8 @@ FitFunc walk=[](const double *x, const int N)
             std::cout<<"FALLEN"<<std::endl;
                 //Look is fixed point
             // std::cout<<"PARAMS: "<<x[0]*0.2<<" "<<x[1]<<" "<<x[2]<<" "<<x[3]<<std::endl;
-            std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<std::endl;
+            // std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<std::endl;
+            std::cout<<"PARAMS: "<<init_vel<<" "<<init_swingangle<<" "<<init_swingvel<<" "<<slope<<" "<<foot_radius<<std::endl;
             // std::cout<<"PARAMS: "<<x[0]<<" "<<x[1]<<" "<<x[2]<<" "<<std::endl;
             // std::cout<<"STATE: "<<g.impactAngle<<" "<<g.impactVel<<" "<<g.impactAngleQ2<<" "<<g.impactVelQ2<<std::endl;
             std::cout<<"STATE: "<<g.impactVel<<" "<<g.impactAngleQ2<<" "<<g.impactVelQ2<<std::endl;
@@ -281,8 +295,8 @@ FitFunc walk=[](const double *x, const int N)
             // score+=1.0/(fabs(g._currentpos.x()));
                 // score+=10.0/(1.0+10*t);
             // score+=1.0/(fabs(init_swingangle));
-            // score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
-            score+= max( 1.0/(fabs(init_swingangle/(M_PI/24.0)))-1.0 , 0.0 );
+            score+= max( 1.0/(fabs(init_swingangle/(M_PI/12.0)))-1.0 , 0.0 );
+            // score+= max( 1.0/(fabs(init_swingangle/(M_PI/24.0)))-1.0 , 0.0 );
             // if(g.nbStep==2)
             //     score+=100;
             // if(g.nbStep==1)
@@ -321,9 +335,10 @@ int main(int argc, char *argv[])
 
 
 
-    int dim = 4; // problem dimensions.
+    int dim = 5; // problem dimensions.
         // std::vector<double> x0(dim,0.0);
-    std::vector<double> x0({-0.4,-0.35,-0.025,-0.005});
+    // std::vector<double> x0({-0.4,-0.35,-0.025,-0.005});
+    std::vector<double> x0({-0.4,-0.35,-0.025,-0.005,0.2});
     // std::vector<double> x0({-0.4,-0.35,-0.025});
     // std::vector<double> x0({-0.6,-0.3,0.3});
     double sigma = 0.1;

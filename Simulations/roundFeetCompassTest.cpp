@@ -78,17 +78,38 @@ int main()
     // double slope= -0.000172640382141967;
 
 
-    double init_vel=-0.180775952444816 *0.2;
-    double init_swingangle=-0.178513250407527;
-    double init_swingvel=-1.95205970158943e-05;
-    double slope= -5.38636255033428e-09;
+    // double init_vel=-0.180775952444816 *0.2;
+    // double init_swingangle=-0.178513250407527;
+    // double init_swingvel=-1.95205970158943e-05;
+    // double slope= -5.38636255033428e-09;
 
 
 
-    double init_angle=((M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0)*0.2;
+    // double init_vel=-0.127804318497643 *0.2;
+    // double init_swingangle=-0.126200881282818;
+    // double init_swingvel=-5.18309767791898e-06;
+    // double slope=-3.0970297455562e-10;
 
 
 
+    // double foot_radius=1.11956469704295;//0.2;
+    // // double slope=-0.1;
+    // double init_vel=-0.237516716283862*foot_radius;
+    // double init_swingangle=-0.299266047913129;
+    // double init_swingvel=-0.00427183120241122;
+    // double slope=-0.00887709411969127;
+
+
+        double foot_radius=0.499999999998606;//0.2;
+    // double slope=-0.1;
+    double init_vel=-0.240615871582297*foot_radius;
+    double init_swingangle=-0.247198466740646;
+    double init_swingvel=-0.00418033423404718;
+    double slope=-3.24581907366929e-12;
+
+
+
+    double init_angle=((M_PI-init_swingangle)/2.0+atan2(slope,1.0)-M_PI/2.0)*foot_radius;
 
 
 
@@ -102,7 +123,7 @@ int main()
     // double ga=-0.21;
     double ga=slope;
     // double ga=0.0;
-    double gb=-0.2;//-1.3;
+    double gb=-foot_radius;//-1.3;
 
 
 
@@ -126,7 +147,7 @@ int main()
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        0.2, atan2(slope,1.0) , init_angle, init_vel);
+        foot_radius, atan2(slope,1.0) , init_angle, init_vel);
     b1.addMass(0.001, Vector2D(0.0, 2.0));
 
     Body& b2 = system.addAngularJoint(
@@ -142,7 +163,7 @@ int main()
 
     RoundFeetGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
 
-    g.feetRadius=0.2;
+    g.feetRadius=foot_radius;
 
 
 
