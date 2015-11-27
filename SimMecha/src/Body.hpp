@@ -21,6 +21,13 @@ class Body
     public:
 
         /**
+         * Keep track of potential and kinetic energy
+         */
+
+    TermPtr _Ep;
+    TermPtr _Ec;
+
+        /**
          * Initialization with time
          * Symbol
          */
@@ -123,6 +130,15 @@ class Body
             return _lagrangian;
         }
 
+        inline TermPtr getPotential()
+        {
+            return _Ep;
+        }
+        inline TermPtr getKinetic()
+        {
+            return _Ec;
+        }
+
         /**
          * Set the Joint root
          * (Do not use)
@@ -214,11 +230,12 @@ class Body
         TermPtr _symAngle;
         TermVectorPtr _symPosVel;
         TermPtr _symAngleVel;
-
         /**
          * Body lagrangian Symbolic expression
          */
         TermPtr _lagrangian;
+
+
 
         /**
          * The joint that links the Body
@@ -262,6 +279,7 @@ class Body
                 TermPtr kinetic =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(tmp1, squaredVel);
+                _Ec=kinetic;
                 //Potential energy
                 TermPtr gravitySym = Constant::create(9.81); //TODO
                 TermPtr height =
@@ -273,6 +291,7 @@ class Body
                 TermPtr potential =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(tmp2, height);
+                _Ep=potential;
                 //Mass lagrangian
                 TermPtr tmp3 = Symbolic::Sub<scalar>::create(
                     kinetic, potential);

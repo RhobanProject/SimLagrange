@@ -7,6 +7,8 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include "Any/src/Any.hpp"
+#include "Vector/src/Vector2D.hpp"
+#include "SimMecha/src/Simulation.h"
 
 namespace Leph {
 namespace SimViewer {
@@ -221,14 +223,61 @@ class SimViewer
 
             //Clear screen background
             _window.clear(sf::Color::Black);
-            // _view.setSize(sf::Vector2f((float)CAMERA_WIDTH/_zoom, (float)CAMERA_WIDTH/_ratio/_zoom));
-            // _view.zoom(_zoom);
-            // _window.setView(_view);
 
-            // _view.setCenter(sf::Vector2f(0, 0));
-            // _view.setSize(sf::Vector2f(CAMERA_WIDTH/_zoom, CAMERA_WIDTH/_ratio/_zoom));
-            // _view.zoom(_zoom);
         }
+
+
+    inline void plot(std::vector<Vector::Vector2D<double>> data, double minrange, double maxrange, int timewin=1000) //TODO
+        {
+            // Vector2D size=Vector2D(_width,_height);
+                //top right
+            // Vector2D centerplot=Vector2D(size.x()/2+size.x()/4,size.y()/2+size.y()/4);
+            // Vector2D centerplot=Vector2D(990,215);
+
+            int x=_width/2+_width/4;
+            int y=_height/4; //Why?
+
+            // sf::View view;
+
+            double ratio=0.015; //bah?
+            // std::cout<<"debug: "<<_width<<" "<<_height<<std::endl;
+            // view.reset(sf::FloatRect(centerplot.x(), centerplot.y(), size.x()/4,size.y()/4));
+
+            // sf::Vector2f sizef=_window.mapPixelToCoords(sf::Vector2i(_width,_height));
+            sf::Vector2f centerplotf=_window.mapPixelToCoords(sf::Vector2i(x,y));
+
+            // viewer._window.setView(view);
+            drawRect(centerplotf.x,-centerplotf.y,_width/8*ratio,_height/8*ratio,0.01,sf::Color::Red);
+            // viewer._window.setView(viewer._view);
+
+            double rangeratio=(maxrange-minrange)/(_height/8*ratio);
+            double timeratio=(timewin)/(_width/8*ratio);
+
+            Vector::Vector2D<double> orig=Vector::Vector2D<double>(centerplotf.x-(_width/8*ratio)/2.0,-centerplotf.y-(_height/8*ratio)/2.0);
+
+            if(data.size()<timewin && data.size()>0)
+            {
+                double prevx=data[0].x();
+                // double prevx=0.0;
+
+                double prevy=data[0].y();
+
+                for(int i=1; i<data.size();i++)
+                {
+
+                    double oldx=(prevx-data[0].x())/timeratio-orig.x();
+                    double oldy=(prevy-minrange)/rangeratio-orig.y();
+                    double newx=(data[i].x()-data[0].x())/timeratio+orig.x();
+                    double newy=(data[i].y()-minrange)/rangeratio-orig.y();
+                    drawLineByEnds(oldx, -oldy, newx, -newy,0.1, sf::Color::Blue);
+                    prevx=data[i].x();
+                    prevy=data[i].y();
+
+                    std::cout<<"debug: "<<newx<<" "<<newy<<" "<<rangeratio<<" "<<timeratio<<" "<<data[i].y()<<" "<<orig<<std::endl;
+                }
+            }
+        }
+
 
         /**
          * Draw a reference frame at the origine or
@@ -400,44 +449,8 @@ class SimViewer
             _window.draw(circle);
         }
 
-    private:
 
-        /**
-         * Handler function pointer for
-         * close and space event
-         */
-        HandlerFunction _onCloseHandler;
-        HandlerFunction _onSpaceHandler;
-        HandlerFunction _onRHandler;
-
-        /**
-         * Parameter for close and space event
-         */
-        Any::Any _onCloseParam;
-        Any::Any _onSpaceParam;
-        Any::Any _onRParam;
-
-        /**
-         * SFML windows and camera
-         */
-        sf::RenderWindow _window;
-        sf::View _view;
-
-        /**
-         * To handle mouse scroll zooming
-         */
-        double _zoom, _ratio;
-        bool _button ;
-        int _width, _height;
-        sf::Vector2f beforeCoord, afterCoord;
-
-        /**
-         * Position and angle of chain end for segment drawing
-         */
-        sf::Vector2f _chainPos;
-        double _chainAngle;
-
-        /**
+            /**
          * Draw a line of given ends or polation position,
          * its thickness and color
          */
@@ -513,6 +526,45 @@ class SimViewer
 
             return angle;
         }
+
+//    private: //F*ck this
+
+        /**
+         * Handler function pointer for
+         * close and space event
+         */
+        HandlerFunction _onCloseHandler;
+        HandlerFunction _onSpaceHandler;
+        HandlerFunction _onRHandler;
+
+        /**
+         * Parameter for close and space event
+         */
+        Any::Any _onCloseParam;
+        Any::Any _onSpaceParam;
+        Any::Any _onRParam;
+
+        /**
+         * SFML windows and camera
+         */
+        sf::RenderWindow _window;
+        sf::View _view;
+
+        /**
+         * To handle mouse scroll zooming
+         */
+        double _zoom, _ratio;
+        bool _button ;
+        int _width, _height;
+        sf::Vector2f beforeCoord, afterCoord;
+
+        /**
+         * Position and angle of chain end for segment drawing
+         */
+        sf::Vector2f _chainPos;
+        double _chainAngle;
+
+
 };
 
 }

@@ -116,10 +116,11 @@ FitFunc walk=[](const double *x, const int N)
 
     if(foot_radius<0.001)
         score+=1000.0;
-    if(foot_radius>0.5)
-        score+=1000.0;
 
-    score+=foot_radius;
+    // if(foot_radius>1.0)
+    //     score+=1000.0;
+
+    score+=foot_radius*0.1;
 
         //check range
     if(slope>0.0)

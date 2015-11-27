@@ -66,7 +66,10 @@ class LinearSpring : public LinearJoint
         {
                 //_F() returns the potential energy
                 //Here the Lagrangian is only L=-Ep
-            setLagrangian(Symbolic::Minus<scalar>::create(_F(getDof())));
+            _Ep=_F(getDof());
+            _Ec=Constant::create(0);
+
+            setLagrangian(Symbolic::Minus<scalar>::create(_Ep));
         }
 
 

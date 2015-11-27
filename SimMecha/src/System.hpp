@@ -371,6 +371,12 @@ class System
                 Symbolic::BaseSymbol::zero()); //reset Lagrangian
 
 
+            _Ec=Symbol::create(
+                Symbolic::BaseSymbol::zero());
+            _Ep=Symbol::create(
+                Symbolic::BaseSymbol::zero());
+
+
             //We assume that Joints in the container are ordered
             //by dependencies (true by construction)
             for (size_t i=0;i<_joints.size();i++) {
@@ -384,6 +390,14 @@ class System
                 _lagrangian = Symbolic::Add<scalar>::create(
                     _lagrangian,
                     _bodies[i]->getLagrangian());
+
+                _Ec = Symbolic::Add<scalar>::create(
+                    _Ec,
+                    _bodies[i]->getKinetic());
+                _Ep = Symbolic::Add<scalar>::create(
+                    _Ep,
+                    _bodies[i]->getPotential());
+
             }
 
                 //Add Joint's Lagrangian (springs)
@@ -394,9 +408,17 @@ class System
                 _lagrangian = Symbolic::Add<scalar>::create(
                     _lagrangian,
                     _joints[i]->getLagrangian());
+
+                _Ec = Symbolic::Add<scalar>::create(
+                    _Ec,
+                    _bodies[i]->getKinetic());
+                _Ep = Symbolic::Add<scalar>::create(
+                    _Ep,
+                    _bodies[i]->getPotential());
+
             }
 
-
+                //TODO optimize with Ec and Ep
 
             _dynamics.clear();
             _velDofs.clear();
@@ -547,6 +569,30 @@ class System
             return body.getSymAngleVel()->evaluate(bounder);
         }
 
+
+        inline TermPtr getPotential()
+        {
+            return _Ep;
+        }
+        inline TermPtr getKinetic()
+        {
+            return _Ec;
+        }
+
+        inline scalar evalPotential()
+        {
+            Symbolic::Bounder bounder = bounderFromCurrentState();
+            _Ep->reset();
+            return _Ep->evaluate(bounder);
+        }
+        inline scalar evalKinetic()
+        {
+            Symbolic::Bounder bounder = bounderFromCurrentState();
+            _Ec->reset();
+            return _Ec->evaluate(bounder);
+        }
+
+
         /**
          * Return the Symbolic derivates degrees
          * of freedom container
@@ -625,6 +671,13 @@ class System
             }
         }
 
+    inline void plot(SimViewer::SimViewer& viewer, std::vector<Vector2D> data)
+        // inline void plot(SimViewer::SimViewer& viewer)
+        {
+
+            viewer.plot(data, 0,100);
+        }
+
     private:
 
         /**
@@ -666,6 +719,13 @@ class System
          */
         TermPtr _lagrangian;
 
+            /**
+         * Keep track of potential and kinetic energy
+         */
+
+    TermPtr _Ep;
+    TermPtr _Ec;
+
         /**
          * Symbolic dynamic equation container
          * Indexed by degree of freedom derivative
@@ -701,6 +761,8 @@ class System
         Vector2D _init_basePosition;
 
         bool _is_init;
+
+
 
     // DofContainer _init_dofs;
     // TermContainer _init_dynamics;

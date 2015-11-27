@@ -100,12 +100,32 @@ int main()
     // double slope=-0.00887709411969127;
 
 
+    //pas mal
         double foot_radius=0.499999999998606;//0.2;
     // double slope=-0.1;
     double init_vel=-0.240615871582297*foot_radius;
     double init_swingangle=-0.247198466740646;
     double init_swingvel=-0.00418033423404718;
     double slope=-3.24581907366929e-12;
+
+
+    //pas mal
+    //     double foot_radius=0.967462093241187;//0.2;
+    // // double slope=-0.1;
+    // double init_vel=-0.336046859935751*foot_radius;
+    // double init_swingangle=-0.384679658116544;
+    // double init_swingvel=-0.0100908435576543;
+    // double slope=-1.97186334255077e-07;
+
+
+    // double foot_radius=0.0811667762698315;//0.2;
+    // // double slope=-0.1;
+    // double init_vel=-0.180016332095015*foot_radius;
+    // double init_swingangle=-0.168777467213;
+    // double init_swingvel=-6.431923527597e-07;
+    // double slope=-3.07501111216845e-08;
+
+
 
 
 
@@ -172,6 +192,7 @@ int main()
 
     double time=0.0;
 
+    std::vector<Vector2D> data;
 #ifdef LOG
     ofstream logfile;
     logfile.open("log.dat");
@@ -188,7 +209,15 @@ int main()
             viewer.drawFrame();
             system.draw(viewer);
             g.draw(viewer);
+
+            scalar Ep=system.evalPotential();
+            scalar Ec=system.evalKinetic();
+            data.push_back(Vector2D(time,Ep+Ec));
+            system.plot(viewer,data);
             viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
+
+
+
             viewer.endDraw(); //TODO
             skip=SKIP_FRAME;
         }
@@ -212,6 +241,10 @@ int main()
                 logfile<<time<<" "<<system.statePosition("q1")<<" "<<system.stateVelocity("q1")<<" "<<system.statePosition("q2")<<" "<<system.stateVelocity("q2")<<"\n";
 #endif
                 system.runSimulationStep(0.001);
+
+                // scalar Ep=system.evalPotential();
+                // scalar Ec=system.evalKinetic();
+                // std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
             }
         }
         catch(const std::exception & e)

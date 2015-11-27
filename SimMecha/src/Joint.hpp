@@ -28,6 +28,14 @@ class Joint
     TermPtr _initposY;
 */
 
+
+        /**
+         * Keep track of potential and kinetic energy
+         */
+
+    TermPtr _Ep;
+    TermPtr _Ec;
+
         /**
          * Default constructor
          * (Do not use)
@@ -155,6 +163,9 @@ class Joint
         virtual void computeLagrangian()
         {
             _lagrangian = Constant::create(0.0);
+            _Ep= Constant::create(0.0);
+            _Ec= Constant::create(0.0);
+
         }
 
         /**
@@ -170,13 +181,22 @@ class Joint
             _lagrangian=L;
         }
 
+        inline TermPtr getPotential()
+        {
+            return _Ep;
+        }
+        inline TermPtr getKinetic()
+        {
+            return _Ec;
+        }
+
 /**
 * stupid hack
 */
 
    inline virtual void setCustomScalar(scalar val)
         {
-            std::cout<<"fuck"<<std::endl;
+            std::cout<<"Bah?"<<std::endl;
         }
 
         /**
