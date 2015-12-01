@@ -135,8 +135,15 @@ int main()
                 system.stateReset();
                 simu_reset=false;
             }
-            if(!simu_pause)
-                system.runSimulationStep(0.01);
+            if(!simu_pause){
+                system.runSimulationStep(0.001);
+                scalar Ep=system.evalPotential();
+                scalar Ec=system.evalKinetic();
+                std::cout.precision(15);
+                // std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
+                std::cout<<Ep+Ec<<" "<<Ep<<" "<<Ec<<std::endl;
+            }
+
         }
         catch(const std::exception & e)
         {

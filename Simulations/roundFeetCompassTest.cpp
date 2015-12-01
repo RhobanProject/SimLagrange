@@ -210,10 +210,11 @@ int main()
             system.draw(viewer);
             g.draw(viewer);
 
-            scalar Ep=system.evalPotential();
-            scalar Ec=system.evalKinetic();
-            data.push_back(Vector2D(time,Ep+Ec));
-            system.plot(viewer,data);
+            // scalar Ep=system.evalPotential();
+            // scalar Ec=system.evalKinetic();
+            // data.push_back(Vector2D(time,Ep+Ec));
+            // system.plot(viewer,data);
+
             viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
 
 
@@ -242,9 +243,11 @@ int main()
 #endif
                 system.runSimulationStep(0.001);
 
-                // scalar Ep=system.evalPotential();
-                // scalar Ec=system.evalKinetic();
+                scalar Ep=system.evalPotential();
+                scalar Ec=system.evalKinetic();
+                std::cout.precision(15);
                 // std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
+                std::cout<<Ep+Ec<<" "<<Ep<<" "<<Ec<<std::endl;
             }
         }
         catch(const std::exception & e)

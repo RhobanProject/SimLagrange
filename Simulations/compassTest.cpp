@@ -254,6 +254,11 @@ int main()
                 logfile<<time<<" "<<system.statePosition("q1")<<" "<<system.stateVelocity("q1")<<" "<<system.statePosition("q2")<<" "<<system.stateVelocity("q2")<<"\n";
 #endif
                 system.runSimulationStep(0.001);
+                scalar Ep=system.evalPotential();
+                scalar Ec=system.evalKinetic();
+                std::cout.precision(15);
+                // std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
+                std::cout<<Ep+Ec<<" "<<Ep<<" "<<Ec<<std::endl;
             }
         }
         catch(const std::exception & e)

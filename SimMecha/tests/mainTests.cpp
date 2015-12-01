@@ -36,24 +36,24 @@ int main()
         0.2, 0.0);
     b2.addMass(1.0, Vector2D(1.0, 0.0));
 
-    Body& b3 = system.addAngularJoint(
-        b2,
-        Vector2D(1.0, 0.0), 0.0,
-        Vector2D(0.0, 0.0), 0.0,
-        0.2, 0.0);
-    b3.addMass(1.0, Vector2D(1.0, 0.0));
+    // Body& b3 = system.addAngularJoint(
+    //     b2,
+    //     Vector2D(1.0, 0.0), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     0.2, 0.0);
+    // b3.addMass(1.0, Vector2D(1.0, 0.0));
 
     system.initSymbols();
 
 
-    HeightUnaryConstraint c1(
-        b3, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryConstraint c2(
-        b2, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryConstraint c3(
-        b1, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryConstraint c4(
-        system.getBase(), system, 0.90, false, 0.0, Vector2D(0.0, 0.0));
+    // HeightUnaryConstraint c1(
+    //     b3, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
+    // HeightUnaryConstraint c2(
+    //     b2, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
+    // HeightUnaryConstraint c3(
+    //     b1, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
+    // HeightUnaryConstraint c4(
+    //     system.getBase(), system, 0.90, false, 0.0, Vector2D(0.0, 0.0));
 
 
     while (viewer.isOpen()) {
@@ -62,10 +62,14 @@ int main()
         viewer.drawFrame();
         system.draw(viewer);
         viewer.moveCam(-system.evalPosition(system.getBase()).x(),system.evalPosition(system.getBase()).y());
-        viewer.endDraw(10);
+        viewer.endDraw();
 
         system.runSimulationStep(0.01);
-
+        scalar Ep=system.evalPotential();
+        scalar Ec=system.evalKinetic();
+        std::cout.precision(15);
+        // std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
+        std::cout<<Ep+Ec<<" "<<Ep<<" "<<Ec<<std::endl;
 
         // c1.handle();
         // c2.handle();

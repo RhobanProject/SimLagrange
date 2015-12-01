@@ -405,16 +405,17 @@ class System
                 _joints[i]->initSymbols();
                 // std::cout<<"DEBUG: "<<_joints[i]->getLagrangian()->toString()<<std::endl;
 
+
                 _lagrangian = Symbolic::Add<scalar>::create(
                     _lagrangian,
                     _joints[i]->getLagrangian());
 
                 _Ec = Symbolic::Add<scalar>::create(
                     _Ec,
-                    _bodies[i]->getKinetic());
+                    _joints[i]->getKinetic());
                 _Ep = Symbolic::Add<scalar>::create(
                     _Ep,
-                    _bodies[i]->getPotential());
+                    _joints[i]->getPotential());
 
             }
 

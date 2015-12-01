@@ -260,6 +260,12 @@ class Body
         inline void computeLagrangian()
         {
 
+            _Ep=Symbol::create(
+                Symbolic::BaseSymbol::zero());
+            _Ec=Symbol::create(
+                Symbolic::BaseSymbol::zero());
+
+
             //Compute lagrangian for all masses
             for (size_t i=0;i<_massPositions.size();i++) {
                 //Mass position
@@ -279,7 +285,9 @@ class Body
                 TermPtr kinetic =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(tmp1, squaredVel);
-                _Ec=kinetic;
+                _Ec=Symbolic::Add<scalar>::create(
+                    kinetic, _Ec);
+
                 //Potential energy
                 TermPtr gravitySym = Constant::create(9.81); //TODO
                 TermPtr height =
@@ -291,7 +299,9 @@ class Body
                 TermPtr potential =
                     Symbolic::Mult<scalar, scalar, scalar>::
                     create(tmp2, height);
-                _Ep=potential;
+                _Ep=Symbolic::Add<scalar>::create(
+                    potential, _Ep);
+
                 //Mass lagrangian
                 TermPtr tmp3 = Symbolic::Sub<scalar>::create(
                     kinetic, potential);
