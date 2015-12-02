@@ -135,33 +135,39 @@ class RoundFoot : public Joint
 
             TermPtr dy = Symbolic::Mult<scalar,scalar,scalar>::create(Symbolic::Minus<scalar>::create(dof),SIN(_gamma));
             dy=Symbolic::Add<scalar>::create(dy,Symbolic::Minus<scalar>::create(_initposY));
+            // dy=Symbolic::Add<scalar>::create(dy,Symbolic::Minus<scalar>::create(SIN(resultAngle)));
+            // dy=Symbolic::Add<scalar>::create(dy,SIN(resultAngle));
 
 
             TermVectorPtr dxdy=Symbolic::Vect<Vector2D, scalar>::create(dx,dy);
-            p1=Symbolic::Add<Vector2D>::create(p1,dxdy);
+            p1=Symbolic::Add<Vector2D>::create(p1,dxdy); //old
 
                                                                // ConstantVector::create(Vector2D(Symbolic::Mult<scalar,scalar,scalar>::create(dof,COS(_gamma)), Symbolic::Mult<scalar,scalar,scalar>::create(dof,SIN(_gamma)) )));
 
 
+            TermVectorPtr radvect = ConstantVector::
+                create(Vector2D(0.0, _sr));
 
 
                 //Joint anchor on Leaf Body
             TermVectorPtr p2 = Symbolic::Add<Vector2D>::create(
                 p1,
                     Symbolic::Rotation<Vector2D, scalar>::create(
-                        unitySym,
+                        radvect,//unitySym,
                         angle_root));
 
+            // p2=Symbolic::Add<Vector2D>::create(p2,dxdy);
             //Build up center of Leaf Body
             TermVectorPtr resultPos = Symbolic::Add<Vector2D>::create(
-                p2,
+                p2, //p2
                 Symbolic::Rotation<Vector2D, scalar>::create(
                     Symbolic::Minus<Vector2D>::create(posLeafSym),
                     resultAngle));
 
+
             //Set up Leaf Symbols
             leaf.initSymbols(
-                p1,
+                resultPos, //p1
                 resultAngle,
                 resultPos->derivate(time),
                 resultAngle->derivate(time));
@@ -183,6 +189,8 @@ class RoundFoot : public Joint
 
             Vector2D pos = posLeaf + Vector2D::rotate(
                 Joint::getPosLeaf(), angleLeaf);
+
+            // std::cout<<"posleaf: "<<posLeaf<<" "<<pos<<std::endl;
 
             // viewer.drawJoint(pos.x(), pos.y(),
             //     (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,

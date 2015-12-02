@@ -100,13 +100,23 @@ int main()
     // double slope=-0.00887709411969127;
 
 
-    //pas mal
-        double foot_radius=0.499999999998606;//0.2;
+    // //pas mal
+    //     double foot_radius=0.499999999998606;//0.2;
+    // // double slope=-0.1;
+    // double init_vel=-0.240615871582297*foot_radius;
+    // double init_swingangle=-0.247198466740646;
+    // double init_swingvel=-0.00418033423404718;
+    // double slope=-3.24581907366929e-12;
+
+
+
+    // //Point fixe
+        double foot_radius=0.990203652412789;
     // double slope=-0.1;
-    double init_vel=-0.240615871582297*foot_radius;
-    double init_swingangle=-0.247198466740646;
-    double init_swingvel=-0.00418033423404718;
-    double slope=-3.24581907366929e-12;
+    double init_vel=-0.321453182965361*foot_radius;
+    double init_swingangle=-0.362180265865957;
+    double init_swingvel=-0.00477058454583621;
+    double slope=-0.000405302209614649;
 
 
     //pas mal
@@ -143,8 +153,8 @@ int main()
     // double ga=-0.21;
     double ga=slope;
     // double ga=0.0;
-    double gb=-foot_radius;//-1.3;
-
+    // double gb=-foot_radius;//-1.3;
+    double gb=0;
 
 
     auto F_ground = [&ga, &gb](double x) -> double
@@ -166,7 +176,7 @@ int main()
     Body& b1 = system.addRoundFoot(
         system.getBase(),
         Vector2D(0.0, 0.0), 0.0,
-        Vector2D(0.0, 0.0), 0.0,
+        Vector2D(0.0, foot_radius), 0.0,
         foot_radius, atan2(slope,1.0) , init_angle, init_vel);
     b1.addMass(0.001, Vector2D(0.0, 2.0));
 
@@ -181,7 +191,7 @@ int main()
 
     system.initSymbols();
 
-    RoundFeetGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0));
+    RoundFeetGround g(b2, system, 0.9, false, F_ground, Vector2D(0.0, -2.0+foot_radius));
 
     g.feetRadius=foot_radius;
 
@@ -243,11 +253,13 @@ int main()
 #endif
                 system.runSimulationStep(0.001);
 
+                    /*
                 scalar Ep=system.evalPotential();
                 scalar Ec=system.evalKinetic();
                 std::cout.precision(15);
                 // std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
                 std::cout<<Ep+Ec<<" "<<Ep<<" "<<Ec<<std::endl;
+                    */
             }
         }
         catch(const std::exception & e)

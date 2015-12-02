@@ -190,7 +190,9 @@ class RoundFeetGround: public Ground
             meanStep=stepDist/nbStep;
 
 
-            Vector2D newbase=point;
+            // Vector2D newbase=point;
+            // Vector2D newbase=Vector2D(point.x()+feetRadius*cos(centerAngle-M_PI/2.0),point.y()+feetRadius*sin(centerAngle-M_PI/2.0));
+            Vector2D newbase=contactPoint;
             Vector2D oldbase=_system->evalPosition(_system->getBase());
             // newbase.y()+=feetRadius; //FIXME!!!!!
 
@@ -325,10 +327,30 @@ class RoundFeetGround: public Ground
                 // viewer.drawCircle(_currentpos.x(),_currentpos.y(),0.05,sf::Color(255,0,0,100));
 
             // viewer.drawCircle(_currentpos.x(),_currentpos.y(),0.05,sf::Color(R,G,B,A));
-            viewer.drawCircle(_currentpos.x(),_currentpos.y(),feetRadius,sf::Color(R,G,B,A));
+
+            // viewer.drawCircle(_currentpos.x(),_currentpos.y(),feetRadius,sf::Color(R,G,B,A));
+
+            Vector2D pos=_currentpos;
+
+            pos_r= pos+Vector2D(feetRadius,0);
+            double theta=0.0;
+
+            for(int i=0;i<100;i++)
+            {
+                theta+=2.0*M_PI/100.0;
+                viewer.drawSegmentByEnd(pos_r.x(),pos_r.y(), pos.x()+feetRadius*cos(theta),pos.y()+feetRadius*sin(theta),0.01,sf::Color(R,G,B,A));
+                pos_r=Vector2D(pos.x()+feetRadius*cos(theta),pos.y()+feetRadius*sin(theta));
+            }
 
                 //the leg
-            viewer.drawSegmentByEnd(_currentpos.x(),_currentpos.y(),_system->evalPosition(*_body).x() ,_system->evalPosition(*_body).y() ,0.05,sf::Color(0,255,0,50));
+            // viewer.drawSegmentByEnd(_currentpos.x(),_currentpos.y(),_system->evalPosition(*_body).x() ,_system->evalPosition(*_body).y() ,0.05,sf::Color(0,255,0,100));
+            // viewer.drawSegmentByEnd(_currentpos.x(),_currentpos.y(),_system->evalPosition(*_body).x() ,_system->evalPosition(*_body).y() ,0.05,sf::Color(0,255,0,100));
+            scalar centerAngle = UnaryConstraint::_system
+                ->evalAngle(*UnaryConstraint::_body);
+            Vector2D hippos=_system->evalPosition(*(_system->getBodies()[1]));
+            // viewer.drawSegmentByEnd(pos.x(),pos.y(),hippos.x() ,pos.y()+feetRadius*sin(centerAngle-M_PI/2.0) ,0.05,sf::Color(0,255,0,100));
+            viewer.drawSegmentByEnd(hippos.x(), hippos.y() ,pos.x()+feetRadius*cos(centerAngle-M_PI/2.0),pos.y()+feetRadius*sin(centerAngle-M_PI/2.0) ,0.05,sf::Color(0,255,0,100));
+
 
         }
 
@@ -344,8 +366,10 @@ class RoundFeetGround: public Ground
             Vector2D pos = centerPos
                 + Vector2D::rotate(_posInBody, centerAngle);
 
+            // std::cout<<"posinbody "<<_posInBody<<" "<<pos<<std::endl;
 
-
+            // Vector2D pos = posLeaf + Vector2D::rotate(
+            //     Joint::getPosLeaf(), angleLeaf);
 
             point = pos;
             dir = Vector2D(0.0, 1.0); //TODO normal
