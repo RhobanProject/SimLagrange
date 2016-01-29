@@ -15,6 +15,7 @@ set(TESTS_DIRECTORIES
     VectorMap
     SymOptim
     SimMecha
+    Model
 )
 
 
@@ -24,6 +25,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Eigen)
 #Include SFML (windows and graphic library)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/include)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/lib)
+
+#Include JSONcpp
+include_directories(/usr/include/jsoncpp)
+
 
 #Enable C++11
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -80,6 +85,7 @@ add_executable(
 	testRoundFeetCompass
         Simulations/roundFeetCompassTest.cpp
 )
+
 
 
 
@@ -140,4 +146,11 @@ target_link_libraries(RoundFootOptim
     sfml-window
     sfml-system
     cmaes
+)
+
+target_link_libraries(testsModel
+    sfml-graphics
+    sfml-window
+    sfml-system
+    jsoncpp
 )

@@ -21,12 +21,14 @@ namespace SimViewer {
  */
 class SimViewer
 {
-    public:
+  public:
 
         /**
          * Typedef for handler function
          */
-        typedef void (*HandlerFunction)(Any::Any param);
+    // typedef void (*HandlerFunction)(Any::Any param);
+    typedef std::function<void(Any::Any param)> HandlerFunction;
+
         /**
          * Configuation constant
          */

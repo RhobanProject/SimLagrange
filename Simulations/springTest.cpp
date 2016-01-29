@@ -7,9 +7,9 @@
 
 #include "SimMecha/src/System.hpp"
 #include "SimViewer/src/SimViewer.hpp"
-#include "SimMecha/src/Constraint.hpp"
+// #include "SimMecha/src/Constraint.hpp"
 #include "SimMecha/src/UnaryConstraint.hpp"
-#include "SimMecha/src/BinaryConstraint.hpp"
+// #include "SimMecha/src/BinaryConstraint.hpp"
 #include "Symbolic/src/Term.hpp"
 #include "Symbolic/src/terms.h"
 #include "SimMecha/src/Simulation.h"

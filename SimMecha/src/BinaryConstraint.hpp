@@ -22,8 +22,8 @@ class BinaryConstraint : public Constraint
 {
     public:
 
-    private:
-        
+    // private:
+
         /**
          * The two Bodies involved in the
          * Constraint
@@ -37,18 +37,18 @@ class BinaryConstraint : public Constraint
          */
         System* _system1;
         System* _system2;
-        
+
         /**
-         * Check if the constraint against 
+         * Check if the constraint against
          * current systems states.
          * Return false is the constraint is tied
-         * Return true in case of violation of the 
-         * constraint and set for the two Bodies 
+         * Return true in case of violation of the
+         * constraint and set for the two Bodies
          * the position and normal direction of
          * detected collision
          */
         virtual bool computeCheckConstraint(
-            Vector2D& pos1, Vector2D& norm1, 
+            Vector2D& pos1, Vector2D& norm1,
             Vector2D& pos2, Vector2D& norm2) = 0;
 };
 
@@ -56,4 +56,3 @@ class BinaryConstraint : public Constraint
 }
 
 #endif
-
