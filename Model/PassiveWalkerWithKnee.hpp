@@ -41,11 +41,6 @@
 #include "Symbolic/src/terms.h"
 #include "SimMecha/src/Simulation.h"
 
-#include "SimMecha/src/Constraint.hpp"
-#include "SimMecha/src/UnaryConstraint.hpp"
-#include "SimMecha/src/BinaryConstraint.hpp"
-#include "SimMecha/src/HeightUnaryConstraint.hpp"
-
 #include <stdio.h>
 #include <functional>
 // #include "Simulations/SimpleWalkerGround.hpp"
@@ -55,9 +50,9 @@
 // #define DRAW
 // #define LOG
 
-#define FREE_KNEE 0
-#define LOCKED_KNEE 1
-#define FALL 2
+#define FREE_KNEE 1
+#define LOCKED_KNEE 2
+#define FALL 4
 
 #define _COLLISION_COOLDOWN 2
 
@@ -79,15 +74,27 @@ class PassiveWalkerKneeStop//: public BinaryConstraint //useless
 
     }
 
-    bool computeCheckConstraint(
-            Vector2D& pos1, Vector2D& norm1,
-            Vector2D& pos2, Vector2D& norm2)
+    void swapmodel(Body* thigh, Body* shank, System *system)
+    {
+        _thigh=thigh;
+        _shank=shank;
+        _system=system;
+    }
+
+    bool computeCheckConstraint()
     {
 
-        double angle_thigh=fmod(_system->evalAngle(*_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
-        double angle_shank=fmod(_system->evalAngle(*_shank),2.0*M_PI);
+        // double angle_thigh=fmod(_system->evalAngle(*_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
+        // double angle_shank=fmod(_system->evalAngle(*_shank),2.0*M_PI);
+
         // std::cout<<"DEBUG knee: "<<angle_thigh<<" "<<angle_shank<<std::endl;
-        if(angle_shank>=angle_thigh)
+
+        double angle_thigh=_system->evalAngle(*_thigh)+M_PI; //better
+        double angle_shank=_system->evalAngle(*_shank);
+
+        // std::cout<<"DEBUG knee: "<<angle_thigh<<" "<<angle_shank<<std::endl;
+
+        if((angle_shank-angle_thigh)>=0)
             return true;
         else
             return false;
@@ -95,265 +102,56 @@ class PassiveWalkerKneeStop//: public BinaryConstraint //useless
 };
 
 
-class PassiveWalkerGround: public Ground
+class PassiveWalkerGroundContact
 {
-
   public:
 
-    bool postCollision;
-    int collision_delay;
-    bool hasFallen;
-    int nbStep;
-    double impactAngle;
-    double impactVel;
+    // Body* _thigh;
+    Body *_shank;
+    System* _system;
+    Vector2D _posInBody;
+    Vector2D lastContactPoint;
+    std::function<float(float)> _F;
+    bool _contact;
 
-    double impactAngleQ2;
-    double impactVelQ2;
-
-
-    double meanImpactAngle;
-    double devImpactAngle;
-    double meanStep;
-    double stepDist;
-    double prevStep;
-
-    bool isFootUpGround;
-    bool prev_isFootUpGround;
-    bool isContactEnabled;
-    bool isInit;
-    int phase;
-    bool supportChanged;
-    bool contactActivated;
-
-    PassiveWalkerGround(Body& body, System& system,
-                              scalar restitutionCoef, bool isFriction,
-                              std::function<float(float)> F, const Vector2D& posInBody):
-            Ground(body, system, restitutionCoef, isFriction, F, posInBody)
+    PassiveWalkerGroundContact(Body* shank, System *system, Vector2D posInBody, std::function<float(float)> F): _shank(shank), _system(system), _posInBody(posInBody), _F(F)
     {
-        postCollision=false;
-        hasFallen=false;
-        collision_delay=_COLLISION_COOLDOWN;
-        nbStep=0;
-        impactAngle=0.0;
-        meanImpactAngle=0.0;
-        devImpactAngle=0.0;
-        meanStep=0.0;
-        prevStep=0.0;
-        stepDist=0.0;
-        impactVel=0.0;
-        impactAngleQ2=0.0;
-        impactVelQ2=0.0;
-        isFootUpGround=true;
-        isContactEnabled=true;
-        prev_isFootUpGround=true;
-        isInit=true;
-        phase=1;
-        supportChanged=false;
-        contactActivated=false;
+        lastContactPoint=Vector2D(0,0);
+        _contact=false;
+    }
+    void swapmodel(Body* shank, System *system)
+    {
+        _shank=shank;
+        _system=system;
     }
 
-    inline void handle()
+    bool computeCheckConstraint()
     {
-        Vector2D point;
-        Vector2D dir;
-        Vector2D posInBody;
-
-
-
-        //draw
-        Vector2D centerPos = UnaryConstraint::_system
-                             ->evalPosition(*UnaryConstraint::_body);
-        scalar centerAngle = UnaryConstraint::_system
-                             ->evalAngle(*UnaryConstraint::_body);
+        Vector2D centerPos = _system->evalPosition(*_shank);
+        scalar centerAngle = _system->evalAngle(*_shank);
 
         Vector2D pos = centerPos
                        + Vector2D::rotate(_posInBody, centerAngle);
 
-        _currentpos=pos;
-        scalar gamma=atan2(_F(1.0)-_F(0.0),1.0); //FIXME ground angle
+        lastContactPoint = pos;
+        // dir = Vector2D(0.0, 1.0); //TODO normal
+        // posInBody = _posInBody;
+        // _currentpos=pos;
 
 
-
-        if((prev_isFootUpGround != isFootUpGround) ) //edge
-        {
-            isContactEnabled=true;
-
+        if (pos.y() <= _F(pos.x())) {
+            // if ((pos.y()-_F(pos.x())) <=0.0 && fabs(pos.y()-_F(pos.x()))<0.01 ) {
+            // if ((pos.y()-_F(pos.x())) <=0.0) {
+            _contact=true;
+            return true;
+        } else {
+            _contact=false;
+            return false;
         }
-        else
-            isContactEnabled=false;
-
-        prev_isFootUpGround=isFootUpGround;
-
-
-        if(pos.y()<=_F(pos.x()))
-            isFootUpGround=false;
-        if(pos.y()>_F(pos.x()))
-            isFootUpGround=true;
-
-
-
-        if(isInit)
-        {
-            if(pos.y()<=_F(pos.x()))
-            {
-                prev_isFootUpGround=false;
-                isFootUpGround=false;
-                isContactEnabled=false;
-            }
-            else
-            {
-                prev_isFootUpGround=false;
-                isFootUpGround=true;
-                isContactEnabled=true;
-            }
-
-            prev_isFootUpGround=false;
-            isFootUpGround=false;
-            isContactEnabled=false;
-            isInit=false;
-        }
-
-
-        if(fabs(_system->statePosition("q1")) > M_PI/2.0)
-        {
-            hasFallen=true;
-            return;
-        }
-
-        if (!computeCheckConstraint(point, dir, posInBody))
-            return;
-
-
-
-        if(isContactEnabled)
-        {
-
-            if(_system->statePosition("q2")<0.0)
-                return;
-        }
-        else
-        {
-            contactActivated=false;
-            return;
-        }
-
-
-        getConstraint(point, dir, posInBody);
-
-
-        postCollision=true;
-
-
-        nbStep++;
-        stepDist+=(_currentpos.x()-fabs(prevStep));
-        prevStep=fabs(_currentpos.x());
-        meanStep=stepDist/nbStep;
-
-
-        //manage the Heelstrike
-        _system->getBase().setPos(point); //get the base to the new contact pos
-
-
-        scalar theta=_system->statePosition("q1")-gamma;
-        scalar theta_dot=_system->stateVelocity("q1");
-        scalar psi_dot=cos(2.0*theta)*(1.0-cos(2.0*theta))*theta_dot;
-
-        // std::cout<<"DEBUG test: "<<2.0*theta<<" "<<_system->statePosition("q2")<<" "<<gamma<<std::endl;
-        theta_dot=cos(2.0*theta)*theta_dot;
-
-        _system->stateVelocity("q1")=theta_dot;
-        _system->stateVelocity("q2")=psi_dot;
-
-        std::cout<<"COLLISION Q1: "<<_system->statePosition("q1")<<" dQ1: "<<_system->stateVelocity("q1")<<" Q2: "<<_system->statePosition("q2")<<" dQ2: "<<_system->stateVelocity("q2")<<" POS: "<<_currentpos.x()<<" STEP: "<<nbStep<<std::endl;
-
-
-        _system->statePosition("q1")=_system->evalAngle(*_body);
-        _system->statePosition("q2")=-_system->statePosition("q2");
-
-
-
-        //velocities
-
-        impactAngle=_system->statePosition("q1");
-        impactVel=_system->stateVelocity("q1");
-
-        impactAngleQ2=_system->statePosition("q2");
-        impactVelQ2=_system->stateVelocity("q2");
-
-
-        meanImpactAngle=impactAngle/nbStep;
-        if(nbStep>1)
-            devImpactAngle=0.0;
-        else
-            devImpactAngle=1.0;
-        devImpactAngle+=fabs(meanImpactAngle-_system->statePosition("q1"));
-
-
-        _system->initSymbols();
-
-        supportChanged=true;
-
     }
 
-    void draw(Leph::SimViewer::SimViewer& viewer)
-    {
-        Vector2D pos_r=_currentpos;
-        Vector2D pos_l=_currentpos;
-
-        for(double xi=0.0; xi<5.0;xi+=0.01)
-        {
-            viewer.drawSegmentByEnd(pos_r.x(),_F(pos_r.x()), xi+pos_r.x(),_F(xi+pos_r.x()) ,0.02,sf::Color(255,255,255,255));
-            pos_r=Vector2D(pos_r.x()+xi, _F(xi+pos_r.x()));
-            viewer.drawSegmentByEnd(pos_l.x(),_F(pos_l.x()), pos_l.x()-xi,_F(pos_l.x()-xi) ,0.02,sf::Color(255,255,255,255));
-            pos_l=Vector2D(pos_l.x()-xi, _F(pos_l.x()-xi));
-        }
-
-
-        int R=0;
-        int G=0;
-        int B=0;
-        int A=0;
-
-        if(contactActivated) //FIXME
-        {
-            R=255;
-            G=0;
-        }
-        else
-        {
-            R=0;
-            G=255;
-        }
-
-        if(phase==0)
-        {
-            B=0;
-        }
-        if(phase==1)
-        {
-            B=255;
-        }
-        // if(isContactEnabled)
-        //     A=255;
-        // else
-        //     A=100;
-
-        A=255;
-        // viewer.drawCircle(_currentpos.x(),_currentpos.y(),0.05,sf::Color(255,0,0,100));
-
-        viewer.drawCircle(_currentpos.x(),_currentpos.y(),0.05,sf::Color(R,G,B,A));
-        //the leg
-        viewer.drawSegmentByEnd(_currentpos.x(),_currentpos.y(),_system->evalPosition(*_body).x() ,_system->evalPosition(*_body).y() ,0.05,sf::Color(0,255,0,50));
-
-    }
-
-    //SOOOooo stupid
-    inline bool computeCheckConstraint(
-            Vector2D& point, Vector2D& dir, Vector2D& posInBody)
-    {
-        return Ground::computeCheckConstraint(point,dir,posInBody);
-    }
 };
+
 
 
 class PassiveWalkerWithKnee: public PassiveWalker
@@ -381,8 +179,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
     double offset;
     // double ga, gb;
     std::function<float(float)> F_ground;
-    PassiveWalkerGround* ground;
+
     PassiveWalkerKneeStop* knee_stop;
+    PassiveWalkerGroundContact* ground_contact;
 
     //model
     System* modelbase;
@@ -398,7 +197,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
     int skip;
 
     //State machine
-    int state; //0=(stance leg + free knee swing leg); 1=(stance leg + locked knee swing leg)
+    unsigned char state; //0=(stance leg + free knee swing leg); 1=(stance leg + locked knee swing leg)
     //2=fall
 
     Leph::SimViewer::SimViewer* viewer;
@@ -436,16 +235,21 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
         // System system(Vector2D(0.0, 0.0));
-        modelbase=new System(Vector2D(0.0, 0.0));;
-
-        //Base is at (0,0) = stance foot
-        // system.getBase().addMass(m_s, Vector2D(0.0, a1));
-        // system.getBase().addMass(m_s, Vector2D(0.0, 0.0));
+        modelbase=new System(Vector2D(0.0, 0.0));
+        //dummy, just to init the memory
+        stance_leg = &(modelbase->addAngularJoint(
+            modelbase->getBase(),
+            Vector2D(0.0, 0.0), 0.0,
+            Vector2D(0.0, 0.0), 0.0,
+            0, 0));
+        modelbase->initSymbols();
 
         BuildInitModel();
 
+        //Viewer stuffs
         viewer= new Leph::SimViewer::SimViewer(1280, 1024);
 
+        //Viewer callbacks
         viewer->setSpaceHandler(
             [this](Leph::Any::Any p) -> void {
                 this->space_cb(p);
@@ -462,11 +266,13 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     }
 
-    void InitModelFreeKnee(double init_angle, double init_vel, double init_swing, double init_swingvel, double init_kneevel)
+    void InitModelFreeKnee(Vector2D pos, double init_angle, double init_vel, double init_swing, double init_swingvel, double init_kneevel)
     {
 
-        //TODO: handle the init position
-        // Vector2D pos=modelbase->evalPosition(*modelbase);
+
+        // Vector2D pos=modelbase->evalPosition(*stance_leg);
+        modelbase=new System(pos);
+
         stance_leg = &(modelbase->addAngularJoint(
             modelbase->getBase(),
             Vector2D(0.0, 0.0), 0.0,
@@ -495,14 +301,12 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     }
 
-    void InitModelLockedKnee(double init_angle, double init_vel, double init_swing, double init_swingvel)
+    void InitModelLockedKnee(Vector2D pos, double init_angle, double init_vel, double init_swing, double init_swingvel)
     {
 
-        //TODO initial position
 
-
-        Vector2D pos=modelbase->evalPosition(*stance_leg);
-        modelbase=new System(pos); //FIXME: memory?
+        // Vector2D pos=modelbase->evalPosition(*stance_leg);
+        modelbase=new System(pos);
 
         stance_leg = &(modelbase->addAngularJoint(
             modelbase->getBase(),
@@ -541,7 +345,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         double init_angle=(M_PI-init_swing)/2.0-slope_angle-M_PI/2.0;
 
         //build the model
-        InitModelFreeKnee(-init_angle, init_q1_dot, M_PI-init_swing, init_q2_dot, init_q3_dot);
+        InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, M_PI-init_swing, init_q2_dot, init_q3_dot);
 
         state=FREE_KNEE;
 
@@ -557,15 +361,47 @@ class PassiveWalkerWithKnee: public PassiveWalker
                         };
 
         //Collision stuffs
-        //legacy
-        ground=new PassiveWalkerGround(*swing_shank, *modelbase, 0.9, false, F_ground, Vector2D(0.0, -(b1+a1)));
+
         knee_stop=new PassiveWalkerKneeStop(swing_thigh, swing_shank, modelbase);
+        ground_contact=new PassiveWalkerGroundContact(swing_shank, modelbase, Vector2D(0.0, L), F_ground);
+
 
         skip=0;
         time=0.0;
 
 
     }
+
+
+    //comes from UnaryConstraint.hpp
+    bool getConstraintTime(std::function<bool()> computeCheckConstraint)
+    {
+        if (!computeCheckConstraint()) {
+            return false;
+        }
+
+        //TODO Bijection
+        scalar timeMin = 0.0;
+        scalar timeMax = 0.01;
+        scalar currentTime = 0.0;
+        for (int i=0;i<100;i++) { //FIXME?
+            scalar t = (timeMax-timeMin)/2.0;
+            modelbase->runSimulationStep(currentTime-t);
+            currentTime = t;
+            if (computeCheckConstraint()) {
+                timeMin = t;
+            } else {
+                timeMax = t;
+            }
+            // std::cout<<"DEBUG Col: "<<t<<" "<<timeMin<<" "<<timeMax<<std::endl;
+        }
+        // std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
+        modelbase->runSimulationStep(currentTime-timeMax);
+        computeCheckConstraint();
+        return true;
+    }
+
+
 
     void lock_the_knee()
     {
@@ -621,10 +457,68 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout<<"DEBUG knee vm:\n"<<v_q_m<<std::endl;
         // std::cout<<"DEBUG knee qm:\n"<<Q_m<<std::endl;
         // std::cout<<"DEBUG knee qp:\n"<<Q_p<<std::endl;
-
-        InitModelLockedKnee(q1, v_q_p(0), -q1+old_q2, v_q_p(1));
+        Vector2D pos=modelbase->evalPosition(*stance_leg);
+        InitModelLockedKnee(pos,q1, v_q_p(0), -q1+old_q2, v_q_p(1)); //FIXME!
+        // InitModelLockedKnee(pos,q1, v_q_p(0), -q1+old_q2, -v_q_p(1));
 
     }
+
+
+
+
+    void foot_on_ground()
+    {
+
+        double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
+        // double q3=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
+        //TODO check
+        double q1=modelbase->evalAngle(*stance_leg);
+
+        //because of the referential...
+        double old_q2=modelbase->evalAngle(*swing_thigh);
+        // double old_q3=modelbase->evalAngle(*swing_shank);
+
+        double q1_dot=modelbase->stateVelocity("q1");
+        double q2_dot=modelbase->stateVelocity("q2");
+        // double q3_dot=modelbase->stateVelocity("q3");
+
+
+        // double alpha=cos(q1-q2); //error in the paper?
+        double alpha=(q1-q2);
+
+        //TODO optimize!
+        double q12_m=-m_s*a1*(l_t+b1)+m_t*b2*(l_s+a2);
+        double q11_m=q12_m+(m_h*L+2.0*m_t*(a2+l_s)+m_s*a1)*L*cos(alpha);
+        double q21_m=q12_m;
+        double q22_m=0.0;
+
+        double q21_p=-(m_s*(b1+l_t)+m_t*b2)*L*cos(alpha);
+        double q11_p=q21_p+(m_s+m_t+m_h)*pow(L,2)+m_s*pow(a1,2)+m_t*pow((a2+l_s),2);
+        double q12_p=q21_p+m_s*pow((b1+l_t),2)+m_t*pow(b2,2);
+        double q22_p=m_s*pow((l_t+b1),2)+m_t*pow(b2,2);
+
+
+        Eigen::Matrix<double, 2, 2> Q_m;
+        Q_m<<q11_m,q12_m,
+                q21_m,q22_m;
+
+        Eigen::Matrix<double, 2, 2> Q_p;
+        Q_p<<q11_p,q12_p,
+                q21_p,q22_p;
+
+        Eigen::Vector2d v_q_m(q1_dot,q2_dot);
+
+        // Eigen::Vector2d v_q_p=Q_p.inverse()*v_q_m*Q_m;
+        Eigen::Vector2d v_q_p=Q_m*v_q_m;
+        v_q_p=v_q_p.transpose()*Q_p.inverse();
+
+        std::cout<<"DEBUG foot res: "<<v_q_p<<std::endl;
+        std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
+
+        InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
+    }
+
+
 
     void detect_collision()
     {
@@ -632,59 +526,135 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // 1/ swing leg knee extension (knee lockup)
         // 2/ swing leg heel-ground collision (only if knee is locked)
 
-        Vector2D point, dir, posInBody;
-        Vector2D pos1, norm1, pos2, norm2;
-
+        //If collision is detected, find the exact time
 
         if(state==FREE_KNEE)
         {
 
             //check if collision happened
-            bool groundcollision=ground->computeCheckConstraint(point, dir, posInBody);
-            bool kneecollision=knee_stop->computeCheckConstraint(pos1, norm1, pos2, norm2);
+            // bool groundcollision=ground->computeCheckConstraint(point, dir, posInBody);
+
+            bool groundcollision=ground_contact->computeCheckConstraint();
+            bool kneecollision=knee_stop->computeCheckConstraint();
 
             if(kneecollision)//ok lock the knee
             {
-                //TODO
                 std::cout<<"DEBUG COLLISION: knee"<<std::endl;
+                //find the collision time
+                getConstraintTime( [this]() -> bool {
+                        knee_stop->computeCheckConstraint();
+                    });
+
                 lock_the_knee();
+
+                knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
+                ground_contact->swapmodel(swing_shank,modelbase);
+
+
                 state=LOCKED_KNEE;
             }
             if(groundcollision)//Forbidden
             {
-                //TODO
+
                 std::cout<<"DEBUG COLLISION: forbidden ground"<<std::endl;
-                state=FALL;
+                state|=FALL;
             }
         }
         if(state==LOCKED_KNEE)
         {
-
+            bool groundcollision=ground_contact->computeCheckConstraint();
             //check if collision happened
 
-            /*
-            bool groundcollision=ground->computeCheckConstraint(point, dir, posInBody);
+            double q2=modelbase->statePosition("q2")-M_PI;
 
-            if(groundcollision) //ok swap stance leg
+            // std::cout<<"DEBUG Q2: "<<q2<<std::endl;
+            //TODO Check if foot if behind.
+            if(groundcollision && q2>=0.0) //ok swap stance leg
             {
-                //TODO
+
+
                 std::cout<<"DEBUG COLLISION: ground"<<std::endl;
+
+                //find the collision time
+                getConstraintTime( [this]() -> bool {
+                        ground_contact->computeCheckConstraint();
+                    });
+
+                //Change the model
+                foot_on_ground();
+
+                knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
+                ground_contact->swapmodel(swing_shank,modelbase);
+
                 state=FREE_KNEE;
             }
-            */
+            if(groundcollision && q2<0.0)
+            {
+                std::cout<<"DEBUG COLLISION: forbidden ground (back leg)"<<std::endl;
+                state|=FALL;
+            }
+
         }
 
 
     }
 
+    void draw_swing_leg()
+    {
+        Vector2D hippos=modelbase->evalPosition(*swing_thigh);
+        Vector2D kneepos=modelbase->evalPosition(*swing_shank);
 
+
+        if(state&FREE_KNEE)
+        {
+            scalar centerAngle = modelbase->evalAngle(*swing_shank);
+
+            Vector2D footpos = kneepos + Vector2D::rotate(Vector2D(0.0, -(b1+a1)), centerAngle);
+
+            if(state&FALL)
+                viewer->drawCircle(footpos.x(),footpos.y(),0.05,sf::Color(255,0,0,255));
+            else
+                viewer->drawCircle(footpos.x(),footpos.y(),0.05,sf::Color(0,200,200,255));
+
+            //the leg
+            viewer->drawSegmentByEnd(footpos.x(),footpos.y(),kneepos.x() , kneepos.y() ,0.05,sf::Color(0,255,0,50));
+            viewer->drawSegmentByEnd(kneepos.x(),kneepos.y(),hippos.x() , hippos.y() ,0.05,sf::Color(0,255,0,50));
+        }
+        if(state&LOCKED_KNEE)
+        {
+            scalar centerAngle = modelbase->evalAngle(*swing_thigh);
+            Vector2D footpos = hippos + Vector2D::rotate(Vector2D(0.0, L), centerAngle);
+
+            if(state&FALL)
+                viewer->drawCircle(footpos.x(),footpos.y(),0.05,sf::Color(255,0,0,255));
+            else
+                viewer->drawCircle(footpos.x(),footpos.y(),0.05,sf::Color(0,200,200,255));
+
+            //the leg
+            viewer->drawSegmentByEnd(footpos.x(),footpos.y(),hippos.x() , hippos.y() ,0.05,sf::Color(0,255,0,50));
+        }
+    }
+
+    void draw_ground()
+    {
+        Vector2D currentpos=modelbase->evalPosition(*stance_leg);
+        Vector2D pos_r=currentpos;
+        Vector2D pos_l=currentpos;
+
+        for(double xi=0.0; xi<5.0;xi+=0.01)
+        {
+            viewer->drawSegmentByEnd(pos_r.x(),F_ground(pos_r.x()), xi+pos_r.x(),F_ground(xi+pos_r.x()) ,0.02,sf::Color(255,255,255,255));
+            pos_r=Vector2D(pos_r.x()+xi, F_ground(xi+pos_r.x()));
+            viewer->drawSegmentByEnd(pos_l.x(),F_ground(pos_l.x()), pos_l.x()-xi,F_ground(pos_l.x()-xi) ,0.02,sf::Color(255,255,255,255));
+            pos_l=Vector2D(pos_l.x()-xi, F_ground(pos_l.x()-xi));
+        }
+
+    }
 
 
     //TODO: move that to the mother class
     void draw()
     {
-
-
 
         if (viewer->isOpen()) {
             if(skip==0)
@@ -692,7 +662,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 viewer->beginDraw();
                 viewer->drawFrame();
                 modelbase->draw(*viewer);
-                ground->draw(*viewer); //FIXME
+                draw_ground();
+                draw_swing_leg();
+                // ground->draw(*viewer); //legacy
 
                 // scalar Ep=system.evalPotential();
                 // scalar Ec=system.evalKinetic();
@@ -713,23 +685,23 @@ class PassiveWalkerWithKnee: public PassiveWalker
     void SimuStep(double dt)
     {
 
-        // std::cout<<"RESET: "<<simu_reset<<std::endl;
-        // std::cout<<"PAUSE: "<<simu_pause<<std::endl;
-
-
         try{
             if(simu_reset){
-                modelbase->stateReset();
+
+
+                BuildInitModel();
                 simu_reset=false;
             }
             if(!simu_pause){
 
-                modelbase->runSimulationStep(dt);
+                if(!(state&FALL))
+                {
+                    modelbase->runSimulationStep(dt);
 
-                time+=dt;
-                // std::cout<<"TIME: "<<t<<std::endl;
-                // ground->handle();
-                detect_collision();
+                    time+=dt;
+
+                    detect_collision();
+                }
             }
         }
         catch(const std::exception & e)
