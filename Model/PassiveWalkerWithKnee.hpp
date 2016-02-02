@@ -47,7 +47,7 @@
 
 #define SKIP_FRAME 0 //20
 
-// #define DRAW
+#define DRAW true
 // #define LOG
 
 #define FREE_KNEE 1
@@ -182,6 +182,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     PassiveWalkerKneeStop* knee_stop;
     PassiveWalkerGroundContact* ground_contact;
+    double collisiontimeoffset;
 
     //model
     System* modelbase;
@@ -192,17 +193,34 @@ class PassiveWalkerWithKnee: public PassiveWalker
     Body* stance_thigh;
     Body* stance_shank;
 
+    double current_q1;
+    double current_q2;
+    double current_q3;
+    double current_swing;
+
+    double current_q1_dot;
+    double current_q2_dot;
+    double current_q3_dot;
+
+
+
     //simu
     double time;
-    int skip;
+    int _skip;
+    int nbStep;
+    bool _draw;
 
     //State machine
     unsigned char state; //0=(stance leg + free knee swing leg); 1=(stance leg + locked knee swing leg)
     //2=fall
 
+    //log file
+    ofstream logfile;
+
+
     Leph::SimViewer::SimViewer* viewer;
 
-    PassiveWalkerWithKnee(const char* jsonconf): PassiveWalker(jsonconf)
+    PassiveWalkerWithKnee(const char* jsonconf, bool draw=DRAW, int skip=SKIP_FRAME): PassiveWalker(jsonconf)
     {
         Json::Value model=this->conf_root["model"];
 
@@ -247,23 +265,121 @@ class PassiveWalkerWithKnee: public PassiveWalker
         BuildInitModel();
 
         //Viewer stuffs
-        viewer= new Leph::SimViewer::SimViewer(1280, 1024);
 
-        //Viewer callbacks
-        viewer->setSpaceHandler(
-            [this](Leph::Any::Any p) -> void {
-                this->space_cb(p);
-            } , param);
-        viewer->setRHandler(
-            [this](Leph::Any::Any p) -> void {
-                this->R_cb(p);
-            } , param);
+        _skip=skip;
+        _draw=draw;
+        if(_draw)
+        {
+            viewer= new Leph::SimViewer::SimViewer(1280, 1024);
+
+            //Viewer callbacks
+            viewer->setSpaceHandler(
+                [this](Leph::Any::Any p) -> void {
+                    this->space_cb(p);
+                } , param);
+            viewer->setRHandler(
+                [this](Leph::Any::Any p) -> void {
+                    this->R_cb(p);
+                } , param);
+        }
+
+        logfile.open("log.dat");
+        collisiontimeoffset=0.0;
+        nbStep=0;
+
+
+
+        current_q1=0.0;
+        current_q2=0.0;
+        current_q3=0.0;
+        current_swing=0.0;
+
+        current_q1_dot=0.0;
+        current_q2_dot=0.0;
+        current_q3_dot=0.0;
+
 
     }
 
+
+    PassiveWalkerWithKnee(double ground_slope, double init_vel, double init_swing_angle, double init_swing_vel, bool draw=DRAW, int skip=SKIP_FRAME): PassiveWalker()
+    {
+        //Without json
+
+
+        m_h=1.0;
+        m_s=0.001;
+        m_t=0.001;
+        L=1.0;
+        a1=0.25;
+        a2=0.25;
+        b1=0.25;
+        b2=0.25;
+        l_t=a2+b2;
+        l_s=a1+b1;
+        // init_q1=model["init_state"]["q1"].asDouble(); //should be useless
+        // init_q2=model["init_state"]["q2"].asDouble();
+        // init_q3=model["init_state"]["q3"].asDouble(); //should be useless
+        init_q1_dot=init_vel;
+        init_q2_dot=init_swing_vel;
+        init_q3_dot=0.0;
+        init_swing=init_swing_angle;
+
+
+        slope=ground_slope;
+
+
+        // System system(Vector2D(0.0, 0.0));
+        modelbase=new System(Vector2D(0.0, 0.0));
+        //dummy, just to init the memory
+        stance_leg = &(modelbase->addAngularJoint(
+            modelbase->getBase(),
+            Vector2D(0.0, 0.0), 0.0,
+            Vector2D(0.0, 0.0), 0.0,
+            0, 0));
+        modelbase->initSymbols();
+
+        BuildInitModel();
+
+
+        _skip=skip;
+        _draw=draw;
+        if(_draw)
+        {
+            viewer= new Leph::SimViewer::SimViewer(1280, 1024);
+
+            //Viewer callbacks
+            viewer->setSpaceHandler(
+                [this](Leph::Any::Any p) -> void {
+                    this->space_cb(p);
+                } , param);
+            viewer->setRHandler(
+                [this](Leph::Any::Any p) -> void {
+                    this->R_cb(p);
+                } , param);
+        }
+
+        logfile.open("log.dat");
+        collisiontimeoffset=0.0;
+        nbStep=0;
+
+        current_q1=0.0;
+        current_q2=0.0;
+        current_q3=0.0;
+        current_swing=0.0;
+
+        current_q1_dot=0.0;
+        current_q2_dot=0.0;
+        current_q3_dot=0.0;
+
+    }
+
+
+
+
     ~PassiveWalkerWithKnee()
     {
-
+        logfile.close();
     }
 
     void InitModelFreeKnee(Vector2D pos, double init_angle, double init_vel, double init_swing, double init_swingvel, double init_kneevel)
@@ -299,6 +415,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         modelbase->initSymbols();
 
+        // knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
+        // ground_contact->swapmodel(swing_shank,modelbase);
+
     }
 
     void InitModelLockedKnee(Vector2D pos, double init_angle, double init_vel, double init_swing, double init_swingvel)
@@ -328,6 +447,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
         modelbase->initSymbols();
+
+        // knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
+        // ground_contact->swapmodel(swing_shank,modelbase);
 
     }
 
@@ -366,7 +488,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         ground_contact=new PassiveWalkerGroundContact(swing_shank, modelbase, Vector2D(0.0, L), F_ground);
 
 
-        skip=0;
+        _skip=0;
         time=0.0;
 
 
@@ -398,6 +520,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
         modelbase->runSimulationStep(currentTime-timeMax);
         computeCheckConstraint();
+        std::cout<<"DEBUG collision time: "<<currentTime-timeMax<<std::endl;
+        collisiontimeoffset=(currentTime-timeMax);
         return true;
     }
 
@@ -528,7 +652,12 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         //If collision is detected, find the exact time
 
-        if(state==FREE_KNEE)
+        Vector2D hip=modelbase->evalPosition(*swing_thigh);
+        if(hip.y()<=F_ground(hip.x()))
+            state|=FALL;
+
+        collisiontimeoffset=0.0;
+        if(state==FREE_KNEE && !(state&FALL))
         {
 
             //check if collision happened
@@ -560,7 +689,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 state|=FALL;
             }
         }
-        if(state==LOCKED_KNEE)
+        if(state==LOCKED_KNEE && !(state&FALL))
         {
             bool groundcollision=ground_contact->computeCheckConstraint();
             //check if collision happened
@@ -587,6 +716,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 ground_contact->swapmodel(swing_shank,modelbase);
 
                 state=FREE_KNEE;
+                nbStep++;
             }
             if(groundcollision && q2<0.0)
             {
@@ -657,28 +787,31 @@ class PassiveWalkerWithKnee: public PassiveWalker
     {
 
         if (viewer->isOpen()) {
-            if(skip==0)
+
+            if(_draw)
             {
-                viewer->beginDraw();
-                viewer->drawFrame();
-                modelbase->draw(*viewer);
-                draw_ground();
-                draw_swing_leg();
-                // ground->draw(*viewer); //legacy
+                if(_skip==0)
+                {
+                    viewer->beginDraw();
+                    viewer->drawFrame();
+                    modelbase->draw(*viewer);
+                    draw_ground();
+                    draw_swing_leg();
 
-                // scalar Ep=system.evalPotential();
-                // scalar Ec=system.evalKinetic();
-                // data.push_back(Vector2D(time,Ep+Ec));
-                // system.plot(viewer,data);
 
-                viewer->moveCam(-modelbase->evalPosition(*swing_thigh).x(),modelbase->evalPosition(*swing_thigh).y());
+                    // scalar Ep=system.evalPotential();
+                    // scalar Ec=system.evalKinetic();
+                    // data.push_back(Vector2D(time,Ep+Ec));
+                    // system.plot(viewer,data);
 
-                viewer->endDraw(); //TODO
-                skip=SKIP_FRAME;
+                    viewer->moveCam(-modelbase->evalPosition(*swing_thigh).x(),modelbase->evalPosition(*swing_thigh).y());
+
+                    viewer->endDraw(); //TODO
+                    _skip=SKIP_FRAME;
+                }
+                else
+                    _skip--;
             }
-            else
-                skip--;
-
         }
     }
 
@@ -697,10 +830,29 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 if(!(state&FALL))
                 {
                     modelbase->runSimulationStep(dt);
+                    // try
+                    // {
+                    //     logfile<<time<<" "<<modelbase->statePosition("q1")<<" "<<modelbase->stateVelocity("q1")<<" "<<modelbase->statePosition("q2")<<" "<<modelbase->stateVelocity("q2")<<" "<<modelbase->statePosition("q3")<<" "<<modelbase->stateVelocity("q3")<<std::endl;
+                    // }
+                    // catch(const std::exception & e){}
 
+                    current_q1=modelbase->statePosition("q1");
+                    current_q2=modelbase->statePosition("q2");
+                    // current_q3=modelbase->statePosition("q3");
+                    current_swing=M_PI-current_q2;
+
+                    current_q1_dot=modelbase->stateVelocity("q1");
+                    current_q2_dot=modelbase->stateVelocity("q2");
+                    // current_q3_dot=modelbase->stateVelocity("q3");
+
+
+
+                    logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
                     time+=dt;
 
                     detect_collision();
+                    time+=collisiontimeoffset;
+                    // std::cout<<"DEBUG time: "<<time<<std::endl;
                 }
             }
         }
@@ -708,6 +860,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         {
             std::cerr << e.what()<<std::endl;
         }
+
+        draw();
 
     }
 

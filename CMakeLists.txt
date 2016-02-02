@@ -86,6 +86,12 @@ add_executable(
         Simulations/roundFeetCompassTest.cpp
 )
 
+add_executable(
+	KneeWalkerOptim
+        Simulations/KneeWalkerOptim.cpp
+)
+
+
 
 
 
@@ -153,4 +159,12 @@ target_link_libraries(testsModel
     sfml-window
     sfml-system
     jsoncpp
+)
+
+target_link_libraries(KneeWalkerOptim
+    sfml-graphics
+    sfml-window
+    sfml-system
+    jsoncpp
+    cmaes
 )
