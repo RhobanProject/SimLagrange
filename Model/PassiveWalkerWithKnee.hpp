@@ -380,13 +380,29 @@ class PassiveWalkerWithKnee: public PassiveWalker
     ~PassiveWalkerWithKnee()
     {
         logfile.close();
+        // if(modelbase)
+        delete modelbase;
+        delete knee_stop;
+        delete ground_contact;
+        if(_draw)
+            delete viewer;
     }
+
 
     void InitModelFreeKnee(Vector2D pos, double init_angle, double init_vel, double init_swing, double init_swingvel, double init_kneevel)
     {
 
 
         // Vector2D pos=modelbase->evalPosition(*stance_leg);
+        // if(modelbase)
+        delete modelbase;
+        // if(stance_leg)
+        //     delete stance_leg;
+        // if(swing_thigh)
+        //     delete swing_thigh;
+        // if(swing_shank)
+        //     delete swing_shank;
+
         modelbase=new System(pos);
 
         stance_leg = &(modelbase->addAngularJoint(
@@ -425,6 +441,20 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
         // Vector2D pos=modelbase->evalPosition(*stance_leg);
+        // delete modelbase;
+        // delete stance_leg;
+        // delete swing_thigh;
+        // delete swing_shank;
+
+        // if(modelbase)
+        delete modelbase;
+        // if(stance_leg)
+        //     delete stance_leg;
+        // if(swing_thigh)
+        //     delete swing_thigh;
+        // if(swing_shank)
+        //     delete swing_shank;
+
         modelbase=new System(pos);
 
         stance_leg = &(modelbase->addAngularJoint(
@@ -593,13 +623,17 @@ class PassiveWalkerWithKnee: public PassiveWalker
     void foot_on_ground()
     {
 
-        double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
+        //argh
+        // double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
+        double q2=fmod(modelbase->evalAngle(*swing_shank)+M_PI,2.0*M_PI); //seems to be the positive angle
         // double q3=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
         //TODO check
         double q1=modelbase->evalAngle(*stance_leg);
 
         //because of the referential...
-        double old_q2=modelbase->evalAngle(*swing_thigh);
+        //argh
+        // double old_q2=modelbase->evalAngle(*swing_thigh);
+        double old_q2=modelbase->evalAngle(*swing_shank);
         // double old_q3=modelbase->evalAngle(*swing_shank);
 
         double q1_dot=modelbase->stateVelocity("q1");
@@ -652,7 +686,12 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         //If collision is detected, find the exact time
 
-        Vector2D hip=modelbase->evalPosition(*swing_thigh);
+        Vector2D hip;
+        if(state==LOCKED_KNEE)
+            hip=modelbase->evalPosition(*swing_shank);
+        else
+            hip=modelbase->evalPosition(*swing_thigh);
+
         if(hip.y()<=F_ground(hip.x()))
             state|=FALL;
 
@@ -731,12 +770,13 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     void draw_swing_leg()
     {
-        Vector2D hippos=modelbase->evalPosition(*swing_thigh);
-        Vector2D kneepos=modelbase->evalPosition(*swing_shank);
 
 
         if(state&FREE_KNEE)
         {
+            Vector2D hippos=modelbase->evalPosition(*swing_thigh);
+            Vector2D kneepos=modelbase->evalPosition(*swing_shank);
+
             scalar centerAngle = modelbase->evalAngle(*swing_shank);
 
             Vector2D footpos = kneepos + Vector2D::rotate(Vector2D(0.0, -(b1+a1)), centerAngle);
@@ -752,7 +792,12 @@ class PassiveWalkerWithKnee: public PassiveWalker
         }
         if(state&LOCKED_KNEE)
         {
-            scalar centerAngle = modelbase->evalAngle(*swing_thigh);
+
+            Vector2D hippos=modelbase->evalPosition(*swing_shank);
+
+            // scalar centerAngle = modelbase->evalAngle(*swing_thigh);
+            scalar centerAngle = modelbase->evalAngle(*swing_shank);
+
             Vector2D footpos = hippos + Vector2D::rotate(Vector2D(0.0, L), centerAngle);
 
             if(state&FALL)
@@ -786,33 +831,42 @@ class PassiveWalkerWithKnee: public PassiveWalker
     void draw()
     {
 
+
         if (viewer->isOpen()) {
 
-            if(_draw)
+            if(_skip==0)
             {
-                if(_skip==0)
-                {
-                    viewer->beginDraw();
-                    viewer->drawFrame();
-                    modelbase->draw(*viewer);
-                    draw_ground();
-                    draw_swing_leg();
+                viewer->beginDraw();
+                viewer->drawFrame();
+                modelbase->draw(*viewer);
+                draw_ground();
+                draw_swing_leg();
 
 
-                    // scalar Ep=system.evalPotential();
-                    // scalar Ec=system.evalKinetic();
-                    // data.push_back(Vector2D(time,Ep+Ec));
-                    // system.plot(viewer,data);
+                // scalar Ep=system.evalPotential();
+                // scalar Ec=system.evalKinetic();
+                // data.push_back(Vector2D(time,Ep+Ec));
+                // system.plot(viewer,data);
 
-                    viewer->moveCam(-modelbase->evalPosition(*swing_thigh).x(),modelbase->evalPosition(*swing_thigh).y());
+                // viewer->moveCam(-modelbase->evalPosition(*swing_shank).x(),modelbase->evalPosition(*swing_shank).y());
 
-                    viewer->endDraw(); //TODO
-                    _skip=SKIP_FRAME;
-                }
-                else
-                    _skip--;
+
+                Vector2D foot=modelbase->evalPosition(*stance_leg);
+                scalar centerAngle = modelbase->evalAngle(*stance_leg);
+
+                Vector2D hippos = foot + Vector2D::rotate(Vector2D(0.0, L), centerAngle);
+
+
+                viewer->moveCam(-hippos.x(),hippos.y());
+
+
+                viewer->endDraw(); //TODO
+                _skip=SKIP_FRAME;
             }
+            else
+                _skip--;
         }
+
     }
 
     void SimuStep(double dt)
@@ -861,7 +915,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
             std::cerr << e.what()<<std::endl;
         }
 
-        draw();
+        if(_draw)
+            draw();
 
     }
 

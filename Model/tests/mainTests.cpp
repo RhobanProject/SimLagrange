@@ -1,8 +1,8 @@
 //*****************************************************************************
 //
-// File Name	: 'test1.cpp'
+// File Name	: 'mainTests.cpp'
 // Author	: Steve NGUYEN
-// Contact      : steve.nguyen@inria.fr
+// Contact      : steve.nguyen@labri.fr
 // Created	: mercredi, janvier 27 2016
 // Revised	:
 // Version	:
@@ -26,16 +26,16 @@
 int main(int argc, char* argv[])
 {
     try{
-        PassiveWalkerWithKnee w(argv[1]);
+        PassiveWalkerWithKnee w(argv[1], true);
 
         // for(int i=0;i<100;i++)
         // w.SimuStep(0.001);
-        while(1)
+        while(!(w.state&FALL)) //!w.state&FALL
         {
-            w.draw();
+            // w.draw();
             w.SimuStep(0.001);
         }
-
+        std::cout<<"FALLEN"<<std::endl;
     }
     catch(const char* e){
         std::cout<<e<<std::endl;
