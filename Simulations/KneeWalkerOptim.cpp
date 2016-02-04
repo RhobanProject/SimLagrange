@@ -52,10 +52,10 @@ FitFunc walk=[](const double *x, const int N)
     //Punishement on bounds
     if(slope>0.0)
         score+=1000.0;
-    if(slope<-0.2)
+    if(slope<-0.5)
         score+=1000.0;
 
-    if(fabs(init_vel)>20.0)
+    if(fabs(init_vel)>10.0)
         score+=1000.0;
 
     // if(init_vel>0.0)
@@ -82,11 +82,13 @@ FitFunc walk=[](const double *x, const int N)
 
     std::cout<<"PARAMS: "<<init_vel<<" "<<init_swing<<" "<<init_swing_vel<<" "<<slope<<std::endl;
     std::cout<<"STATE: "<<w.current_q1_dot<<" "<<w.current_swing<<" "<<w.current_q2_dot<<std::endl;
+    std::cout<<"STEP: "<<w.ground_contact->lastContactPoint.x()<<std::endl;
 
     score+=DIST(init_vel,w.current_q1_dot)+DIST(init_swing,w.current_swing)+DIST(init_swing_vel,w.current_q2_dot);
 
     score+= max( 1.0/(fabs(init_swing/(M_PI/6.0)))-1.0 , 0.0 );
 
+    score+=  pow(1.0+w.ground_contact->lastContactPoint.x(),2);
 
 
 
@@ -117,12 +119,13 @@ int main(int argc, char* argv[])
         //int lambda = 100; // offsprings at each generation.
     CMAParameters<> cmaparams(x0,sigma);
 
-    cmaparams.set_mt_feval(true); //multithread
+    // cmaparams.set_mt_feval(true); //multithread
 
     // cmaparams.set_algo(aCMAES); //standard
     cmaparams.set_algo(aBIPOP_CMAES);
     // cmaparams.set_elitism(true);
-    cmaparams.set_restarts(3);
+    // cmaparams.set_restarts(3);
+    cmaparams.set_restarts(1);
 
     cmaparams.set_ftarget(1e-10);
 

@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <functional>
 #include "Simulations/SimpleWalkerGround.hpp"
+#include <iomanip>
+
 
 #define SKIP_FRAME 20
 
@@ -223,6 +225,21 @@ int main()
     Leph::SimViewer::SimViewer viewer(1280, 1024);
     viewer.setSpaceHandler((SimViewer::HandlerFunction)space_cb, param);
     viewer.setRHandler((SimViewer::HandlerFunction)R_cb, param);
+
+
+
+    //animation stuff
+    // sf::View view(viewer._window.getView());
+    // // view.zoom(0.3);
+    // viewer._window.setView(view);
+    // viewer.moveCam(10,0.5);
+    // std::stringstream filename;
+
+    // int i=0;
+
+
+
+
     while (viewer.isOpen()) {
         if(skip==0)
         {
@@ -233,6 +250,14 @@ int main()
             viewer.moveCam(-system.evalPosition(b2).x(),system.evalPosition(b2).y());
             viewer.endDraw(); //TODO
             skip=SKIP_FRAME;
+
+
+        // sf::Image Screen = viewer._window.capture();
+        // filename.str(std::string());
+        // filename.clear();
+        // filename<<std::setfill('0') << std::setw(3)<<i++<<".bmp";
+        // Screen.saveToFile(filename.str());
+
         }
         else
             skip--;

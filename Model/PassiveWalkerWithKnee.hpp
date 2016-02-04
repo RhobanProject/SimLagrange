@@ -119,10 +119,11 @@ class PassiveWalkerGroundContact
         lastContactPoint=Vector2D(0,0);
         _contact=false;
     }
-    void swapmodel(Body* shank, System *system)
+    void swapmodel(Body* shank, System *system, Vector2D posInBody)
     {
         _shank=shank;
         _system=system;
+        _posInBody=posInBody;
     }
 
     bool computeCheckConstraint()
@@ -132,6 +133,13 @@ class PassiveWalkerGroundContact
 
         Vector2D pos = centerPos
                        + Vector2D::rotate(_posInBody, centerAngle);
+
+
+
+            // Vector2D kneepos=modelbase->evalPosition(*swing_shank);
+            // scalar centerAngle = modelbase->evalAngle(*swing_shank);
+            // Vector2D footpos = kneepos + Vector2D::rotate(Vector2D(0.0, -(b1+a1)), centerAngle);
+
 
         lastContactPoint = pos;
         // dir = Vector2D(0.0, 1.0); //TODO normal
@@ -310,11 +318,19 @@ class PassiveWalkerWithKnee: public PassiveWalker
         m_h=1.0;
         m_s=0.001;
         m_t=0.001;
-        L=1.0;
-        a1=0.25;
-        a2=0.25;
-        b1=0.25;
-        b2=0.25;
+        // L=1.0;
+        // a1=0.25;
+        // a2=0.25;
+        // b1=0.25;
+        // b2=0.25;
+
+        L=2.0;
+        a1=0.5;
+        a2=0.5;
+        b1=0.5;
+        b2=0.5;
+
+
         l_t=a2+b2;
         l_s=a1+b1;
         // init_q1=model["init_state"]["q1"].asDouble(); //should be useless
@@ -673,6 +689,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
         std::cout<<"DEBUG foot res: "<<v_q_p<<std::endl;
         std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
 
+        Vector2D oldcontact=modelbase->evalPosition(*stance_leg);
+        std::cout<<"DEBUG step: ("<<oldcontact.x()<<", "<<oldcontact.y()<<") -> ("<<ground_contact->lastContactPoint.x()<<", "<<ground_contact->lastContactPoint.y()<<")"<<std::endl;
+
         InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
     }
 
@@ -687,23 +706,33 @@ class PassiveWalkerWithKnee: public PassiveWalker
         //If collision is detected, find the exact time
 
         Vector2D hip;
-        if(state==LOCKED_KNEE)
+        if(state&LOCKED_KNEE)
             hip=modelbase->evalPosition(*swing_shank);
         else
             hip=modelbase->evalPosition(*swing_thigh);
 
         if(hip.y()<=F_ground(hip.x()))
+        {
             state|=FALL;
-
+            std::cout<<"DEBUG hip under ground"<<std::endl;
+        }
         collisiontimeoffset=0.0;
-        if(state==FREE_KNEE && !(state&FALL))
+
+        if(state&FREE_KNEE && !(state&FALL))
         {
 
-            //check if collision happened
-            // bool groundcollision=ground->computeCheckConstraint(point, dir, posInBody);
 
             bool groundcollision=ground_contact->computeCheckConstraint();
             bool kneecollision=knee_stop->computeCheckConstraint();
+
+            // std::cout<<"DEBUG FREE: "<<kneecollision<<" "<<groundcollision<<std::endl;
+
+            if(groundcollision)//Forbidden
+            {
+
+                std::cout<<"DEBUG COLLISION: forbidden ground"<<std::endl;
+                state|=FALL;
+            }
 
             if(kneecollision)//ok lock the knee
             {
@@ -716,30 +745,33 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 lock_the_knee();
 
                 knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
-                ground_contact->swapmodel(swing_shank,modelbase);
+                ground_contact->swapmodel(swing_shank,modelbase, Vector2D(0,L));
 
-
-                state=LOCKED_KNEE;
+                state=0;
+                state|=LOCKED_KNEE;
+                // state&=!(FREE_KNEE);
             }
-            if(groundcollision)//Forbidden
-            {
 
-                std::cout<<"DEBUG COLLISION: forbidden ground"<<std::endl;
-                state|=FALL;
-            }
+
         }
-        if(state==LOCKED_KNEE && !(state&FALL))
+        if(state&LOCKED_KNEE && !(state&FALL))
         {
             bool groundcollision=ground_contact->computeCheckConstraint();
             //check if collision happened
 
-            double q2=modelbase->statePosition("q2")-M_PI;
+            // double q2=modelbase->statePosition("q2")-M_PI;
 
-            // std::cout<<"DEBUG Q2: "<<q2<<std::endl;
+            double shank_angle=fmod(modelbase->evalAngle(*swing_shank)-M_PI,2.0*M_PI);
+            double stance_angle=fmod(modelbase->evalAngle(*stance_leg),2.0*M_PI);
+
+
+            double q2=shank_angle-stance_angle;
+
+            // std::cout<<"DEBUG Q2: "<<q2<<" stance: "<<stance_angle<<" swing: "<<shank_angle<<std::endl;
             //TODO Check if foot if behind.
-            if(groundcollision && q2>=0.0) //ok swap stance leg
+            if(groundcollision && q2>0.0) //ok swap stance leg
             {
-
+                std::cout<<"DEBUG Q2: "<<q2<<" stance: "<<stance_angle<<" swing: "<<shank_angle<<std::endl;
 
                 std::cout<<"DEBUG COLLISION: ground"<<std::endl;
 
@@ -752,12 +784,14 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 foot_on_ground();
 
                 knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
-                ground_contact->swapmodel(swing_shank,modelbase);
+                ground_contact->swapmodel(swing_shank,modelbase, Vector2D(0,-(a1+b1)));
 
-                state=FREE_KNEE;
+                state=0;
+                state|=FREE_KNEE;
+                // state&=!(LOCKED_KNEE);
                 nbStep++;
             }
-            if(groundcollision && q2<0.0)
+            if(groundcollision && q2<=0.0)
             {
                 std::cout<<"DEBUG COLLISION: forbidden ground (back leg)"<<std::endl;
                 state|=FALL;
@@ -775,10 +809,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
         if(state&FREE_KNEE)
         {
             Vector2D hippos=modelbase->evalPosition(*swing_thigh);
+
             Vector2D kneepos=modelbase->evalPosition(*swing_shank);
-
             scalar centerAngle = modelbase->evalAngle(*swing_shank);
-
             Vector2D footpos = kneepos + Vector2D::rotate(Vector2D(0.0, -(b1+a1)), centerAngle);
 
             if(state&FALL)
@@ -856,8 +889,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
                 Vector2D hippos = foot + Vector2D::rotate(Vector2D(0.0, L), centerAngle);
 
-
-                viewer->moveCam(-hippos.x(),hippos.y());
+                //Follow the model
+                // viewer->moveCam(-hippos.x(),hippos.y());
 
 
                 viewer->endDraw(); //TODO

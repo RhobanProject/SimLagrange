@@ -53,6 +53,13 @@ add_executable(
 
 
 add_executable(
+	testCamSimple
+        Simulations/camTestSimple.cpp
+)
+
+
+
+add_executable(
 	testCompass
         Simulations/compassTest.cpp
 )
@@ -108,6 +115,12 @@ target_link_libraries(testsSimMecha
 )
 
 target_link_libraries(testCam
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+target_link_libraries(testCamSimple
     sfml-graphics
     sfml-window
     sfml-system
