@@ -23,8 +23,11 @@
 #include <fstream>
 
 
+
+
 int main(int argc, char* argv[])
 {
+    double score=0.0;
     try{
         PassiveWalkerWithKnee w(argv[1], true);
 
@@ -34,6 +37,12 @@ int main(int argc, char* argv[])
         {
             // w.draw();
             w.SimuStep(0.001);
+
+            // if(w.nbStep==1)
+            // {
+            //     std::cout<<"STATE: "<<w.current_q1_dot<<" "<<-w.current_swing<<" "<<w.current_q2_dot<<std::endl;
+            //     return 0;
+            // }
         }
         std::cout<<"FALLEN"<<std::endl;
     }

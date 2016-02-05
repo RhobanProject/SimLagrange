@@ -89,7 +89,7 @@ class PassiveWalkerKneeStop//: public BinaryConstraint //useless
 
         // std::cout<<"DEBUG knee: "<<angle_thigh<<" "<<angle_shank<<std::endl;
 
-        double angle_thigh=_system->evalAngle(*_thigh)+M_PI; //better
+        double angle_thigh=_system->evalAngle(*_thigh);
         double angle_shank=_system->evalAngle(*_shank);
 
         // std::cout<<"DEBUG knee: "<<angle_thigh<<" "<<angle_shank<<std::endl;
@@ -134,7 +134,7 @@ class PassiveWalkerGroundContact
         Vector2D pos = centerPos
                        + Vector2D::rotate(_posInBody, centerAngle);
 
-
+        // std::cout<<"DEBUG ground: "<<pos.x()<<" "<<pos.y()<<" "<<centerPos.x()<<" "<<centerPos.y()<<" "<<centerAngle<<std::endl;
 
             // Vector2D kneepos=modelbase->evalPosition(*swing_shank);
             // scalar centerAngle = modelbase->evalAngle(*swing_shank);
@@ -435,14 +435,14 @@ class PassiveWalkerWithKnee: public PassiveWalker
             Vector2D(0.0, L), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_swing, init_swingvel));
-        swing_thigh->addMass(m_t, Vector2D(0.0, b2));
+        swing_thigh->addMass(m_t, Vector2D(0.0, -b2));
 
 
         swing_shank = &(modelbase->addAngularJoint(
             *swing_thigh,
-            Vector2D(0.0, b2+a2), 0.0,
+            Vector2D(0.0, -(b2+a2)), 0.0,
             Vector2D(0.0, 0.0), 0.0,
-            M_PI, init_kneevel)); //straight leg
+            0, init_kneevel)); //straight leg
         swing_shank->addMass(m_s, Vector2D(0.0, -b1));
 
         modelbase->initSymbols();
@@ -488,8 +488,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
             Vector2D(0.0, L), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_swing, init_swingvel));
-        swing_shank->addMass(m_t, Vector2D(0.0, b2));
-        swing_shank->addMass(m_s, Vector2D(0.0, l_t+b1));
+        swing_shank->addMass(m_t, Vector2D(0.0, -b2));
+        swing_shank->addMass(m_s, Vector2D(0.0, -(l_t+b1)));
 
 
         modelbase->initSymbols();
@@ -510,10 +510,11 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         double slope_angle=slope;
                 // atan2(slope,1.0); //FIXME
-        double init_angle=(M_PI-init_swing)/2.0-slope_angle-M_PI/2.0;
+        double init_angle=(M_PI+init_swing)/2.0-slope_angle-M_PI/2.0;
 
         //build the model
-        InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, M_PI-init_swing, init_q2_dot, init_q3_dot);
+        // InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, M_PI-init_swing, init_q2_dot, init_q3_dot);
+        InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, init_swing, init_q2_dot, init_q3_dot);
 
         state=FREE_KNEE;
 
@@ -531,8 +532,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         //Collision stuffs
 
         knee_stop=new PassiveWalkerKneeStop(swing_thigh, swing_shank, modelbase);
-        ground_contact=new PassiveWalkerGroundContact(swing_shank, modelbase, Vector2D(0.0, L), F_ground);
-
+        // ground_contact=new PassiveWalkerGroundContact(swing_shank, modelbase, Vector2D(0.0, L), F_ground);
+        ground_contact=new PassiveWalkerGroundContact(swing_shank, modelbase, Vector2D(0,-(a1+b1)), F_ground); //carefull, we start in free_knee
 
         _skip=0;
         time=0.0;
@@ -576,7 +577,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
     void lock_the_knee()
     {
 
-        double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
+        // double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
+        double q2=fmod(modelbase->evalAngle(*swing_thigh),2.0*M_PI); //seems to be the positive angle
+
         double q3=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
         //TODO check
         double q1=modelbase->evalAngle(*stance_leg);
@@ -628,7 +631,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout<<"DEBUG knee qm:\n"<<Q_m<<std::endl;
         // std::cout<<"DEBUG knee qp:\n"<<Q_p<<std::endl;
         Vector2D pos=modelbase->evalPosition(*stance_leg);
-        InitModelLockedKnee(pos,q1, v_q_p(0), -q1+old_q2, v_q_p(1)); //FIXME!
+        InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1)); //FIXME!
         // InitModelLockedKnee(pos,q1, v_q_p(0), -q1+old_q2, -v_q_p(1));
 
     }
@@ -641,7 +644,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         //argh
         // double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
-        double q2=fmod(modelbase->evalAngle(*swing_shank)+M_PI,2.0*M_PI); //seems to be the positive angle
+        // double q2=fmod(modelbase->evalAngle(*swing_shank)+M_PI,2.0*M_PI); //seems to be the positive angle
+        double q2=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI); //seems to be the positive angle
         // double q3=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
         //TODO check
         double q1=modelbase->evalAngle(*stance_leg);
@@ -745,7 +749,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 lock_the_knee();
 
                 knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
-                ground_contact->swapmodel(swing_shank,modelbase, Vector2D(0,L));
+                ground_contact->swapmodel(swing_shank,modelbase, Vector2D(0,-L));
 
                 state=0;
                 state|=LOCKED_KNEE;
@@ -761,7 +765,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
             // double q2=modelbase->statePosition("q2")-M_PI;
 
-            double shank_angle=fmod(modelbase->evalAngle(*swing_shank)-M_PI,2.0*M_PI);
+            // double shank_angle=fmod(modelbase->evalAngle(*swing_shank)-M_PI,2.0*M_PI);
+            double shank_angle=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
+
             double stance_angle=fmod(modelbase->evalAngle(*stance_leg),2.0*M_PI);
 
 
@@ -831,7 +837,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
             // scalar centerAngle = modelbase->evalAngle(*swing_thigh);
             scalar centerAngle = modelbase->evalAngle(*swing_shank);
 
-            Vector2D footpos = hippos + Vector2D::rotate(Vector2D(0.0, L), centerAngle);
+            Vector2D footpos = hippos + Vector2D::rotate(Vector2D(0.0, -L), centerAngle);
 
             if(state&FALL)
                 viewer->drawCircle(footpos.x(),footpos.y(),0.05,sf::Color(255,0,0,255));
@@ -926,7 +932,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                     current_q1=modelbase->statePosition("q1");
                     current_q2=modelbase->statePosition("q2");
                     // current_q3=modelbase->statePosition("q3");
-                    current_swing=M_PI-current_q2;
+                    current_swing=current_q2;
 
                     current_q1_dot=modelbase->stateVelocity("q1");
                     current_q2_dot=modelbase->stateVelocity("q2");
@@ -935,6 +941,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
                     logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
+                    // logfile<<time<<std::endl;//" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
+
                     time+=dt;
 
                     detect_collision();
