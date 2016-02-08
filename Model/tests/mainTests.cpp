@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 
 
@@ -31,12 +32,33 @@ int main(int argc, char* argv[])
     try{
         PassiveWalkerWithKnee w(argv[1], true);
 
+
+    //animation stuff
+    // sf::View view(viewer._window.getView());
+    // view.zoom(0.3);
+    // viewer._window.setView(view);
+    // viewer.moveCam(00,0.5);
+    // std::stringstream filename;
+    // int i=0;
+    // int im=0;
+
+
         // for(int i=0;i<100;i++)
         // w.SimuStep(0.001);
         while(!(w.state&FALL)) //!w.state&FALL
         {
             // w.draw();
             w.SimuStep(0.001);
+
+
+            // if(im++%10==0)
+            // {
+            //     sf::Image Screen = w.viewer->_window.capture();
+            //     filename.str(std::string());
+            //     filename.clear();
+            //     filename<<std::setfill('0') << std::setw(4)<<i++<<".bmp";
+            //     Screen.saveToFile(filename.str());
+            // }
 
             // if(w.nbStep==1)
             // {

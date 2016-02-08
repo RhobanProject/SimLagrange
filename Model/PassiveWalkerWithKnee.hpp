@@ -48,7 +48,7 @@
 #define SKIP_FRAME 0 //20
 
 #define DRAW true
-// #define LOG
+// #define LOGING
 
 #define FREE_KNEE 1
 #define LOCKED_KNEE 2
@@ -182,6 +182,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
     double init_q3, init_q3_dot;
     double init_swing;
 
+    bool _forced_init;
     //world
     double slope;
     double offset;
@@ -238,6 +239,11 @@ class PassiveWalkerWithKnee: public PassiveWalker
         if(model["has_feet"].asBool())
             throw("Trying to create a PassiveWalkerWithKnee: JSON conf said has_feet==true");
 
+
+        _forced_init=model["forced_init"].asBool();
+
+
+
         m_h=model["parameters"]["m_h"].asDouble();
         m_s=model["parameters"]["m_s"].asDouble();
         m_t=model["parameters"]["m_t"].asDouble();
@@ -291,7 +297,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 } , param);
         }
 
+        #ifdef LOGING
         logfile.open("log.dat");
+        #endif
         collisiontimeoffset=0.0;
         nbStep=0;
 
@@ -375,7 +383,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 } , param);
         }
 
+        #ifdef LOGING
         logfile.open("log.dat");
+        #endif
         collisiontimeoffset=0.0;
         nbStep=0;
 
@@ -395,7 +405,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     ~PassiveWalkerWithKnee()
     {
+        #ifdef LOGING
         logfile.close();
+        #endif
         // if(modelbase)
         delete modelbase;
         delete knee_stop;
@@ -514,7 +526,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         //build the model
         // InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, M_PI-init_swing, init_q2_dot, init_q3_dot);
-        InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, init_swing, init_q2_dot, init_q3_dot);
+        if(!_forced_init)
+            InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, init_swing, init_q2_dot, init_q3_dot);
+        else
+            InitModelFreeKnee(Vector2D(0,0),init_q1, init_q1_dot, init_q2-init_q1, init_q2_dot, init_q3_dot);
 
         state=FREE_KNEE;
 
@@ -631,8 +646,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout<<"DEBUG knee qm:\n"<<Q_m<<std::endl;
         // std::cout<<"DEBUG knee qp:\n"<<Q_p<<std::endl;
         Vector2D pos=modelbase->evalPosition(*stance_leg);
-        InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1)); //FIXME!
-        // InitModelLockedKnee(pos,q1, v_q_p(0), -q1+old_q2, -v_q_p(1));
+        InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1));
+
 
     }
 
@@ -696,7 +711,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         Vector2D oldcontact=modelbase->evalPosition(*stance_leg);
         std::cout<<"DEBUG step: ("<<oldcontact.x()<<", "<<oldcontact.y()<<") -> ("<<ground_contact->lastContactPoint.x()<<", "<<ground_contact->lastContactPoint.y()<<")"<<std::endl;
 
-        InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
+        // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
+        InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel
     }
 
 
@@ -939,10 +955,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
                     // current_q3_dot=modelbase->stateVelocity("q3");
 
 
-
+                    #ifdef LOGING
                     logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
                     // logfile<<time<<std::endl;//" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
-
+                    #endif
                     time+=dt;
 
                     detect_collision();

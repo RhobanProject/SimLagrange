@@ -1,0 +1,42 @@
+{
+    "model":
+    {
+	"name": "Passive Walker with Knees",
+	"has_knee": true,
+	"has_feet": false,
+	"forced_init": false,
+	"parameters":
+	{
+	    "m_h": 1.0,
+	    "m_t": 0.001,
+	    "m_s": 0.001,
+	    "L": 2.0,
+	    "a1": 0.5,
+	    "b1": 0.5,
+	    "a2": 0.5,
+	    "b2": 0.5
+	},
+
+	"init_state":
+	{
+	    "q1":0.0,
+	    "q1_dot":-0.617612132235154,
+	    "q2":0.0,
+	    "q2_dot":0.63509876576631,
+	    "q3":0.0,
+	    "q3_dot":0.0,
+	    "swing":-0.261799387799528
+	}
+
+
+    },
+    "world":
+    {
+	"ground":
+	{
+	    "slope":-1.03484046365938e-15
+	}
+    }
+
+
+}
