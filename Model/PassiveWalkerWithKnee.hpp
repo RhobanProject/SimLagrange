@@ -48,7 +48,7 @@
 #define SKIP_FRAME 0 //20
 
 #define DRAW true
-// #define LOGING
+#define LOGGING false
 
 #define FREE_KNEE 1
 #define LOCKED_KNEE 2
@@ -225,11 +225,11 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     //log file
     ofstream logfile;
-
+    bool _log;
 
     Leph::SimViewer::SimViewer* viewer;
 
-    PassiveWalkerWithKnee(const char* jsonconf, bool draw=DRAW, int skip=SKIP_FRAME): PassiveWalker(jsonconf)
+    PassiveWalkerWithKnee(const char* jsonconf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(jsonconf)
     {
         Json::Value model=this->conf_root["model"];
 
@@ -282,6 +282,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         _skip=skip;
         _draw=draw;
+        _log=log;
         if(_draw)
         {
             viewer= new Leph::SimViewer::SimViewer(1280, 1024);
@@ -297,9 +298,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 } , param);
         }
 
-        #ifdef LOGING
-        logfile.open("log.dat");
-        #endif
+        if(_log)
+            logfile.open("log.dat");
+
         collisiontimeoffset=0.0;
         nbStep=0;
 
@@ -383,9 +384,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 } , param);
         }
 
-        #ifdef LOGING
-        logfile.open("log.dat");
-        #endif
+
+        if(_log)
+            logfile.open("log.dat");
+
         collisiontimeoffset=0.0;
         nbStep=0;
 
@@ -405,9 +407,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     ~PassiveWalkerWithKnee()
     {
-        #ifdef LOGING
-        logfile.close();
-        #endif
+
+        if(_log)
+            logfile.close();
+
         // if(modelbase)
         delete modelbase;
         delete knee_stop;
@@ -638,7 +641,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         // Eigen::Vector2d v_q_p=Q_p.inverse()*v_q_m*Q_m;
         Eigen::Vector2d v_q_p=Q_m*v_q_m;
-        v_q_p=v_q_p.transpose()*Q_p.inverse();
+
+        // std::cout<<"DEBUG MATRIX0: "<<v_q_p.transpose()*Q_p.inverse()<<std::endl;
+        // v_q_p=v_q_p.transpose()*Q_p.inverse();
+        v_q_p=Q_p.inverse()*v_q_p;
 
         std::cout<<"DEBUG knee res: "<<v_q_p<<std::endl;
         std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
@@ -646,6 +652,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout<<"DEBUG knee qm:\n"<<Q_m<<std::endl;
         // std::cout<<"DEBUG knee qp:\n"<<Q_p<<std::endl;
         Vector2D pos=modelbase->evalPosition(*stance_leg);
+        // InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1)); //should be ok
         InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1));
 
 
@@ -703,7 +710,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         // Eigen::Vector2d v_q_p=Q_p.inverse()*v_q_m*Q_m;
         Eigen::Vector2d v_q_p=Q_m*v_q_m;
-        v_q_p=v_q_p.transpose()*Q_p.inverse();
+        // v_q_p=v_q_p.transpose()*Q_p.inverse();
+        v_q_p=Q_p.inverse()*v_q_p;
 
         std::cout<<"DEBUG foot res: "<<v_q_p<<std::endl;
         std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
@@ -712,7 +720,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         std::cout<<"DEBUG step: ("<<oldcontact.x()<<", "<<oldcontact.y()<<") -> ("<<ground_contact->lastContactPoint.x()<<", "<<ground_contact->lastContactPoint.y()<<")"<<std::endl;
 
         // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
-        InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel
+        // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel. Should be ok
+        InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), -v_q_p(1), 0); //knee_vel=swing_vel. Minus q2_dot?
     }
 
 
@@ -955,15 +964,19 @@ class PassiveWalkerWithKnee: public PassiveWalker
                     // current_q3_dot=modelbase->stateVelocity("q3");
 
 
-                    #ifdef LOGING
-                    logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
-                    // logfile<<time<<std::endl;//" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
-                    #endif
+
+                    if(_log)
+                    {
+                        scalar Ep=modelbase->evalPotential();
+                        scalar Ec=modelbase->evalKinetic();
+                        logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
+                    }
+
                     time+=dt;
 
                     detect_collision();
                     time+=collisiontimeoffset;
-                    // std::cout<<"DEBUG time: "<<time<<std::endl;
+
                 }
             }
         }

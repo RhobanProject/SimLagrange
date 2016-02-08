@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 {
     double score=0.0;
     try{
-        PassiveWalkerWithKnee w(argv[1], true);
+        PassiveWalkerWithKnee w(argv[1], true, 20, true);
 
 
     //animation stuff
