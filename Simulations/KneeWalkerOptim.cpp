@@ -130,13 +130,13 @@ int main(int argc, char* argv[])
         //int lambda = 100; // offsprings at each generation.
     CMAParameters<> cmaparams(x0,sigma);
 
-    cmaparams.set_mt_feval(true); //multithread
+    // cmaparams.set_mt_feval(true); //multithread
 
     // cmaparams.set_algo(aCMAES); //standard
     cmaparams.set_algo(aBIPOP_CMAES);
     // cmaparams.set_elitism(true);
-    cmaparams.set_restarts(3);
-    // cmaparams.set_restarts(1);
+    // cmaparams.set_restarts(3);
+    cmaparams.set_restarts(1);
 
     cmaparams.set_ftarget(1e-10);
 
