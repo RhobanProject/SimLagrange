@@ -41,6 +41,19 @@ class PassiveWalker
     Leph::Any::Any param;
 
     PassiveWalker(){};
+
+    PassiveWalker(Json::Value conf): conf_root(conf)
+    {
+        // conf_root=conf; //copy
+        // std::cout<<"JSON:"<<std::endl;
+        // std::cout<<conf_root;
+
+        simu_pause=false;
+        simu_reset=false;
+
+    }
+
+
     PassiveWalker(const char* jsonconf)
     {
         std::ifstream jsonfile (jsonconf);

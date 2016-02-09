@@ -23,7 +23,7 @@
 #define SKIP_FRAME 20
 
 #define DRAW
-// #define LOG
+#define LOG
 
 
 using namespace std;
@@ -270,7 +270,9 @@ int main()
             if(!simu_pause && !g.hasFallen)
             {
 #ifdef LOG
-                logfile<<time<<" "<<system.statePosition("q1")<<" "<<system.stateVelocity("q1")<<" "<<system.statePosition("q2")<<" "<<system.stateVelocity("q2")<<"\n";
+                scalar Ep=system.evalPotential();
+                scalar Ec=system.evalKinetic();
+                logfile<<time<<" "<<system.statePosition("q1")<<" "<<system.stateVelocity("q1")<<" "<<system.statePosition("q2")<<" "<<system.stateVelocity("q2")<<" "<<Ep<<" "<<Ec<<" "<<Ep+Ec<<"\n";
 #endif
                 system.runSimulationStep(0.001);
 

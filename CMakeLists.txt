@@ -97,6 +97,10 @@ add_executable(
 	KneeWalkerOptim
         Simulations/KneeWalkerOptim.cpp
 )
+add_executable(
+	KneeWalkerOptimAll
+        Simulations/KneeWalkerOptimAll.cpp
+)
 
 
 
@@ -175,6 +179,15 @@ target_link_libraries(testsModel
 )
 
 target_link_libraries(KneeWalkerOptim
+    sfml-graphics
+    sfml-window
+    sfml-system
+    jsoncpp
+    cmaes
+)
+
+
+target_link_libraries(KneeWalkerOptimAll
     sfml-graphics
     sfml-window
     sfml-system

@@ -45,6 +45,16 @@
 #include <functional>
 // #include "Simulations/SimpleWalkerGround.hpp"
 
+//As usual...
+// Converts degrees to radians.
+#define DEG_TO_RAD(angleDegrees) (angleDegrees * M_PI / 180.0)
+// Converts radians to degrees.
+#define RAD_TO_DEG(angleRadians) (angleRadians * 180.0 / M_PI)
+
+
+
+
+
 #define SKIP_FRAME 0 //20
 
 #define DRAW true
@@ -229,41 +239,12 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     Leph::SimViewer::SimViewer* viewer;
 
-    PassiveWalkerWithKnee(const char* jsonconf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(jsonconf)
+
+    PassiveWalkerWithKnee(Json::Value conf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(conf)
     {
-        Json::Value model=this->conf_root["model"];
-
-        if(!model["has_knee"].asBool())
-            throw("Trying to create a PassiveWalkerWithKnee: JSON conf said has_knee==false");
-
-        if(model["has_feet"].asBool())
-            throw("Trying to create a PassiveWalkerWithKnee: JSON conf said has_feet==true");
 
 
-        _forced_init=model["forced_init"].asBool();
-
-
-
-        m_h=model["parameters"]["m_h"].asDouble();
-        m_s=model["parameters"]["m_s"].asDouble();
-        m_t=model["parameters"]["m_t"].asDouble();
-        L=model["parameters"]["L"].asDouble();
-        a1=model["parameters"]["a1"].asDouble();
-        a2=model["parameters"]["a2"].asDouble();
-        b1=model["parameters"]["b1"].asDouble();
-        b2=model["parameters"]["b2"].asDouble();
-        l_t=a2+b2;
-        l_s=a1+b1;
-        init_q1=model["init_state"]["q1"].asDouble(); //should be useless
-        init_q2=model["init_state"]["q2"].asDouble();
-        init_q3=model["init_state"]["q3"].asDouble(); //should be useless
-        init_q1_dot=model["init_state"]["q1_dot"].asDouble();
-        init_q2_dot=model["init_state"]["q2_dot"].asDouble();
-        init_q3_dot=model["init_state"]["q3_dot"].asDouble();
-        init_swing=model["init_state"]["swing"].asDouble();
-
-        Json::Value world=this->conf_root["world"];
-        slope=world["ground"]["slope"].asDouble();
+        getConfig();
 
 
         // System system(Vector2D(0.0, 0.0));
@@ -278,7 +259,38 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         BuildInitModel();
 
-        //Viewer stuffs
+        InitStuffs(draw, skip, log);
+
+    }
+
+
+
+    PassiveWalkerWithKnee(const char* jsonconf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(jsonconf)
+    {
+
+        getConfig();
+
+        // System system(Vector2D(0.0, 0.0));
+        modelbase=new System(Vector2D(0.0, 0.0));
+        //dummy, just to init the memory
+        stance_leg = &(modelbase->addAngularJoint(
+            modelbase->getBase(),
+            Vector2D(0.0, 0.0), 0.0,
+            Vector2D(0.0, 0.0), 0.0,
+            0, 0));
+        modelbase->initSymbols();
+
+        BuildInitModel();
+
+        InitStuffs(draw, skip, log);
+
+    }
+
+
+    void InitStuffs(bool draw, int skip, bool log)
+    {
+
+                //Viewer stuffs
 
         _skip=skip;
         _draw=draw;
@@ -315,11 +327,57 @@ class PassiveWalkerWithKnee: public PassiveWalker
         current_q2_dot=0.0;
         current_q3_dot=0.0;
 
+    }
+
+
+    void getConfig()
+    {
+
+        // std::cout<<"DEBUG my json: "<<std::endl;
+        // std::cout<<this->conf_root<<std::endl;
+
+        Json::Value model=this->conf_root["model"];
+
+
+        if(!model["has_knee"].asBool())
+            throw("Trying to create a PassiveWalkerWithKnee: JSON conf said has_knee==false");
+
+        if(model["has_feet"].asBool())
+            throw("Trying to create a PassiveWalkerWithKnee: JSON conf said has_feet==true");
+
+
+        _forced_init=model["forced_init"].asBool();
+
+
+
+        m_h=model["parameters"]["m_h"].asDouble();
+        m_s=model["parameters"]["m_s"].asDouble();
+        m_t=model["parameters"]["m_t"].asDouble();
+        L=model["parameters"]["L"].asDouble();
+        a1=model["parameters"]["a1"].asDouble();
+        a2=model["parameters"]["a2"].asDouble();
+        b1=model["parameters"]["b1"].asDouble();
+        b2=model["parameters"]["b2"].asDouble();
+        l_t=a2+b2;
+        l_s=a1+b1;
+        // std::cout<<"DEBUG Length: "<<l_t<<" "<<l_s<<" "<<a1<<" "<<a2<<std::endl;
+        init_q1=model["init_state"]["q1"].asDouble(); //should be useless
+        init_q2=model["init_state"]["q2"].asDouble();
+        init_q3=model["init_state"]["q3"].asDouble(); //should be useless
+        init_q1_dot=model["init_state"]["q1_dot"].asDouble();
+        init_q2_dot=model["init_state"]["q2_dot"].asDouble();
+        init_q3_dot=model["init_state"]["q3_dot"].asDouble();
+        init_swing=model["init_state"]["swing"].asDouble();
+
+        Json::Value world=this->conf_root["world"];
+        slope=world["ground"]["slope"].asDouble();
+
+
 
     }
 
 
-    PassiveWalkerWithKnee(double ground_slope, double init_vel, double init_swing_angle, double init_swing_vel, bool draw=DRAW, int skip=SKIP_FRAME): PassiveWalker()
+    PassiveWalkerWithKnee(double ground_slope, double init_vel, double init_swing_angle, double init_swing_vel, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker()
     {
         //Without json
 
@@ -367,38 +425,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         BuildInitModel();
 
 
-        _skip=skip;
-        _draw=draw;
-        if(_draw)
-        {
-            viewer= new Leph::SimViewer::SimViewer(1280, 1024);
-
-            //Viewer callbacks
-            viewer->setSpaceHandler(
-                [this](Leph::Any::Any p) -> void {
-                    this->space_cb(p);
-                } , param);
-            viewer->setRHandler(
-                [this](Leph::Any::Any p) -> void {
-                    this->R_cb(p);
-                } , param);
-        }
-
-
-        if(_log)
-            logfile.open("log.dat");
-
-        collisiontimeoffset=0.0;
-        nbStep=0;
-
-        current_q1=0.0;
-        current_q2=0.0;
-        current_q3=0.0;
-        current_swing=0.0;
-
-        current_q1_dot=0.0;
-        current_q2_dot=0.0;
-        current_q3_dot=0.0;
+        InitStuffs(draw, skip, log);
 
     }
 
@@ -595,20 +622,27 @@ class PassiveWalkerWithKnee: public PassiveWalker
     void lock_the_knee()
     {
 
-        // double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
-        double q2=fmod(modelbase->evalAngle(*swing_thigh),2.0*M_PI); //seems to be the positive angle
+        // minus everywhere...
 
-        double q3=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
+        // double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
+        double q2=-fmod(modelbase->evalAngle(*swing_thigh),2.0*M_PI); //seems to be the positive angle
+
+        double q3=-fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
         //TODO check
-        double q1=modelbase->evalAngle(*stance_leg);
+        double q1=-modelbase->evalAngle(*stance_leg);
 
         //because of the referential...
-        double old_q2=modelbase->evalAngle(*swing_thigh);
-        double old_q3=modelbase->evalAngle(*swing_shank);
+        double old_q2=-modelbase->evalAngle(*swing_thigh);
+        double old_q3=-modelbase->evalAngle(*swing_shank);
 
-        double q1_dot=modelbase->stateVelocity("q1");
-        double q2_dot=modelbase->stateVelocity("q2");
-        double q3_dot=modelbase->stateVelocity("q3");
+        double q1_dot=-modelbase->stateVelocity("q1");
+        double q2_dot=-modelbase->stateVelocity("q2");
+        double q3_dot=-modelbase->stateVelocity("q3");
+
+
+        std::cout<<"DEBUG KNEE COL: "<<RAD_TO_DEG(q1)<<" "<<RAD_TO_DEG(q2)<<" "<<RAD_TO_DEG(q3)<<std::endl;
+        std::cout<<q1_dot<<" "<<q2_dot<<" "<<q3_dot<<std::endl;
+
 
 
         double alpha=q1-q2;
@@ -653,7 +687,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout<<"DEBUG knee qp:\n"<<Q_p<<std::endl;
         Vector2D pos=modelbase->evalPosition(*stance_leg);
         // InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1)); //should be ok
-        InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1));
+        // InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1));
+        InitModelLockedKnee(pos,-q1, -v_q_p(0), -(-q1+old_q2), -v_q_p(1));
 
 
     }
@@ -664,27 +699,24 @@ class PassiveWalkerWithKnee: public PassiveWalker
     void foot_on_ground()
     {
 
-        //argh
-        // double q2=fmod(modelbase->evalAngle(*swing_thigh)+M_PI,2.0*M_PI); //seems to be the positive angle
-        // double q2=fmod(modelbase->evalAngle(*swing_shank)+M_PI,2.0*M_PI); //seems to be the positive angle
-        double q2=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI); //seems to be the positive angle
-        // double q3=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
-        //TODO check
-        double q1=modelbase->evalAngle(*stance_leg);
+        //minus everywhere
+        double q2=-fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI); //seems to be the positive angle
+
+        double q1=-modelbase->evalAngle(*stance_leg);
 
         //because of the referential...
         //argh
         // double old_q2=modelbase->evalAngle(*swing_thigh);
-        double old_q2=modelbase->evalAngle(*swing_shank);
+        double old_q2=-modelbase->evalAngle(*swing_shank);
         // double old_q3=modelbase->evalAngle(*swing_shank);
 
-        double q1_dot=modelbase->stateVelocity("q1");
-        double q2_dot=modelbase->stateVelocity("q2");
+        double q1_dot=-modelbase->stateVelocity("q1");
+        double q2_dot=-modelbase->stateVelocity("q2");
         // double q3_dot=modelbase->stateVelocity("q3");
 
 
-        // double alpha=cos(q1-q2); //error in the paper?
-        double alpha=(q1-q2);
+        double alpha=cos(q1-q2); //error in the paper?
+        // double alpha=(q1-q2);
 
         //TODO optimize!
         double q12_m=-m_s*a1*(l_t+b1)+m_t*b2*(l_s+a2);
@@ -711,7 +743,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // Eigen::Vector2d v_q_p=Q_p.inverse()*v_q_m*Q_m;
         Eigen::Vector2d v_q_p=Q_m*v_q_m;
         // v_q_p=v_q_p.transpose()*Q_p.inverse();
+
         v_q_p=Q_p.inverse()*v_q_p;
+
 
         std::cout<<"DEBUG foot res: "<<v_q_p<<std::endl;
         std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
@@ -721,7 +755,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
         // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel. Should be ok
-        InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), -v_q_p(1), 0); //knee_vel=swing_vel. Minus q2_dot?
+
+        InitModelFreeKnee(ground_contact->lastContactPoint, -q2, -v_q_p(0), (-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel. Minus q2_dot?
     }
 
 
@@ -980,9 +1015,11 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 }
             }
         }
+
         catch(const std::exception & e)
         {
             std::cerr << e.what()<<std::endl;
+            state=FALL; //heuu
         }
 
         if(_draw)
