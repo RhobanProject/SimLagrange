@@ -791,12 +791,14 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
             // std::cout<<"DEBUG FREE: "<<kneecollision<<" "<<groundcollision<<std::endl;
 
+
             if(groundcollision)//Forbidden
             {
 
                 std::cout<<"DEBUG COLLISION: forbidden ground"<<std::endl;
                 state|=FALL;
             }
+
 
             if(kneecollision)//ok lock the knee
             {

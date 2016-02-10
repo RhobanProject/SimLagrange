@@ -42,10 +42,10 @@ int main(int argc, char* argv[])
     // int i=0;
     // int im=0;
 
-
+        int prev=0;
         // for(int i=0;i<100;i++)
         // w.SimuStep(0.001);
-        while(!(w.state&FALL)) //!w.state&FALL
+        while(1)//(!(w.state&FALL)) //!w.state&FALL
         {
             // w.draw();
             w.SimuStep(0.001);
@@ -60,11 +60,11 @@ int main(int argc, char* argv[])
             //     Screen.saveToFile(filename.str());
             // }
 
-            // if(w.nbStep==1)
-            // {
-            //     std::cout<<"STATE: "<<w.current_q1_dot<<" "<<-w.current_swing<<" "<<w.current_q2_dot<<std::endl;
-            //     return 0;
-            // }
+            if(w.nbStep==1 && prev==0)
+            {
+                std::cout<<"STATE: "<<w.current_q1<<" "<<w.current_q1_dot<<" "<<-w.current_swing<<" "<<w.current_q2_dot<<std::endl;
+                prev=1;
+            }
         }
         std::cout<<"FALLEN"<<std::endl;
     }
