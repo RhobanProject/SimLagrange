@@ -47,6 +47,7 @@ using namespace libcmaes;
 FitFunc walk=[](const double *x, const int N)
 {
 
+
     double slope=x[0];
     double init_vel=x[1];
     double init_swing=x[2];
@@ -170,12 +171,12 @@ FitFunc walk=[](const double *x, const int N)
     std::cout<<"PARAMS: "<<init_vel<<" "<<init_swing<<" "<<init_swing_vel<<" "<<slope<<" "<<a1<<" "<<a2<<" "<<mh<<" "<<ms<<" "<<mt<<std::endl;
 
 
-    std::cout<<"STATE: "<<w.current_q1_dot<<" "<<-w.current_swing<<" "<<w.current_q2_dot<<std::endl;
+    std::cout<<"STATE: "<<w.current_q1_dot<<" "<<w.current_swing<<" "<<w.current_q2_dot<<std::endl;
     std::cout<<"STEP: "<<w.ground_contact->lastContactPoint.x()<<std::endl;
 
     // score+=DIST(init_vel,w.current_q1_dot)+DIST(init_swing,w.current_swing)+DIST(init_swing_vel,w.current_q2_dot);
 
-    score+=DIST(init_vel,w.current_q1_dot)+DIST_ANGLE(init_swing,-w.current_swing)+DIST(init_swing_vel,w.current_q2_dot);
+    score+=DIST(init_vel,w.current_q1_dot)+DIST_ANGLE(init_swing,w.current_swing)+DIST(init_swing_vel,w.current_q2_dot);
 
     score+= max( 1.0/(fabs(init_swing/(M_PI/24.0)))-1.0 , 0.0 );
 
@@ -197,6 +198,57 @@ FitFunc walk=[](const double *x, const int N)
 };
 
 
+void save_solution(std::vector<double> x, const char* filename)
+{
+    Json::Value conf;
+    std::ofstream file;
+    file.open(filename);
+
+    double slope=x[0];
+    double init_vel=x[1];
+    double init_swing=x[2];
+    double init_swing_vel=x[3];
+    double a1=x[4];
+    double a2=x[5];
+
+    double mh=x[6];
+    double ms=x[7];
+    double mt=x[8];
+
+    conf["model"]["has_knee"]=true;
+    conf["model"]["has_feet"]=false;
+    conf["model"]["forced_init"]=false;
+
+    // conf["model"]["parameters"]["m_h"]=1.0;
+    // conf["model"]["parameters"]["m_s"]=0.001;
+    // conf["model"]["parameters"]["m_t"]=0.001;
+
+    conf["model"]["parameters"]["m_h"]=mh;
+    conf["model"]["parameters"]["m_s"]=ms;
+    conf["model"]["parameters"]["m_t"]=mt;
+
+
+    conf["model"]["parameters"]["L"]=2.0;
+
+    conf["model"]["parameters"]["a1"]=a1;
+    conf["model"]["parameters"]["a2"]=a2;
+
+    conf["model"]["parameters"]["b1"]=1.0-a1;
+    conf["model"]["parameters"]["b2"]=1.0-a2;
+
+    conf["model"]["init_state"]["q1"]=0.0;  //automatic
+    conf["model"]["init_state"]["q2"]=0.0;  //automatic cf swing
+    conf["model"]["init_state"]["q3"]=0.0;  //automatic
+    conf["model"]["init_state"]["q1_dot"]=init_vel;
+    conf["model"]["init_state"]["q2_dot"]=init_swing_vel;
+    conf["model"]["init_state"]["q3_dot"]=0.0; //automatic
+    conf["model"]["init_state"]["swing"]=init_swing;
+    conf["world"]["ground"]["slope"]=slope;
+
+    Json::StyledWriter Writer;
+    file << Writer.write(conf);
+    file.close();
+}
 
 int main(int argc, char* argv[])
 {
@@ -205,9 +257,15 @@ int main(int argc, char* argv[])
     int dim = 9; // problem dimensions.
 
     // std::vector<double> x0({-0.1,-1.4,-0.5,1.5,0.5,0.5});
-    std::vector<double> x0({-0.1,-1.4,-0.5,1.5,0.5,0.5,1.0,0.001,0.001});
 
-    double sigma = 0.1;
+    // std::vector<double> x0({-0.1,-1.4,-0.5,1.5,0.5,0.5,1.0,0.001,0.001});
+    // double sigma = 0.1;
+
+    //Start from a good solution
+    std::vector<double> x0({-0.00138611487182065,-1.53859247193321,-0.532506967778129,1.9864034821433,0.52119274561097,0.269452637112695,0.13281810737985,0.523979626929375,0.510355579117084});
+
+    double sigma = 0.001;
+
         //int lambda = 100; // offsprings at each generation.
     CMAParameters<> cmaparams(x0,sigma);
 
@@ -219,7 +277,7 @@ int main(int argc, char* argv[])
     cmaparams.set_restarts(3);
     // cmaparams.set_restarts(1);
 
-    cmaparams.set_ftarget(1e-10);
+    cmaparams.set_ftarget(1e-15);
 
 
     time_t rawtime;
@@ -235,10 +293,18 @@ int main(int argc, char* argv[])
     cmaparams.set_fplot(str);
 
 
-    std::cout.precision(15);
+    std::cout.precision(25);
     CMASolutions cmasols = cmaes<>(walk,cmaparams);
     std::cout << "best solution: " << cmasols << std::endl;
     std::cout << "optimization took " << cmasols.elapsed_time() / 1000.0 << " seconds\n";
+
+    Candidate bcand = cmasols.best_candidate();
+    std::vector<double>x = bcand.get_x();
+
+    strftime(buffer,80,"best_solution_%d-%m-%Y_%I%M.json",timeinfo);
+    std::string file(buffer);
+
+    save_solution(x,file.c_str());
 
     return cmasols.run_status();
 

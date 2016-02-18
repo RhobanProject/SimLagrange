@@ -202,6 +202,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
     PassiveWalkerKneeStop* knee_stop;
     PassiveWalkerGroundContact* ground_contact;
     double collisiontimeoffset;
+    int isCollided;
 
     //model
     System* modelbase;
@@ -315,7 +316,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         collisiontimeoffset=0.0;
         nbStep=0;
-
+        isCollided=0;
 
 
         current_q1=0.0;
@@ -816,6 +817,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 state=0;
                 state|=LOCKED_KNEE;
                 // state&=!(FREE_KNEE);
+                isCollided=_COLLISION_COOLDOWN;
             }
 
 
@@ -858,6 +860,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 state|=FREE_KNEE;
                 // state&=!(LOCKED_KNEE);
                 nbStep++;
+                isCollided=_COLLISION_COOLDOWN;
             }
             if(groundcollision && q2<=0.0)
             {
@@ -958,7 +961,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 Vector2D hippos = foot + Vector2D::rotate(Vector2D(0.0, L), centerAngle);
 
                 //Follow the model
-                // viewer->moveCam(-hippos.x(),hippos.y());
+                viewer->moveCam(-hippos.x(),hippos.y());
 
 
                 viewer->endDraw(); //TODO
@@ -991,6 +994,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                     // }
                     // catch(const std::exception & e){}
 
+                    /*
                     current_q1=modelbase->statePosition("q1");
                     current_q2=modelbase->statePosition("q2");
                     // current_q3=modelbase->statePosition("q3");
@@ -999,20 +1003,34 @@ class PassiveWalkerWithKnee: public PassiveWalker
                     current_q1_dot=modelbase->stateVelocity("q1");
                     current_q2_dot=modelbase->stateVelocity("q2");
                     // current_q3_dot=modelbase->stateVelocity("q3");
+                    */
 
 
 
+                    time+=dt;
+
+                    if(isCollided==0) //cooldown. Wait a little just after a collision
+                        detect_collision();
+                    else
+                        isCollided--;
+
+                    time+=collisiontimeoffset;
+
+
+                    current_q1=modelbase->statePosition("q1");
+                    current_q2=modelbase->statePosition("q2");
+                    // current_q3=modelbase->statePosition("q3");
+                    current_swing=current_q2;
+
+                    current_q1_dot=modelbase->stateVelocity("q1");
+                    current_q2_dot=modelbase->stateVelocity("q2");
+                    // current_q3_dot=modelbase->stateVelocity("q3");
                     if(_log)
                     {
                         scalar Ep=modelbase->evalPotential();
                         scalar Ec=modelbase->evalKinetic();
                         logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
                     }
-
-                    time+=dt;
-
-                    detect_collision();
-                    time+=collisiontimeoffset;
 
                 }
             }
