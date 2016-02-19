@@ -23,7 +23,7 @@
 #include <fstream>
 #include <cmaes/cmaes.h>
 #include <json/json.h>
-
+#include <iomanip>
 
 #define DIST(x,y) (sqrt(pow((x-y),2)))
 // #define DIST(x,y) (pow(sqrt(pow((x-y),2))),2)
@@ -246,6 +246,7 @@ void save_solution(std::vector<double> x, const char* filename)
     conf["world"]["ground"]["slope"]=slope;
 
     Json::StyledWriter Writer;
+    file << std::setprecision(25);
     file << Writer.write(conf);
     file.close();
 }
