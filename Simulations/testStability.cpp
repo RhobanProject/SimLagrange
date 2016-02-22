@@ -27,6 +27,8 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
+#include <random>
+
 
 #define DIST(x,y) (sqrt(pow((x-y),2)))
 // #define DIST(x,y) (pow(sqrt(pow((x-y),2))),2)
@@ -40,6 +42,9 @@
 #define GREEN "\033[32m"
 #define BLUE "\033[34m"
 #define DEFAULT "\033[39m"
+
+
+
 
 using namespace std;
 using namespace Leph::SimMecha;
@@ -139,8 +144,9 @@ void computeStability(Json::Value conf, double delta=0.0000000001)
         Eigen::Vector3d v(diff.data());
         Psi.col(i)=v;
 
-
     }
+
+
     Eigen::Vector3d deltas(delta,delta,delta);
     Eigen::Matrix<double, 3, 3> Tau=deltas.asDiagonal();
 
@@ -166,6 +172,86 @@ void computeStability(Json::Value conf, double delta=0.0000000001)
 
 }
 
+void computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=10e-8)
+{
+    //3 dimensions
+    std::vector<double> init_state;
+    init_state.push_back(conf["model"]["init_state"]["q1_dot"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["swing"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["q2_dot"].asDouble());
+
+    /*
+      Eigen::Matrix<double, 3, _NB_ITER*3> Psi;
+      Eigen::Matrix<double, 3, _NB_ITER*3> Tau;
+      Tau=Eigen::Matrix<double, 3, _NB_ITER*3>::Zero();
+    */
+
+    Eigen::MatrixXd Psi(3, nbIter*3);
+    Eigen::MatrixXd Tau(3, nbIter*3);
+    Tau=Eigen::MatrixXd::Zero(3, nbIter*3);
+
+    std::random_device rd;
+    std::default_random_engine re(rd());
+    std::uniform_real_distribution<double> unif(-delta, delta);
+    std::vector<double> deltas={0.0,0.0,0.0};
+
+    for(int k=0;k<nbIter;k++)
+    {
+        std::cout<<"\tk: "<<k<<std::endl;
+
+        //make som small delta variations on each dimension
+        for(int i=0;i<3;i++)
+        {
+            std::cout<<"\t\ti: "<<i<<std::endl;
+            std::vector<double> state(init_state);
+
+            double r=unif(re);
+            state[i]+=r;
+            deltas[i]=r;
+
+            if(!makeStep(conf,state))
+                std::cerr<<"Problem"<<std::endl;
+
+            std::vector<double> diff;
+            for(int j=0;j<3;j++)
+                diff.push_back(state[j]-init_state[j]);
+
+
+            Eigen::Vector3d v(diff.data());
+
+            Psi.col(k*3+i)=v;
+            Eigen::Vector3d d(deltas.data());
+
+            Tau.col(k*3+i)=d;
+            deltas[i]=0.0;
+        }
+    }
+
+    Eigen::MatrixXd DF=Tau.transpose().jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(Psi.transpose());
+
+    // Eigen::VectorXcd EV=DF.eigenvalues();
+
+    Eigen:: EigenSolver<Eigen::MatrixXd> es(DF);
+
+
+    std::cout<<"Tau:"<<std::endl;
+    std::cout<<Tau<<std::endl;
+    std::cout<<"Psi:"<<std::endl;
+    std::cout<<Psi<<std::endl;
+    std::cout<<"Df:"<<std::endl;
+    std::cout<<DF<<std::endl;
+
+    std::cout<<"Eigenvectors:"<<std::endl;
+    std::cout<<es.eigenvectors()<<std::endl;
+    std::cout<<"Eigenvalues:"<<std::endl;
+    std::cout<<es.eigenvalues()<<std::endl;
+    std::cout<<"Eigenvalues norm:"<<std::endl;
+    std::cout<<std::abs(es.eigenvalues()(0))<<std::endl;
+    std::cout<<std::abs(es.eigenvalues()(1))<<std::endl;
+    std::cout<<std::abs(es.eigenvalues()(2))<<std::endl;
+}
+
+
 int main(int argc, char* argv[])
 {
 
@@ -174,8 +260,11 @@ int main(int argc, char* argv[])
         Json::Value conf_root;
         std::ifstream jsonfile (argv[1]);
         jsonfile >> conf_root;
-        computeStability(conf_root);
-
+        // computeStability(conf_root);
+        std::cout<<std::endl;
+        std::cout<<"PSEUDO"<<std::endl;
+        std::cout<<std::endl;
+        computeStabilityPseudoInv(conf_root);
     }
     else
     {

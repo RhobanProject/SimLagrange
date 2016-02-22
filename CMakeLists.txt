@@ -37,6 +37,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 
+
 #Build tests
 foreach(f ${TESTS_DIRECTORIES})
     add_executable(

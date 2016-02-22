@@ -55,7 +55,7 @@
 
 
 
-#define SKIP_FRAME 0 //20
+#define SKIP_FRAME 20 //20
 
 #define DRAW true
 #define LOGGING false

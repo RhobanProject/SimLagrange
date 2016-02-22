@@ -38,9 +38,9 @@ int main(int argc, char* argv[])
     // // view.zoom(0.3);
     // wviewer._window.setView(view);
     // viewer.moveCam(00,0.5);
-    std::stringstream filename;
-    int i=0;
-    int im=0;
+        // std::stringstream filename;
+        // int i=0;
+        // int im=0;
 
         int prev=0;
         // for(int i=0;i<100;i++)
@@ -51,14 +51,14 @@ int main(int argc, char* argv[])
             w.SimuStep(0.001);
 
 
-            if(im++%10==0)
-            {
-                sf::Image Screen = w.viewer->_window.capture();
-                filename.str(std::string());
-                filename.clear();
-                filename<<std::setfill('0') << std::setw(4)<<i++<<".bmp";
-                Screen.saveToFile(filename.str());
-            }
+            // if(im++%10==0)
+            // {
+            //     sf::Image Screen = w.viewer->_window.capture();
+            //     filename.str(std::string());
+            //     filename.clear();
+            //     filename<<std::setfill('0') << std::setw(4)<<i++<<".bmp";
+            //     Screen.saveToFile(filename.str());
+            // }
 
             if(w.nbStep==1 && prev==0)
             {
