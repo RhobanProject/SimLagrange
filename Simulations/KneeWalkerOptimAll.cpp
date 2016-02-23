@@ -259,15 +259,15 @@ int main(int argc, char* argv[])
 
     // std::vector<double> x0({-0.1,-1.4,-0.5,1.5,0.5,0.5});
 
-    // std::vector<double> x0({-0.1,-1.4,-0.5,1.5,0.5,0.5,1.0,0.001,0.001});
+    std::vector<double> x0({-0.1,-1.4,-0.5,1.5,0.5,0.5,1.0,0.001,0.001});
     // double sigma = 0.1;
 
     //Start from a good solution
-    std::vector<double> x0({-0.00138611487182065,-1.53859247193321,-0.532506967778129,1.9864034821433,0.52119274561097,0.269452637112695,0.13281810737985,0.523979626929375,0.510355579117084});
+    // std::vector<double> x0({-0.00138611487182065,-1.53859247193321,-0.532506967778129,1.9864034821433,0.52119274561097,0.269452637112695,0.13281810737985,0.523979626929375,0.510355579117084});
 
     double sigma = 0.001;
 
-        //int lambda = 100; // offsprings at each generation.
+    //int lambda = 100; // offsprings at each generation.
     CMAParameters<> cmaparams(x0,sigma);
 
     cmaparams.set_mt_feval(true); //multithread
@@ -275,8 +275,8 @@ int main(int argc, char* argv[])
     // cmaparams.set_algo(aCMAES); //standard
     cmaparams.set_algo(aBIPOP_CMAES);
     // cmaparams.set_elitism(true);
-    cmaparams.set_restarts(3);
-    // cmaparams.set_restarts(1);
+    // cmaparams.set_restarts(3);
+    cmaparams.set_restarts(1);
 
     cmaparams.set_ftarget(1e-15);
 

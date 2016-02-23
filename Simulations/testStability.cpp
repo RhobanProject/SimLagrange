@@ -29,6 +29,10 @@
 #include <Eigen/Eigenvalues>
 #include <random>
 
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define BLUE "\033[34m"
+#define DEFAULT "\033[39m"
 
 #define DIST(x,y) (sqrt(pow((x-y),2)))
 // #define DIST(x,y) (pow(sqrt(pow((x-y),2))),2)
@@ -119,7 +123,7 @@ bool makeStep(Json::Value conf, std::vector<double> &state)
 };
 
 
-void computeStability(Json::Value conf, double delta=0.0000000001)
+Eigen::MatrixXd computeStability(Json::Value conf, double delta=10e-8)
 {
     //3 dimensions
     std::vector<double> init_state;
@@ -169,10 +173,10 @@ void computeStability(Json::Value conf, double delta=0.0000000001)
     // std::cout<<EV[2].norm()<<std::endl;
 
     // std::cout<<EV.norm()<<std::endl;
-
+    return DF;
 }
 
-void computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=10e-8)
+Eigen::MatrixXd computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=10e-8)
 {
     //3 dimensions
     std::vector<double> init_state;
@@ -231,7 +235,7 @@ void computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=10e-
 
     // Eigen::VectorXcd EV=DF.eigenvalues();
 
-    Eigen:: EigenSolver<Eigen::MatrixXd> es(DF);
+    Eigen:: EigenSolver<Eigen::MatrixXd> es(DF.transpose());
 
 
     std::cout<<"Tau:"<<std::endl;
@@ -239,7 +243,7 @@ void computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=10e-
     std::cout<<"Psi:"<<std::endl;
     std::cout<<Psi<<std::endl;
     std::cout<<"Df:"<<std::endl;
-    std::cout<<DF<<std::endl;
+    std::cout<<DF.transpose()<<std::endl;
 
     std::cout<<"Eigenvectors:"<<std::endl;
     std::cout<<es.eigenvectors()<<std::endl;
@@ -249,6 +253,55 @@ void computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=10e-
     std::cout<<std::abs(es.eigenvalues()(0))<<std::endl;
     std::cout<<std::abs(es.eigenvalues()(1))<<std::endl;
     std::cout<<std::abs(es.eigenvalues()(2))<<std::endl;
+
+    return DF.transpose();
+}
+
+void testNewtonRaphson(Json::Value conf)
+{
+    //3 dimensions
+    std::vector<double> init_state;
+    init_state.push_back(conf["model"]["init_state"]["q1_dot"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["swing"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["q2_dot"].asDouble());
+    Eigen::Vector3d xn(init_state.data()); // x_n=x0
+    Eigen::Vector3d xn_p1; //x_n+1
+    std::cout<<std::setprecision(25);
+    double norm=999.9;
+    // for(int i=0;i<10;i++)
+    while(norm>10e-15)
+    {
+        std::vector<double> state(init_state.size());
+        Eigen::Map<Eigen::Vector3d>(state.data(),init_state.size())=xn; //how convenient is this...
+
+        Json::Value tmp=conf;
+        tmp["model"]["init_state"]["q1_dot"]=state[0];
+        tmp["model"]["init_state"]["swing"]=state[1];
+        tmp["model"]["init_state"]["q2_dot"]=state[2];
+
+        if(!makeStep(tmp,state))
+            std::cerr<<"Problem"<<std::endl;
+
+        std::vector<double> diff;
+        for(int j=0;j<3;j++)
+            diff.push_back(state[j]-init_state[j]);
+
+        //F_xn= F(xn)-x0
+        Eigen::Vector3d F_xn(diff.data());
+
+        Eigen::MatrixXd DF=computeStability(tmp);
+
+        xn_p1=xn-DF.inverse()*F_xn;
+        xn=xn_p1;
+
+        std::cout<<"F(Xn): "<<std::endl;
+        std::cout<<F_xn<<std::endl;
+        std::cout<<"Xn: "<<std::endl;
+        std::cout<<xn_p1<<std::endl;
+        norm=F_xn.norm();
+        std::cout<<"NORM: "<<RED<<norm<<DEFAULT<<std::endl;
+    }
+
 }
 
 
@@ -264,7 +317,9 @@ int main(int argc, char* argv[])
         std::cout<<std::endl;
         std::cout<<"PSEUDO"<<std::endl;
         std::cout<<std::endl;
-        computeStabilityPseudoInv(conf_root);
+        // computeStabilityPseudoInv(conf_root);
+
+        testNewtonRaphson(conf_root);
     }
     else
     {
