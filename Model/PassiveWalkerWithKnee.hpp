@@ -43,6 +43,10 @@
 
 #include <stdio.h>
 #include <functional>
+#include <iomanip>
+
+#include <chrono>
+
 // #include "Simulations/SimpleWalkerGround.hpp"
 
 //As usual...
@@ -236,6 +240,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     //log file
     ofstream logfile;
+    ofstream logfile_step;
     bool _log;
 
     Leph::SimViewer::SimViewer* viewer;
@@ -291,7 +296,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
     void InitStuffs(bool draw, int skip, bool log)
     {
 
-                //Viewer stuffs
+        //Viewer stuffs
 
         _skip=skip;
         _draw=draw;
@@ -311,9 +316,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 } , param);
         }
 
-        if(_log)
+        if(_log){
             logfile.open("log.dat");
-
+            logfile_step.open("log_step.dat");
+        }
         collisiontimeoffset=0.0;
         nbStep=0;
         isCollided=0;
@@ -436,9 +442,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
     ~PassiveWalkerWithKnee()
     {
 
-        if(_log)
+        if(_log){
             logfile.close();
-
+            logfile_step.close();
+        }
         // if(modelbase)
         delete modelbase;
         delete knee_stop;
@@ -552,7 +559,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         //compute the angle in order to place both feet on the ground
 
         double slope_angle=slope;
-                // atan2(slope,1.0); //FIXME
+        // atan2(slope,1.0); //FIXME
         double init_angle=(M_PI+init_swing)/2.0-slope_angle-M_PI/2.0;
 
         //build the model
@@ -571,9 +578,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         //function defining the curve of the ground
         F_ground = [&ga, &gb](double x) -> double
-                        {
-                            return ga*x+gb;
-                        };
+                   {
+                       return ga*x+gb;
+                   };
 
         //Collision stuffs
 
@@ -613,7 +620,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
         modelbase->runSimulationStep(currentTime-timeMax);
         computeCheckConstraint();
-        std::cout<<"DEBUG collision time: "<<currentTime-timeMax<<std::endl;
+        // std::cout<<"DEBUG collision time: "<<currentTime-timeMax<<std::endl;
         collisiontimeoffset=(currentTime-timeMax);
         return true;
     }
@@ -641,7 +648,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         double q3_dot=-modelbase->stateVelocity("q3");
 
 
-        std::cout<<"DEBUG KNEE COL: "<<RAD_TO_DEG(q1)<<" "<<RAD_TO_DEG(q2)<<" "<<RAD_TO_DEG(q3)<<std::endl;
+        // std::cout<<"DEBUG KNEE COL: "<<RAD_TO_DEG(q1)<<" "<<RAD_TO_DEG(q2)<<" "<<RAD_TO_DEG(q3)<<std::endl;
         std::cout<<q1_dot<<" "<<q2_dot<<" "<<q3_dot<<std::endl;
 
 
@@ -681,8 +688,9 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // v_q_p=v_q_p.transpose()*Q_p.inverse();
         v_q_p=Q_p.inverse()*v_q_p;
 
-        std::cout<<"DEBUG knee res: "<<v_q_p<<std::endl;
-        std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
+        // std::cout<<"DEBUG knee res: "<<v_q_p<<std::endl;
+        // std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
+
         // std::cout<<"DEBUG knee vm:\n"<<v_q_m<<std::endl;
         // std::cout<<"DEBUG knee qm:\n"<<Q_m<<std::endl;
         // std::cout<<"DEBUG knee qp:\n"<<Q_p<<std::endl;
@@ -748,11 +756,12 @@ class PassiveWalkerWithKnee: public PassiveWalker
         v_q_p=Q_p.inverse()*v_q_p;
 
 
-        std::cout<<"DEBUG foot res: "<<v_q_p<<std::endl;
-        std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
+        // std::cout<<"DEBUG foot res: "<<v_q_p<<std::endl;
+        // std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
 
         Vector2D oldcontact=modelbase->evalPosition(*stance_leg);
-        std::cout<<"DEBUG step: ("<<oldcontact.x()<<", "<<oldcontact.y()<<") -> ("<<ground_contact->lastContactPoint.x()<<", "<<ground_contact->lastContactPoint.y()<<")"<<std::endl;
+
+        // std::cout<<"DEBUG step: ("<<oldcontact.x()<<", "<<oldcontact.y()<<") -> ("<<ground_contact->lastContactPoint.x()<<", "<<ground_contact->lastContactPoint.y()<<")"<<std::endl;
 
         // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
         // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel. Should be ok
@@ -801,7 +810,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
             }
 
 
-            if(kneecollision)//ok lock the knee
+            if(kneecollision && !(state&FALL))//ok lock the knee
             {
                 std::cout<<"DEBUG COLLISION: knee"<<std::endl;
                 //find the collision time
@@ -841,7 +850,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
             //TODO Check if foot if behind.
             if(groundcollision && q2>0.0) //ok swap stance leg
             {
-                std::cout<<"DEBUG Q2: "<<q2<<" stance: "<<stance_angle<<" swing: "<<shank_angle<<std::endl;
+                // std::cout<<"DEBUG Q2: "<<q2<<" stance: "<<stance_angle<<" swing: "<<shank_angle<<std::endl;
 
                 std::cout<<"DEBUG COLLISION: ground"<<std::endl;
 
@@ -861,6 +870,21 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 // state&=!(LOCKED_KNEE);
                 nbStep++;
                 isCollided=_COLLISION_COOLDOWN;
+                if(_log)
+                {
+                    current_q1=modelbase->statePosition("q1");
+                    current_q2=modelbase->statePosition("q2");
+                    // current_q3=modelbase->statePosition("q3");
+                    current_swing=current_q2;
+
+                    current_q1_dot=modelbase->stateVelocity("q1");
+                    current_q2_dot=modelbase->stateVelocity("q2");
+
+                    logfile_step<<std::setprecision(25);
+                    scalar Ep=modelbase->evalPotential();
+                    scalar Ec=modelbase->evalKinetic();
+                    logfile_step<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
+                }
             }
             if(groundcollision && q2<=0.0)
             {
@@ -987,23 +1011,12 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
                 if(!(state&FALL))
                 {
+
+                    // auto t1=std::chrono::steady_clock::now();
                     modelbase->runSimulationStep(dt);
-                    // try
-                    // {
-                    //     logfile<<time<<" "<<modelbase->statePosition("q1")<<" "<<modelbase->stateVelocity("q1")<<" "<<modelbase->statePosition("q2")<<" "<<modelbase->stateVelocity("q2")<<" "<<modelbase->statePosition("q3")<<" "<<modelbase->stateVelocity("q3")<<std::endl;
-                    // }
-                    // catch(const std::exception & e){}
-
-                    /*
-                    current_q1=modelbase->statePosition("q1");
-                    current_q2=modelbase->statePosition("q2");
-                    // current_q3=modelbase->statePosition("q3");
-                    current_swing=current_q2;
-
-                    current_q1_dot=modelbase->stateVelocity("q1");
-                    current_q2_dot=modelbase->stateVelocity("q2");
-                    // current_q3_dot=modelbase->stateVelocity("q3");
-                    */
+                    // auto t2=std::chrono::steady_clock::now();
+                    // auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+                    // std::cout<<"\tTIME: "<<d.count()<<std::endl;
 
 
 
@@ -1025,6 +1038,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
                     current_q1_dot=modelbase->stateVelocity("q1");
                     current_q2_dot=modelbase->stateVelocity("q2");
                     // current_q3_dot=modelbase->stateVelocity("q3");
+
+
                     if(_log)
                     {
                         scalar Ep=modelbase->evalPotential();

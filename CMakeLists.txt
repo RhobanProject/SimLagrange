@@ -34,7 +34,9 @@ include_directories(/usr/include/jsoncpp)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 #Special flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+#optim
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -O3 -funroll-loops -march=native -mfpmath=sse")
 
 
 
@@ -101,6 +103,10 @@ add_executable(
 add_executable(
 	KneeWalkerOptimAll
         Simulations/KneeWalkerOptimAll.cpp
+)
+add_executable(
+	KneeWalkerOptimEigen
+        Simulations/KneeWalkerOptimEigen.cpp
 )
 add_executable(
 	testStability
@@ -193,6 +199,14 @@ target_link_libraries(KneeWalkerOptim
 
 
 target_link_libraries(KneeWalkerOptimAll
+    sfml-graphics
+    sfml-window
+    sfml-system
+    jsoncpp
+    cmaes
+)
+
+target_link_libraries(KneeWalkerOptimEigen
     sfml-graphics
     sfml-window
     sfml-system

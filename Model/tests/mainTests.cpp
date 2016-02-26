@@ -22,7 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-
+#include<chrono>
 
 
 
@@ -30,14 +30,14 @@ int main(int argc, char* argv[])
 {
     double score=0.0;
     try{
-        PassiveWalkerWithKnee w(argv[1], true, 20, true);
+        PassiveWalkerWithKnee w(argv[1], true, 0, true);
 
 
-    //animation stuff
-    // sf::View view(w.viewer->_window.getView());
-    // // view.zoom(0.3);
-    // wviewer._window.setView(view);
-    // viewer.moveCam(00,0.5);
+        //animation stuff
+        // sf::View view(w.viewer->_window.getView());
+        // // view.zoom(0.3);
+        // wviewer._window.setView(view);
+        // viewer.moveCam(00,0.5);
         // std::stringstream filename;
         // int i=0;
         // int im=0;
@@ -48,7 +48,13 @@ int main(int argc, char* argv[])
         while(1)//(!(w.state&FALL)) //!w.state&FALL
         {
             // w.draw();
+            // auto t1=std::chrono::steady_clock::now();
             w.SimuStep(0.001);
+            // auto t2=std::chrono::steady_clock::now();
+            // auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+            // std::cout<<"TIME: "<<d.count()<<std::endl;
+
+
 
 
             // if(im++%10==0)

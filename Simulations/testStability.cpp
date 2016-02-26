@@ -42,12 +42,6 @@
 // #define DIST(x,y) (sqrt(pow((10.0*x-10*y),2)))
 
 
-#define RED "\033[31m"
-#define GREEN "\033[32m"
-#define BLUE "\033[34m"
-#define DEFAULT "\033[39m"
-
-
 
 
 using namespace std;
@@ -269,7 +263,7 @@ void testNewtonRaphson(Json::Value conf)
     std::cout<<std::setprecision(25);
     double norm=999.9;
     // for(int i=0;i<10;i++)
-    while(norm>10e-15)
+    while(norm>10e-14)
     {
         std::vector<double> state(init_state.size());
         Eigen::Map<Eigen::Vector3d>(state.data(),init_state.size())=xn; //how convenient is this...
@@ -305,6 +299,59 @@ void testNewtonRaphson(Json::Value conf)
 }
 
 
+void logEigenvectors(Json::Value conf)
+{
+
+    //3 dimensions
+    std::vector<double> init_state;
+    init_state.push_back(conf["model"]["init_state"]["q1_dot"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["swing"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["q2_dot"].asDouble());
+
+    std::cout<<std::setprecision(25);
+
+    ofstream logfile;
+    logfile.open("log_eigen.dat");
+    logfile<<std::setprecision(25);
+    std::vector<double> state(init_state);
+
+    for(int i=0;i<200;i++)
+        // while(norm>10e-14)
+    {
+
+
+        Json::Value tmp=conf;
+        tmp["model"]["init_state"]["q1_dot"]=state[0];
+        tmp["model"]["init_state"]["swing"]=state[1];
+        tmp["model"]["init_state"]["q2_dot"]=state[2];
+
+
+        if(!makeStep(tmp,state))
+            std::cerr<<"Problem"<<std::endl;
+
+
+        Eigen::MatrixXd DF=computeStability(tmp);
+        Eigen::EigenSolver<Eigen::MatrixXd> es(DF);
+
+        // logfile<<i<<" "<<state[0]<<" "<<state[1]<<" "<<state[2]<<" "<<std::abs(es.eigenvalues()(0))<<" "<<std::abs(es.eigenvalues()(1))<<" "<<std::abs(es.eigenvalues()(2))<<" "<<es.eigenvectors().col(0)(0).real()<<std::endl;;
+
+        logfile<<i<<" ";
+        for(int i=0;i<3;i++)
+            logfile<<state[i]<<" ";
+        for(int i=0;i<3;i++)
+            logfile<<es.eigenvalues()(i).real()<<" "<<es.eigenvalues()(i).imag()<<" ";
+        for(int i=0;i<3;i++)
+            for(int j=0;j<3;j++)
+                logfile<<es.eigenvectors().col(i)(j).real()<<" "<<es.eigenvectors().col(i)(j).imag()<<" ";
+        logfile<<std::endl;
+
+
+
+    }
+
+    logfile.close();
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -314,12 +361,9 @@ int main(int argc, char* argv[])
         std::ifstream jsonfile (argv[1]);
         jsonfile >> conf_root;
         // computeStability(conf_root);
-        std::cout<<std::endl;
-        std::cout<<"PSEUDO"<<std::endl;
-        std::cout<<std::endl;
         // computeStabilityPseudoInv(conf_root);
-
-        testNewtonRaphson(conf_root);
+        // testNewtonRaphson(conf_root);
+        logEigenvectors(conf_root);
     }
     else
     {

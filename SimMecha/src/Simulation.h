@@ -11,6 +11,9 @@
 #include "Symbolic/src/Constant.hpp"
 #include "Symbolic/src/Bounder.hpp"
 #include "Symbolic/src/terms.h"
+#include <chrono>
+
+// #define _PROFILE
 
 namespace Leph {
 namespace SimMecha {
@@ -51,21 +54,21 @@ typedef Symbolic::Constant<Vector2D> ConstantVector;
  * Typedef for Eigen vector
  */
 typedef Eigen::Matrix
-    <scalar, Eigen::Dynamic, 1> EigenVector;
+<scalar, Eigen::Dynamic, 1> EigenVector;
 typedef Eigen::Matrix
-    <scalar, Eigen::Dynamic, Eigen::Dynamic> EigenMatrix;
+<scalar, Eigen::Dynamic, Eigen::Dynamic> EigenMatrix;
 
 /**
  * Typedef for degrees of freedom container
  */
-typedef VectorMap::VectorMap<std::string, SymbolPtr> 
-    DofContainer;
+typedef VectorMap::VectorMap<std::string, SymbolPtr>
+DofContainer;
 
 /**
  * Typedef for Symbolic dynamic container
  */
 typedef VectorMap::VectorMap<std::string, TermPtr>
-    TermContainer;
+TermContainer;
 
 /**
  * Fill up and return Symbolic bounder
@@ -73,11 +76,14 @@ typedef VectorMap::VectorMap<std::string, TermPtr>
  * using given degree of freedom container
  */
 inline Symbolic::Bounder simulationSetUpBounder(
-    const EigenVector& position, 
-    const EigenVector& velocity, 
-    const EigenVector& acceleration, 
+    const EigenVector& position,
+    const EigenVector& velocity,
+    const EigenVector& acceleration,
     const DofContainer& dofs, SymbolPtr time)
 {
+#ifdef _PROFILE
+    auto t1=std::chrono::steady_clock::now();
+#endif
     Symbolic::Bounder bounder;
     for (size_t i=0;i<dofs.size();i++) {
         SymbolPtr sym = dofs[i];
@@ -88,36 +94,50 @@ inline Symbolic::Bounder simulationSetUpBounder(
         bounder.setValue(sym_ddt, acceleration[i]);
     }
 
+#ifdef _PROFILE
+    auto t2=std::chrono::steady_clock::now();
+    auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout<<"TIME (SetUpBunder): "<<d.count()<<std::endl;
+#endif
     return bounder;
 }
 
 /**
  * Compute and return the torques vector for each
- * degrees of freedom given position, 
+ * degrees of freedom given position,
  * velocity and acceleration values
  */
 inline EigenVector simulationComputeTorques(
     const EigenVector& position,
-    const EigenVector& velocity,
-    const EigenVector& acceleration,
-    const DofContainer& dofs, 
-    TermContainer& dynamics, SymbolPtr time)
+            const EigenVector& velocity,
+            const EigenVector& acceleration,
+            const DofContainer& dofs,
+            TermContainer& dynamics, SymbolPtr time)
 {
+#ifdef _PROFILE
+    auto t1=std::chrono::steady_clock::now();
+#endif
     Symbolic::Bounder bounder = simulationSetUpBounder(
         position, velocity, acceleration, dofs, time);
-    
+
     EigenVector torques(dofs.size(), 1);
     for (size_t i=0;i<dofs.size();i++) {
         dynamics[dofs.getKey(i)]->reset();
         torques[i] = dynamics[dofs.getKey(i)]
-            ->evaluate(bounder);
+                     ->evaluate(bounder);
     }
+
+#ifdef _PROFILE
+    auto t2=std::chrono::steady_clock::now();
+    auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout<<"TIME (ComputeTorques): "<<d.count()<<std::endl;
+#endif
 
     return torques;
 }
 
 /**
- * Compute and return the acceleration 
+ * Compute and return the acceleration
  * for each degrees of freedom given their position
  * velocity and applied torque using given dynamics
  */
@@ -125,135 +145,186 @@ inline EigenVector simulationComputeAccelerations(
     const EigenVector& position,
     const EigenVector& velocity,
     const EigenVector& torques,
-    const DofContainer& dofs, 
+    const DofContainer& dofs,
     TermContainer& dynamics, SymbolPtr time)
 {
+#ifdef _PROFILE
+    auto t1=std::chrono::steady_clock::now();
+#endif
     EigenVector forces = simulationComputeTorques(
-        position, velocity, 
-        EigenVector::Zero(dofs.size(), 1), 
-        dofs, dynamics, time);
+    position, velocity,
+            EigenVector::Zero(dofs.size(), 1),
+            dofs, dynamics, time);
     EigenMatrix inertia = EigenMatrix::
-        Zero(dofs.size(), dofs.size());
+                          Zero(dofs.size(), dofs.size());
     EigenVector acceleration = EigenVector::
-        Zero(dofs.size(), 1);
-    for (size_t i=0;i<dofs.size();i++) {
-        acceleration(i) = 1.0;
-        inertia.col(i) = 
-            simulationComputeTorques(position, velocity, 
-                acceleration, dofs, dynamics, time) - forces;
-        acceleration(i) = 0.0;
-    }
+                               Zero(dofs.size(), 1);
+    for (size_t i=0;i<dofs.size();i++)
+    {
+    acceleration(i) = 1.0;
+    inertia.col(i) =
+            simulationComputeTorques(position, velocity,
+            acceleration, dofs, dynamics, time) - forces;
+    acceleration(i) = 0.0;
+}
 
     //Using LU decomposition for inversing inertia matrix
     Eigen::FullPivLU<EigenMatrix> inertiaLU(inertia);
     if (inertiaLU.isInvertible()) {
-        return inertiaLU.inverse()*(torques - forces);
-    } else {
-        throw std::logic_error("Simulation singular inertia matrix");
-        //return EigenVector::Zero(dofs.size(), 1);
-    }
+#ifdef _PROFILE
+    auto t2=std::chrono::steady_clock::now();
+    auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout<<"TIME (ComputeAccelerations): "<<d.count()<<std::endl;
+#endif
+
+    return inertiaLU.inverse()*(torques - forces);
+} else {
+    throw std::logic_error("Simulation singular inertia matrix");
+    //return EigenVector::Zero(dofs.size(), 1);
+}
 }
 
 /**
- * Compute and return the given state derivative applying 
+ * Compute and return the given state derivative applying
  * given torques against given dynamics
  */
 inline EigenVector simulationDifferentialEquations(
-    const EigenVector& state, 
-    const EigenVector& torques, 
-    const DofContainer& dofs, 
-    TermContainer& dynamics, SymbolPtr time)
+    const EigenVector& state,
+            const EigenVector& torques,
+            const DofContainer& dofs,
+            TermContainer& dynamics, SymbolPtr time)
 {
+#ifdef _PROFILE
+    auto t1=std::chrono::steady_clock::now();
+#endif
+
     EigenVector position(dofs.size(), 1);
     EigenVector velocity(dofs.size(), 1);
+
+    /*
+      for (size_t i=0;i<dofs.size();i++) {
+      position[i] = state[i];
+      }
+      for (size_t i=0;i<dofs.size();i++) {
+      velocity[i] = state[i+dofs.size()];
+      }
+    */
+
     for (size_t i=0;i<dofs.size();i++) {
-        position[i] = state[i];
-    }
-    for (size_t i=0;i<dofs.size();i++) {
-        velocity[i] = state[i+dofs.size()];
-    }
+    position[i] = state[i];
+    velocity[i] = state[i+dofs.size()];
+}
 
     EigenVector acceleration = simulationComputeAccelerations(
-        position, velocity, torques, dofs, dynamics, time);
+    position, velocity, torques, dofs, dynamics, time);
 
     EigenVector nextState(2*dofs.size(), 1);
+
+    /*
+      for (size_t i=0;i<dofs.size();i++) {
+      nextState[i] = velocity[i];
+      }
+      for (size_t i=0;i<dofs.size();i++) {
+      nextState[i+dofs.size()] = acceleration[i];
+      }
+    */
+
     for (size_t i=0;i<dofs.size();i++) {
-        nextState[i] = velocity[i];
-    }
-    for (size_t i=0;i<dofs.size();i++) {
-        nextState[i+dofs.size()] = acceleration[i];
-    }
+    nextState[i] = velocity[i];
+    nextState[i+dofs.size()] = acceleration[i];
+}
+#ifdef _PROFILE
+    auto t2=std::chrono::steady_clock::now();
+    auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    std::cout<<"TIME (ComputeDiffEq): "<<d.count()<<std::endl;
+#endif
 
     return nextState;
 }
-        
+
 /**
  * Integrate the given state over dt given time. The given
  * torques vector is applied to degrees of freedom
  */
 inline EigenVector simulationRungeKutta4(
     const EigenVector& state,
-    const EigenVector& torques, 
-    scalar dt, const DofContainer& dofs,
-    TermContainer& dynamics, SymbolPtr time)
+            const EigenVector& torques,
+            scalar dt, const DofContainer& dofs,
+            TermContainer& dynamics, SymbolPtr time)
 {
     EigenVector k1 = simulationDifferentialEquations
-        (state, torques, dofs, dynamics, time);
+                     (state, torques, dofs, dynamics, time);
     EigenVector k2 = simulationDifferentialEquations
-        (state + (dt/2.0)*k1, torques, dofs, dynamics, time);
+                     (state + (dt/2.0)*k1, torques, dofs, dynamics, time);
     EigenVector k3 = simulationDifferentialEquations
-        (state + (dt/2.0)*k2, torques, dofs, dynamics, time);
+                     (state + (dt/2.0)*k2, torques, dofs, dynamics, time);
     EigenVector k4 = simulationDifferentialEquations
-        (state + dt*k3, torques, dofs, dynamics, time);
+                     (state + dt*k3, torques, dofs, dynamics, time);
 
     return state + (dt/6.0)*(k1 + 2.0*k2 + 2.0*k3 + k4);
 }
 
 /**
- * Compute the next simulation step and 
+ * Compute the next simulation step and
  * update the given state using given
  * applied torques and time step
  */
 inline void simulationComputeStep(
     std::vector<scalar>& statePosition,
-    std::vector<scalar>& stateVelocity,
-    const std::vector<scalar>& stateTorque,
-    scalar dt, const DofContainer& dofs,
-    TermContainer& dynamics, SymbolPtr time)
+            std::vector<scalar>& stateVelocity,
+            const std::vector<scalar>& stateTorque,
+            scalar dt, const DofContainer& dofs,
+            TermContainer& dynamics, SymbolPtr time)
 {
     if (
-        statePosition.size() != dofs.size() ||
-        stateVelocity.size() != dofs.size() ||
-        stateTorque.size() != dofs.size()
-    ) {
-        throw std::logic_error("Simulation invalid state size");
-    }
+    statePosition.size() != dofs.size() ||
+            stateVelocity.size() != dofs.size() ||
+            stateTorque.size() != dofs.size()
+            ) {
+    throw std::logic_error("Simulation invalid state size");
+}
 
     EigenVector state(2*dofs.size(), 1);
     EigenVector torques(dofs.size(), 1);
+
+    /*
+      for (size_t i=0;i<dofs.size();i++) {
+      state(i) = statePosition[i];
+      }
+      for (size_t i=0;i<dofs.size();i++) {
+      state(i+dofs.size()) = stateVelocity[i];
+      }
+      for (size_t i=0;i<dofs.size();i++) {
+      torques(i) = stateTorque[i];
+      }
+    */
+
+
     for (size_t i=0;i<dofs.size();i++) {
-        state(i) = statePosition[i];
-    }
-    for (size_t i=0;i<dofs.size();i++) {
-        state(i+dofs.size()) = stateVelocity[i];
-    }
-    for (size_t i=0;i<dofs.size();i++) {
-        torques(i) = stateTorque[i];
-    }
+    state(i) = statePosition[i];
+    state(i+dofs.size()) = stateVelocity[i];
+    torques(i) = stateTorque[i];
+}
 
     state = simulationRungeKutta4(
-        state, torques, dt, dofs, dynamics, time);
-    
+    state, torques, dt, dofs, dynamics, time);
+
+    /*
+      for (size_t i=0;i<dofs.size();i++) {
+      statePosition[i] = state(i);
+      }
+      for (size_t i=0;i<dofs.size();i++) {
+      stateVelocity[i] = state(i+dofs.size());
+      }
+    */
     for (size_t i=0;i<dofs.size();i++) {
-        statePosition[i] = state(i);
+    statePosition[i] = state(i);
+    stateVelocity[i] = state(i+dofs.size());
     }
-    for (size_t i=0;i<dofs.size();i++) {
-        stateVelocity[i] = state(i+dofs.size());
-    }
+
 }
 
 }
 }
 
 #endif
-
