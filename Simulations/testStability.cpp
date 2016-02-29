@@ -87,8 +87,8 @@ bool makeStep(Json::Value conf, std::vector<double> &state)
     // std::cout<<"PARAMS: "<<init_vel<<" "<<init_swing<<" "<<init_swing_vel<<" "<<slope<<" "<<a1<<" "<<a2<<" "<<mh<<" "<<ms<<" "<<mt<<std::endl;
 
 
-    std::cout<<"STATE: "<<w.current_q1_dot<<" "<<w.current_swing<<" "<<w.current_q2_dot<<std::endl;
-    std::cout<<"STEP: "<<w.ground_contact->lastContactPoint.x()<<std::endl;
+    // std::cout<<"STATE: "<<w.current_q1_dot<<" "<<w.current_swing<<" "<<w.current_q2_dot<<std::endl;
+    // std::cout<<"STEP: "<<w.ground_contact->lastContactPoint.x()<<std::endl;
 
     // score+=DIST(init_vel,w.current_q1_dot)+DIST(init_swing,w.current_swing)+DIST(init_swing_vel,w.current_q2_dot);
 
@@ -117,7 +117,7 @@ bool makeStep(Json::Value conf, std::vector<double> &state)
 };
 
 
-Eigen::MatrixXd computeStability(Json::Value conf, double delta=10e-10)
+Eigen::MatrixXd computeStability(Json::Value conf, double delta=1e-10)
 {
     //3 dimensions
     std::vector<double> init_state;
@@ -170,7 +170,7 @@ Eigen::MatrixXd computeStability(Json::Value conf, double delta=10e-10)
     return DF;
 }
 
-Eigen::MatrixXd computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=10e-8)
+Eigen::MatrixXd computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=1e-8)
 {
     //3 dimensions
     std::vector<double> init_state;
@@ -365,6 +365,94 @@ void logEigenvectors(Json::Value conf)
     logfile.close();
 }
 
+
+void logEigenvectorsCont(Json::Value conf)
+{
+
+    //3 dimensions
+    std::vector<double> init_state;
+    init_state.push_back(conf["model"]["init_state"]["q1_dot"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["swing"].asDouble());
+    init_state.push_back(conf["model"]["init_state"]["q2_dot"].asDouble());
+
+    std::cout<<std::setprecision(25);
+
+    ofstream logfile;
+    logfile.open("log_eigen.dat");
+    logfile<<std::setprecision(25);
+    std::vector<double> state(init_state);
+
+
+
+    PassiveWalkerWithKnee w(conf, false);
+    int i=0;
+    int prevstep=0;
+    while(!(w.state&FALL) && (w.nbStep<200))
+    {
+
+        try{
+            w.SimuStep(0.001);
+        }
+        catch(const std::logic_error& e)
+        {
+            std::cout<<"DEBUG SINGULAR MATRIX?"<<std::endl;
+            break;
+        }
+
+        std::cout<<"STATE: "<<w.current_q1_dot<<" "<<w.current_swing<<" "<<w.current_q2_dot<<std::endl;
+        // std::cout<<"STEP: "<<w.ground_contact->lastContactPoint.x()<<std::endl;
+
+        if(w.state&FALL)
+        {
+            std::cout<<"FALLEN"<<std::endl;
+            break;
+
+        }
+
+        if(prevstep!=w.nbStep)
+        {
+            std::cout<<"STEP: "<<w.ground_contact->lastContactPoint.x()<<std::endl;
+            prevstep=w.nbStep;
+            state[0]=w.current_q1_dot;
+            state[1]=w.current_swing;
+            state[2]=w.current_q2_dot;
+
+
+            Json::Value tmp=conf;
+
+            //useless, could use conf
+            tmp["model"]["init_state"]["q1_dot"]=state[0];
+            tmp["model"]["init_state"]["swing"]=state[1];
+            tmp["model"]["init_state"]["q2_dot"]=state[2];
+
+
+            if(!makeStep(tmp,state))
+                std::cerr<<"Problem"<<std::endl;
+
+
+            Eigen::MatrixXd DF=computeStability(tmp);
+            Eigen::EigenSolver<Eigen::MatrixXd> es(DF);
+
+            // logfile<<i<<" "<<state[0]<<" "<<state[1]<<" "<<state[2]<<" "<<std::abs(es.eigenvalues()(0))<<" "<<std::abs(es.eigenvalues()(1))<<" "<<std::abs(es.eigenvalues()(2))<<" "<<es.eigenvectors().col(0)(0).real()<<std::endl;;
+
+            logfile<<i<<" ";
+            for(int i=0;i<3;i++)
+                logfile<<state[i]<<" ";
+            for(int i=0;i<3;i++)
+                logfile<<es.eigenvalues()(i).real()<<" "<<es.eigenvalues()(i).imag()<<" ";
+            for(int i=0;i<3;i++)
+                for(int j=0;j<3;j++)
+                    logfile<<es.eigenvectors().col(i)(j).real()<<" "<<es.eigenvectors().col(i)(j).imag()<<" ";
+            logfile<<std::endl;
+            i++;
+        }
+
+    }
+
+    logfile.close();
+}
+
+
 int main(int argc, char* argv[])
 {
 
@@ -375,8 +463,10 @@ int main(int argc, char* argv[])
         jsonfile >> conf_root;
         // computeStability(conf_root);
         // computeStabilityPseudoInv(conf_root);
-        testNewtonRaphson(conf_root);
-        // logEigenvectors(conf_root);
+        // testNewtonRaphson(conf_root);
+        logEigenvectors(conf_root);
+        // logEigenvectorsCont(conf_root);
+
     }
     else
     {

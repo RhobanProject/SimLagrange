@@ -82,10 +82,10 @@ class PassiveWalkerKneeStop//: public BinaryConstraint //useless
     Body* _thigh;
     Body *_shank;
     System* _system;
-
+    bool _contact;
     PassiveWalkerKneeStop(Body* thigh, Body* shank, System *system): _thigh(thigh), _shank(shank), _system(system)
     {
-
+        _contact=false;
     }
 
     void swapmodel(Body* thigh, Body* shank, System *system)
@@ -109,9 +109,15 @@ class PassiveWalkerKneeStop//: public BinaryConstraint //useless
         // std::cout<<"DEBUG knee: "<<angle_thigh<<" "<<angle_shank<<std::endl;
 
         if((angle_shank-angle_thigh)>=0)
+        {
+            _contact=true;
             return true;
+        }
         else
+        {
+            _contact=false;
             return false;
+        }
     }
 };
 
@@ -150,9 +156,9 @@ class PassiveWalkerGroundContact
 
         // std::cout<<"DEBUG ground: "<<pos.x()<<" "<<pos.y()<<" "<<centerPos.x()<<" "<<centerPos.y()<<" "<<centerAngle<<std::endl;
 
-            // Vector2D kneepos=modelbase->evalPosition(*swing_shank);
-            // scalar centerAngle = modelbase->evalAngle(*swing_shank);
-            // Vector2D footpos = kneepos + Vector2D::rotate(Vector2D(0.0, -(b1+a1)), centerAngle);
+        // Vector2D kneepos=modelbase->evalPosition(*swing_shank);
+        // scalar centerAngle = modelbase->evalAngle(*swing_shank);
+        // Vector2D footpos = kneepos + Vector2D::rotate(Vector2D(0.0, -(b1+a1)), centerAngle);
 
 
         lastContactPoint = pos;
@@ -160,13 +166,19 @@ class PassiveWalkerGroundContact
         // posInBody = _posInBody;
         // _currentpos=pos;
 
+        // std::cout<<"DEBUG GROUND: "<<pos.y()<<" "<<_F(pos.x())<<std::endl;
 
-        if (pos.y() <= _F(pos.x())) {
+        if (pos.y() <= _F(pos.x()))
+        {
+            // std::cout<<"DEBUG GROUND CONTACT TRUE: "<<pos.y()<<" "<<_F(pos.x())<<std::endl;
             // if ((pos.y()-_F(pos.x())) <=0.0 && fabs(pos.y()-_F(pos.x()))<0.01 ) {
             // if ((pos.y()-_F(pos.x())) <=0.0) {
             _contact=true;
             return true;
-        } else {
+        }
+        else
+        {
+            // std::cout<<"DEBUG GROUND NO: "<<pos.y()<<" "<<_F(pos.x())<<std::endl;
             _contact=false;
             return false;
         }
@@ -598,15 +610,19 @@ class PassiveWalkerWithKnee: public PassiveWalker
     //comes from UnaryConstraint.hpp
     bool getConstraintTime(std::function<bool()> computeCheckConstraint)
     {
+
+        // bool c=computeCheckConstraint();
+        // std::cout<<"DEBUG CONSTRAINT "<<c<<" "<<ground_contact->_contact<<" "<<knee_stop->_contact<<std::endl;
         if (!computeCheckConstraint()) {
+            // std::cout<<"DEBUG CONSTRAINT ??"<<std::endl;
             return false;
         }
-
+        // std::cout<<"DEBUG CONSTRAINT 1"<<std::endl;
         //TODO Bijection
         scalar timeMin = 0.0;
         scalar timeMax = 0.01;
         scalar currentTime = 0.0;
-        for (int i=0;i<200;i++) { //FIXME? was 100
+        for (int i=0;i<100;i++) { //FIXME? was 100
             scalar t = (timeMax-timeMin)/2.0;
             modelbase->runSimulationStep(currentTime-t);
             currentTime = t;
@@ -766,7 +782,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), v_q_p(1));
         // InitModelFreeKnee(ground_contact->lastContactPoint, q2, v_q_p(0), -(-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel. Should be ok
 
+        //OK
         InitModelFreeKnee(ground_contact->lastContactPoint, -q2, -v_q_p(0), (-q1+old_q2), v_q_p(1), 0); //knee_vel=swing_vel. Minus q2_dot?
+        // InitModelFreeKnee(Vector2D(0,0), -q2, -v_q_p(0), (-q1+old_q2), v_q_p(1), 0); //better stability?
+
     }
 
 
@@ -815,7 +834,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 std::cout<<"DEBUG COLLISION: knee"<<std::endl;
                 //find the collision time
                 getConstraintTime( [this]() -> bool {
-                        knee_stop->computeCheckConstraint();
+                        return knee_stop->computeCheckConstraint();
                     });
 
                 lock_the_knee();
@@ -865,7 +884,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
                 //find the collision time
                 getConstraintTime( [this]() -> bool {
-                        ground_contact->computeCheckConstraint();
+                        return ground_contact->computeCheckConstraint();
                     });
 
                 //Change the model
@@ -1026,39 +1045,39 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 {
 
                     // auto t1=std::chrono::steady_clock::now();
-                  modelbase->runSimulationStep(dt);
-                  // auto t2=std::chrono::steady_clock::now();
-                  // auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-                  // std::cout<<"\tTIME: "<<d.count()<<std::endl;
+                    modelbase->runSimulationStep(dt);
+                    // auto t2=std::chrono::steady_clock::now();
+                    // auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+                    // std::cout<<"\tTIME: "<<d.count()<<std::endl;
 
 
 
-                  time+=dt;
+                    time+=dt;
 
-                  if(isCollided==0) //cooldown. Wait a little just after a collision
-                      detect_collision();
-                  else
-                      isCollided--;
+                    if(isCollided==0) //cooldown. Wait a little just after a collision
+                        detect_collision();
+                    else
+                        isCollided--;
 
-                  time+=collisiontimeoffset;
-
-
-                  current_q1=modelbase->statePosition("q1");
-                  current_q2=modelbase->statePosition("q2");
-                  // current_q3=modelbase->statePosition("q3");
-                  current_swing=current_q2;
-
-                  current_q1_dot=modelbase->stateVelocity("q1");
-                  current_q2_dot=modelbase->stateVelocity("q2");
-                  // current_q3_dot=modelbase->stateVelocity("q3");
+                    time+=collisiontimeoffset;
 
 
-                  if(_log)
-                  {
-                      scalar Ep=modelbase->evalPotential();
-                      scalar Ec=modelbase->evalKinetic();
-                      logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
-                  }
+                    current_q1=modelbase->statePosition("q1");
+                    current_q2=modelbase->statePosition("q2");
+                    // current_q3=modelbase->statePosition("q3");
+                    current_swing=current_q2;
+
+                    current_q1_dot=modelbase->stateVelocity("q1");
+                    current_q2_dot=modelbase->stateVelocity("q2");
+                    // current_q3_dot=modelbase->stateVelocity("q3");
+
+
+                    if(_log)
+                    {
+                        scalar Ep=modelbase->evalPotential();
+                        scalar Ec=modelbase->evalKinetic();
+                        logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
+                    }
 
                 }
             }
