@@ -117,7 +117,7 @@ bool makeStep(Json::Value conf, std::vector<double> &state)
 };
 
 
-Eigen::MatrixXd computeStability(Json::Value conf, double delta=10e-8)
+Eigen::MatrixXd computeStability(Json::Value conf, double delta=10e-10)
 {
     //3 dimensions
     std::vector<double> init_state;
@@ -262,13 +262,16 @@ void testNewtonRaphson(Json::Value conf)
     Eigen::Vector3d xn_p1; //x_n+1
     std::cout<<std::setprecision(25);
     double norm=999.9;
+    double prevnorm=norm;
     // for(int i=0;i<10;i++)
-    while(norm>10e-14)
+    int it=0;
+    Json::Value tmp=conf;
+    while(norm>10e-10 && it++<100)
     {
         std::vector<double> state(init_state.size());
         Eigen::Map<Eigen::Vector3d>(state.data(),init_state.size())=xn; //how convenient is this...
 
-        Json::Value tmp=conf;
+        tmp=conf;
         tmp["model"]["init_state"]["q1_dot"]=state[0];
         tmp["model"]["init_state"]["swing"]=state[1];
         tmp["model"]["init_state"]["q2_dot"]=state[2];
@@ -293,8 +296,17 @@ void testNewtonRaphson(Json::Value conf)
         std::cout<<"Xn: "<<std::endl;
         std::cout<<xn_p1<<std::endl;
         norm=F_xn.norm();
-        std::cout<<"NORM: "<<RED<<norm<<DEFAULT<<std::endl;
+        std::cout<<"NORM: "<<RED<<norm<<DEFAULT<<" delta: "<<((prevnorm-norm)>0.0?GREEN:RED)<<" "<<(prevnorm-norm)<<DEFAULT<<std::endl;
+        prevnorm=norm;
     }
+
+    std::ofstream file;
+    file.open("test_newton.json");
+
+    Json::StyledWriter Writer;
+    file << std::setprecision(25);
+    file << Writer.write(tmp);
+    file.close();
 
 }
 
@@ -316,11 +328,12 @@ void logEigenvectors(Json::Value conf)
     std::vector<double> state(init_state);
 
     for(int i=0;i<200;i++)
-        // while(norm>10e-14)
     {
 
 
         Json::Value tmp=conf;
+
+        //useless, could use conf
         tmp["model"]["init_state"]["q1_dot"]=state[0];
         tmp["model"]["init_state"]["swing"]=state[1];
         tmp["model"]["init_state"]["q2_dot"]=state[2];
@@ -362,8 +375,8 @@ int main(int argc, char* argv[])
         jsonfile >> conf_root;
         // computeStability(conf_root);
         // computeStabilityPseudoInv(conf_root);
-        // testNewtonRaphson(conf_root);
-        logEigenvectors(conf_root);
+        testNewtonRaphson(conf_root);
+        // logEigenvectors(conf_root);
     }
     else
     {

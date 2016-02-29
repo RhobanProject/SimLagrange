@@ -23,12 +23,14 @@
 #include <fstream>
 #include <iomanip>
 #include<chrono>
-
+#include <unistd.h>
 
 
 int main(int argc, char* argv[])
 {
     double score=0.0;
+    std::cout<<std::setprecision(25);
+
     try{
         PassiveWalkerWithKnee w(argv[1], true, 0, true);
 
@@ -54,8 +56,7 @@ int main(int argc, char* argv[])
             // auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
             // std::cout<<"TIME: "<<d.count()<<std::endl;
 
-
-
+            usleep(1000);
 
             // if(im++%10==0)
             // {

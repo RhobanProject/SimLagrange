@@ -606,7 +606,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         scalar timeMin = 0.0;
         scalar timeMax = 0.01;
         scalar currentTime = 0.0;
-        for (int i=0;i<100;i++) { //FIXME?
+        for (int i=0;i<200;i++) { //FIXME? was 100
             scalar t = (timeMax-timeMin)/2.0;
             modelbase->runSimulationStep(currentTime-t);
             currentTime = t;
@@ -619,8 +619,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         }
         // std::cout << "TTT> " << currentTime << " " << timeMax << std::endl;
         modelbase->runSimulationStep(currentTime-timeMax);
-        computeCheckConstraint();
-        // std::cout<<"DEBUG collision time: "<<currentTime-timeMax<<std::endl;
+        computeCheckConstraint(); //what for?
+        std::cout<<"DEBUG collision time: "<<currentTime-timeMax<<std::endl;
         collisiontimeoffset=(currentTime-timeMax);
         return true;
     }
@@ -649,7 +649,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
         // std::cout<<"DEBUG KNEE COL: "<<RAD_TO_DEG(q1)<<" "<<RAD_TO_DEG(q2)<<" "<<RAD_TO_DEG(q3)<<std::endl;
-        std::cout<<q1_dot<<" "<<q2_dot<<" "<<q3_dot<<std::endl;
+        // std::cout<<"\tDEBUG KNEE (vel): "<<q1_dot<<" "<<q2_dot<<" "<<q3_dot<<std::endl;
 
 
 
@@ -805,7 +805,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
             if(groundcollision)//Forbidden
             {
 
-                std::cout<<"DEBUG COLLISION: forbidden ground"<<std::endl;
+                std::cout<<"DEBUG COLLISION: forbidden ground (free knee)"<<std::endl;
                 state|=FALL;
             }
 
@@ -827,6 +827,15 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 state|=LOCKED_KNEE;
                 // state&=!(FREE_KNEE);
                 isCollided=_COLLISION_COOLDOWN;
+
+                current_q1=modelbase->statePosition("q1");
+                current_q2=modelbase->statePosition("q2");
+                // current_q3=modelbase->statePosition("q3");
+                current_swing=current_q2;
+
+                current_q1_dot=modelbase->stateVelocity("q1");
+                current_q2_dot=modelbase->stateVelocity("q2");
+                std::cout<<"\tSTATE: "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
             }
 
 
@@ -870,21 +879,25 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 // state&=!(LOCKED_KNEE);
                 nbStep++;
                 isCollided=_COLLISION_COOLDOWN;
+                current_q1=modelbase->statePosition("q1");
+                current_q2=modelbase->statePosition("q2");
+                // current_q3=modelbase->statePosition("q3");
+                current_swing=current_q2;
+
+                current_q1_dot=modelbase->stateVelocity("q1");
+                current_q2_dot=modelbase->stateVelocity("q2");
                 if(_log)
                 {
-                    current_q1=modelbase->statePosition("q1");
-                    current_q2=modelbase->statePosition("q2");
-                    // current_q3=modelbase->statePosition("q3");
-                    current_swing=current_q2;
-
-                    current_q1_dot=modelbase->stateVelocity("q1");
-                    current_q2_dot=modelbase->stateVelocity("q2");
 
                     logfile_step<<std::setprecision(25);
                     scalar Ep=modelbase->evalPotential();
                     scalar Ec=modelbase->evalKinetic();
                     logfile_step<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
                 }
+
+                std::cout<<"\tSTATE: "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
+
+
             }
             if(groundcollision && q2<=0.0)
             {
@@ -1013,39 +1026,39 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 {
 
                     // auto t1=std::chrono::steady_clock::now();
-                    modelbase->runSimulationStep(dt);
-                    // auto t2=std::chrono::steady_clock::now();
-                    // auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-                    // std::cout<<"\tTIME: "<<d.count()<<std::endl;
+                  modelbase->runSimulationStep(dt);
+                  // auto t2=std::chrono::steady_clock::now();
+                  // auto d=std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+                  // std::cout<<"\tTIME: "<<d.count()<<std::endl;
 
 
 
-                    time+=dt;
+                  time+=dt;
 
-                    if(isCollided==0) //cooldown. Wait a little just after a collision
-                        detect_collision();
-                    else
-                        isCollided--;
+                  if(isCollided==0) //cooldown. Wait a little just after a collision
+                      detect_collision();
+                  else
+                      isCollided--;
 
-                    time+=collisiontimeoffset;
-
-
-                    current_q1=modelbase->statePosition("q1");
-                    current_q2=modelbase->statePosition("q2");
-                    // current_q3=modelbase->statePosition("q3");
-                    current_swing=current_q2;
-
-                    current_q1_dot=modelbase->stateVelocity("q1");
-                    current_q2_dot=modelbase->stateVelocity("q2");
-                    // current_q3_dot=modelbase->stateVelocity("q3");
+                  time+=collisiontimeoffset;
 
 
-                    if(_log)
-                    {
-                        scalar Ep=modelbase->evalPotential();
-                        scalar Ec=modelbase->evalKinetic();
-                        logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
-                    }
+                  current_q1=modelbase->statePosition("q1");
+                  current_q2=modelbase->statePosition("q2");
+                  // current_q3=modelbase->statePosition("q3");
+                  current_swing=current_q2;
+
+                  current_q1_dot=modelbase->stateVelocity("q1");
+                  current_q2_dot=modelbase->stateVelocity("q2");
+                  // current_q3_dot=modelbase->stateVelocity("q3");
+
+
+                  if(_log)
+                  {
+                      scalar Ep=modelbase->evalPotential();
+                      scalar Ec=modelbase->evalKinetic();
+                      logfile<<time<<" "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<" "<<Ep<<" "<<Ec<<std::endl;
+                  }
 
                 }
             }
