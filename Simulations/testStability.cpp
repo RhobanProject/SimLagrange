@@ -170,7 +170,7 @@ Eigen::MatrixXd computeStability(Json::Value conf, double delta=1e-10)
     return DF;
 }
 
-Eigen::MatrixXd computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=1e-8)
+Eigen::MatrixXd computeStabilityPseudoInv(Json::Value conf, int nbIter=10,double delta=1e-10)
 {
     //3 dimensions
     std::vector<double> init_state;
@@ -399,7 +399,7 @@ void logEigenvectorsCont(Json::Value conf)
             break;
         }
 
-        std::cout<<"STATE: "<<w.current_q1_dot<<" "<<w.current_swing<<" "<<w.current_q2_dot<<std::endl;
+        // std::cout<<"STATE: "<<w.current_q1_dot<<" "<<w.current_swing<<" "<<w.current_q2_dot<<std::endl;
         // std::cout<<"STEP: "<<w.ground_contact->lastContactPoint.x()<<std::endl;
 
         if(w.state&FALL)
@@ -453,6 +453,37 @@ void logEigenvectorsCont(Json::Value conf)
 }
 
 
+void test_from_points(Json::Value conf)
+{
+    ifstream datafile;
+    datafile.open("test_points.dat");
+    double x=0.0;
+    double y=0.0;
+    double z=0.0;
+    std::vector<std::vector<double>> points;
+
+    while (datafile >> x >> y >> z)
+    {
+
+        // std::cout<<x<<" "<<y<<" "<<z<<std::endl;
+        std::vector<double> tmp;
+        tmp.push_back(x);
+        tmp.push_back(y);
+        tmp.push_back(z);
+
+        points.push_back(tmp);
+    }
+    datafile.close();
+
+    for(auto p:points)
+    {
+        for(auto x:p)
+            std::cout<<x<<" ";
+        std::cout<<std::endl;
+    }
+
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -464,9 +495,9 @@ int main(int argc, char* argv[])
         // computeStability(conf_root);
         // computeStabilityPseudoInv(conf_root);
         // testNewtonRaphson(conf_root);
-        logEigenvectors(conf_root);
-        // logEigenvectorsCont(conf_root);
-
+        // logEigenvectors(conf_root);
+        logEigenvectorsCont(conf_root);
+        // test_from_points(conf_root);
     }
     else
     {
