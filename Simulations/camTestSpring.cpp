@@ -108,15 +108,32 @@ int main()
     // b1.addMass(0.1, Vector2D(0.0, 0.4));
 
 
+    // Body& b2 = system.addLinearJoint(
+    //     b1,
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     0.0, 0.0);
+    // b2.addMass(0.1, Vector2D(0.0, 0.4));
 
-    Body& b1 = system.addCamJoint(
+
+
+
+
+    Body& b1 = system.addCamSpringJoint(
         system.getBase(),
         Vector2D(0.0, 0.4), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        F,0.29, 0.0, 0.3, -0.8);
+        F,0.29, 0.0, 0.3, -0.8,5,5);
     b1.addMass(0.1, Vector2D(0.0, 0.4));
 
 
+
+    // Body& b2 = system.addLinearSpring(
+    //     system.getBase(),
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     2.0, 0.0, 0.0, 0.0);
+    // b2.addMass(0.1, Vector2D(0.0, 0.4));
 
 
 

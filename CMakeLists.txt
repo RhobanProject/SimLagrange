@@ -112,6 +112,10 @@ add_executable(
 	testStability
         Simulations/testStability.cpp
 )
+add_executable(
+	testCamSpring
+        Simulations/camTestSpring.cpp
+)
 
 
 
@@ -219,4 +223,11 @@ target_link_libraries(testStability
     sfml-window
     sfml-system
     jsoncpp
+)
+
+
+target_link_libraries(testCamSpring
+    sfml-graphics
+    sfml-window
+    sfml-system
 )
