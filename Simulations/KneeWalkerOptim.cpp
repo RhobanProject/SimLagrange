@@ -80,7 +80,6 @@ FitFunc walk=[](const double *x, const int N)
     //     score+=1000.0;
 
     PassiveWalkerWithKnee w(slope, init_vel, init_swing, init_swing_vel, false);
-
     while(!(w.state&FALL) && (w.nbStep<1))
     {
         w.SimuStep(0.001);
@@ -125,9 +124,8 @@ int main(int argc, char* argv[])
     int dim = 4; // problem dimensions.
 
     std::vector<double> x0({-0.1,-1.4,-0.5,1.5});
-
     double sigma = 0.1;
-        //int lambda = 100; // offsprings at each generation.
+    //int lambda = 100; // offsprings at each generation.
     CMAParameters<> cmaparams(x0,sigma);
 
     // cmaparams.set_mt_feval(true); //multithread
@@ -144,7 +142,6 @@ int main(int argc, char* argv[])
     time_t rawtime;
     struct tm * timeinfo;
     char buffer[80];
-
     time (&rawtime);
     timeinfo = localtime(&rawtime);
 
@@ -160,7 +157,6 @@ int main(int argc, char* argv[])
     std::cout << "optimization took " << cmasols.elapsed_time() / 1000.0 << " seconds\n";
 
     return cmasols.run_status();
-
 
 
 }

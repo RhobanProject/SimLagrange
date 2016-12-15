@@ -63,26 +63,30 @@ int main()
 
 
     //parabolic
-    TermPtr a=Constant::create(0.001);
-    TermPtr b=Constant::create(6.0);
-
-
-    auto F = [&a, &b](TermPtr x) -> TermPtr
-        {
-            return Leph::Symbolic::Add<scalar>::create(Leph::Symbolic::Mult<scalar, scalar, scalar>::create(a,x),Leph::Symbolic::Mult<scalar, scalar, scalar>::create(b,Leph::Symbolic::Pow<scalar>::create(x,2)));
-        };
-
-    //hyperbolic
     // TermPtr a=Constant::create(0.001);
-    // TermPtr b=Constant::create(0.1);
-    // TermPtr c=Constant::create(6.0);
+    // TermPtr b=Constant::create(6.0);
 
-    // auto F = [&a, &b, &c](TermPtr x) -> TermPtr
+
+    // auto F = [&a, &b](TermPtr x) -> TermPtr
     //     {
-
-    //         return Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) );
-
+    //         return Leph::Symbolic::Add<scalar>::create(Leph::Symbolic::Mult<scalar, scalar, scalar>::create(a,x),Leph::Symbolic::Mult<scalar, scalar, scalar>::create(b,Leph::Symbolic::Pow<scalar>::create(x,2)));
     //     };
+
+    // hyperbolic
+    TermPtr a=Constant::create(0.001);
+    TermPtr b=Constant::create(0.025);
+    TermPtr c=Constant::create(6.0);
+
+    auto F = [&a, &b, &c](TermPtr x) -> TermPtr
+             {
+                 //a/(b+x)+c.x²
+                 return Leph::Symbolic::Add<scalar>::create(
+                     Leph::Symbolic::Frac<scalar>::create( a,
+                                                           Leph::Symbolic::Add<scalar>::create(b,x) ),
+                     Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
+                                                            );
+
+             };
 
 
     // auto mF = [&a, &b, &c](TermPtr x) -> TermPtr
@@ -123,7 +127,7 @@ int main()
         system.getBase(),
         Vector2D(0.0, 0.4), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        F,0.29, 0.0, 0.3, -0.8,5,5);
+        F,0.29, 0.0, 5, 0.0,0.5,0);
     b1.addMass(0.1, Vector2D(0.0, 0.4));
 
 
