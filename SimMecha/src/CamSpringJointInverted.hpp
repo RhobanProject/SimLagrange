@@ -1,31 +1,31 @@
-#ifndef LEPH_SIMMECHA_CAMSPRINGJOINT_HPP
-#define LEPH_SIMMECHA_CAMSPRINGJOINT_HPP
+#if !defined(CAMSPRINGJOINTINVERTED_HPP)
+#define CAMSPRINGJOINTINVERTED_HPP
+
+
 
 #include "SimMecha/src/Joint.hpp"
-#include <stdio.h>
 #include "Symbolic/src/Bounder.hpp"
 #include <functional>
+
+#include <stdio.h>
 
 //Let's annoy Leph
 #define COS(x) Symbolic::Polar<scalar, scalar>::create(x)
 #define SIN(x) Symbolic::PolarInv<scalar, scalar>::create(x)
 
-
-
 namespace Leph {
 namespace SimMecha {
 
 /**
- * CamSpringJoint
+ * CamSpringJointInverted
  */
-class CamSpringJoint : public Joint
+class CamSpringJointInverted : public Joint
 {
   public:
 
 
     TermPtr _phi, _H, _sEp, _sl, _K, _l0;
-    scalar  _sphi, _sH;
-
+    scalar _sphi, _sH;
     std::function<TermPtr(TermPtr)> _F;
     std::function<TermPtr(TermPtr)> _F_Hooke;
     /**
@@ -33,7 +33,7 @@ class CamSpringJoint : public Joint
      * given Bodies and reference (zero) angles
      * and Symbolic degree of freedom
      */
-    CamSpringJoint(
+    CamSpringJointInverted(
         Body& bodyRoot, const Vector2D& posRoot, scalar angleRoot,
         Body& bodyLeaf, const Vector2D& posLeaf, scalar angleLeaf,
         SymbolPtr dof, std::function<TermPtr(TermPtr)> F, scalar H, scalar phi,scalar K, scalar l0) :
@@ -50,9 +50,9 @@ class CamSpringJoint : public Joint
         _sEp=Constant::create(0);
         _sl=Constant::create(0);
 
+        _F=F;
         // _sa=a;
         // _sb=b;
-        _F=F;
         _sH=H;
         _sphi=phi;
         _F_Hooke= [this](TermPtr x) -> TermPtr
@@ -77,12 +77,10 @@ class CamSpringJoint : public Joint
 
 
       }
-    */
-    /*
+
       scalar F(scalar x)
       {
-      // return _sa*x+_sb*x*x;
-      return 0.001/(x+0.08)+8.0*x*x;//+_sb*x*x;
+      return _sa*x+_sb*x*x;
       }
     */
 
@@ -141,19 +139,28 @@ class CamSpringJoint : public Joint
                 root.getSymAngle()));
 
 
-        TermPtr z=Symbolic::Add<scalar>::create(_F(Symbolic::Mult<scalar, scalar, scalar>::create(_H,SIN(dof))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(dof)));
+        TermPtr z=Symbolic::Add<scalar>::create(_F(Symbolic::Mult<scalar, scalar, scalar>::create(Symbolic::Minus<scalar>::create(_H),SIN(Symbolic::Add<scalar>::create(dof,_phi)))),Symbolic::Mult<scalar, scalar, scalar>::create(_H,COS(Symbolic::Add<scalar>::create(dof,_phi))));
 
         _sl=z;//keep track of the translation for the spring
 
 
         //Joint anchor on Leaf Body
+        // TermVectorPtr p2 = Symbolic::Add<Vector2D>::create(
+        //     p1,
+        //     Symbolic::Mult<Vector2D, scalar, Vector2D>::create(
+        //         z,
+        //         Symbolic::Rotation<Vector2D, scalar>::create(
+        //             unitySym,
+        //             angle_root)));
+
         TermVectorPtr p2 = Symbolic::Add<Vector2D>::create(
             p1,
             Symbolic::Mult<Vector2D, scalar, Vector2D>::create(
                 z,
                 Symbolic::Rotation<Vector2D, scalar>::create(
                     unitySym,
-                    angle_root)));
+                    angle1)));
+
 
         //Build up center of Leaf Body
         TermVectorPtr resultPos = Symbolic::Add<Vector2D>::create(
@@ -165,11 +172,11 @@ class CamSpringJoint : public Joint
         //Set up Leaf Symbols
         leaf.initSymbols(
             resultPos,
-            Symbolic::Add<scalar>::create(resultAngle,_phi),
+            // Symbolic::Add<scalar>::create(resultAngle,_phi),
+            resultAngle,
             resultPos->derivate(time),
             resultAngle->derivate(time));
     }
-
 
     inline virtual void computeLagrangian()
     {
@@ -182,7 +189,6 @@ class CamSpringJoint : public Joint
         setLagrangian(Symbolic::Minus<scalar>::create(_Ep));
     }
 
-
     /**
      * @Inherit
      */
@@ -194,20 +200,22 @@ class CamSpringJoint : public Joint
         Joint::draw(viewer, posRoot, angleRoot,
                     posLeaf, angleLeaf, value);
 
-        // Vector2D pos = posRoot + Vector2D::rotate(
-        //     Joint::getPosRoot(), angleRoot);
+        Vector2D pos_j = posRoot + Vector2D::rotate(
+            Joint::getPosRoot(), angleRoot);
+
+        viewer.drawJoint(pos_j.x(), pos_j.y(),
+                         (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
+                         (value)*180.0/M_PI);
 
         Vector2D pos = posLeaf + Vector2D::rotate(
             Joint::getPosLeaf(), angleLeaf);
 
-        viewer.drawJoint(pos.x(), pos.y(),
-                         (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
-                         (value)*180.0/M_PI);
+        // viewer.drawJoint(pos.x(), pos.y(),
+        //     (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
+        //     (value)*180.0/M_PI);
 
-        pos = posRoot + Vector2D::rotate(
-            Joint::getPosRoot(), angleRoot);
 
-        double ori=(Joint::getAngleRoot()+angleRoot);
+        double ori=(Joint::getAngleLeaf()+angleLeaf);
 
         Vector2D rot;
 
@@ -220,28 +228,26 @@ class CamSpringJoint : public Joint
         Leph::Symbolic::Bounder bounder;
         SymbolPtr xs = Symbol::create("x");
 
+
         for(int i=0;i<100;i++)
         {
-
             x+=.3/100.0;
             xs->reset();
             bounder.setValue(xs,x);
             // y=F(x);
             y=_F(xs)->evaluate(bounder);
 
-            // std::cout<<"x: "<<x<<" "<<xs->evaluate(bounder)<<" y: "<<y<<std::endl;
 
 
-            rot=Vector2D::rotate(Vector2D(x,y),ori);
+            rot=Vector2D::rotate(Vector2D(x,y),ori+M_PI);
 
             viewer.drawSegmentByEnd(pos_r.x(),pos_r.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(200,200,200,100));
             pos_r=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
-
             xs->reset();
             bounder.setValue(xs,-x);
             y=_F(xs)->evaluate(bounder);
             // y=F(-x);
-            rot=Vector2D::rotate(Vector2D(-x,y),ori);
+            rot=Vector2D::rotate(Vector2D(-x,y),ori+M_PI);
 
             viewer.drawSegmentByEnd(pos_l.x(),pos_l.y(), pos.x()+rot.x(),pos.y()+rot.y() ,0.01,sf::Color(200,200,200,100));
             pos_l=Vector2D(pos.x()+rot.x(), pos.y()+rot.y());
@@ -249,17 +255,19 @@ class CamSpringJoint : public Joint
 
         }
 
-        viewer.drawSegment(pos.x(),pos.y(),_sH*2.0,((Joint::getAngleRoot()+angleRoot)+M_PI/2.0)*180.0/M_PI,0.05,sf::Color(255,255,255,100));
 
-        //Draw the lever
-        viewer.drawSegment(posLeaf.x(),posLeaf.y(),_sH,(angleLeaf-M_PI/2.0)*180.0/M_PI,0.01,sf::Color(255,0,255,100));
-        viewer.drawCircle(posLeaf.x()+_sH*cos(angleLeaf-M_PI/2.0),posLeaf.y()+_sH*sin(angleLeaf-M_PI/2.0),0.03,sf::Color(255,0,255,100));
+
+        viewer.drawSegment(pos.x(),pos.y(),_sH*2.0,(Joint::getAngleLeaf()+angleLeaf-M_PI/2.0)*180.0/M_PI,0.05,sf::Color(255,255,255,100));
+
+
+        viewer.drawSegment(pos_j.x(),pos_j.y(),_sH,((Joint::getAngleRoot()+angleRoot)+M_PI/2.0-_sphi)*180.0/M_PI,0.01,sf::Color(255,0,255,100));
+
+        viewer.drawCircle(pos_j.x()+_sH*cos((Joint::getAngleRoot()+angleRoot)+M_PI/2.0-_sphi),pos_j.y()+_sH*sin((Joint::getAngleRoot()+angleRoot)+M_PI/2.0-_sphi),0.03,sf::Color(255,0,255,100));
+
         viewer.drawCircle(pos.x(),pos.y(),0.03,sf::Color(255,255,255,255));
-        // viewer.drawCircle(pos.x(),pos.y(),0.03,sf::Color(255,0,0,255));
-        // viewer.drawCircle(posLeaf.x(),posLeaf.y(),0.03,sf::Color(255,0,0,255));
 
 
-        //Draw spring
+                //Draw spring
         Vector2D pos1 = posRoot + Vector2D::rotate(
             Joint::getPosRoot(), angleRoot);
         Vector2D pos2 = posLeaf + Vector2D::rotate(
@@ -296,9 +304,6 @@ class CamSpringJoint : public Joint
 
         tmpnew=tmppos+Vector2D::rotate(Vector2D(0.1*sig,tmp), angle+M_PI/2.0+M_PI);
         viewer.drawSegmentByEnd(tmppos.x(),tmppos.y(), tmpnew.x(),tmpnew.y(),0.01,sf::Color(200,200,200,100));
-
-
-
 
     }
 };

@@ -12,6 +12,7 @@
 #include "SimMecha/src/LinearSpring.hpp"
 #include "SimMecha/src/CamJoint.hpp"
 #include "SimMecha/src/CamJointInverted.hpp"
+#include "SimMecha/src/CamSpringJointInverted.hpp"
 #include "SimMecha/src/CamSpringJoint.hpp"
 #include "SimMecha/src/RoundFoot.hpp"
 #include "SimMecha/src/Body.hpp"
@@ -341,6 +342,28 @@ return *leaf;
     {
         Body* leaf = new Body(_time);
         Joint* joint = new CamSpringJoint(
+            root, posRoot, angleRoot,
+            *leaf, posLeaf, angleLeaf,
+            createDof(), F, H, phi,K,l0);
+        leaf->setJointRoot(joint);
+        root.addLeafJoint(joint);
+
+        _bodies.push_back(leaf);
+        _joints.push_back(joint);
+        _statePosition.push_back(statePos);
+        _stateVelocity.push_back(stateVel);
+        _stateTorque.push_back(0.0);
+
+        return *leaf;
+    }
+
+
+    inline Body& addCamSpringJointInverted(Body& root,
+                                           const Vector2D& posRoot, scalar angleRoot,const Vector2D& posLeaf, scalar angleLeaf, std::function<TermPtr(TermPtr)> F, scalar H, scalar phi, scalar K, scalar l0,
+                                           scalar statePos, scalar stateVel)
+    {
+        Body* leaf = new Body(_time);
+        Joint* joint = new CamSpringJointInverted(
             root, posRoot, angleRoot,
             *leaf, posLeaf, angleLeaf,
             createDof(), F, H, phi,K,l0);

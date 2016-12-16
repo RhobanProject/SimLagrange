@@ -89,6 +89,19 @@ int main()
              };
 
 
+    //numerical version
+    const double na=0.001;
+    const double nb=0.025;
+    const double nc=6.0;
+
+    auto nF = [&na, &nb, &nc](double x) -> double
+              {
+                  //a/(b+x)+c.x²
+                  return na/(nb+x)+nc*pow(x,2);
+              };
+
+    std::cout << "DEBUG, initial length: "<<nF(0.0) << "\n";
+
     // auto mF = [&a, &b, &c](TermPtr x) -> TermPtr
     //     {
 
@@ -104,97 +117,42 @@ int main()
 
 
 
-    // Body& b1 = system.addCamJointInverted(
+
+
+
+
+    // Body& b1 = system.addCamSpringJoint(
     //     system.getBase(),
     //     Vector2D(0.0, 0.4), 0.0,
     //     Vector2D(0.0, 0.0), 0.0,
-    //     mF,0.29, 0.0, 0.3, -0.8);
+    //     F,0.29, 0.0, 5, nF(0.0),0.5,0.0);
+    // b1.addMass(0.1, Vector2D(0.0, 0.4));
+
+    // Body& b1 = system.addCamSpringJointInverted(
+    //     system.getBase(),
+    //     Vector2D(0.0, 0.4), 0.0,
+    //     Vector2D(0.0, 0.0), 0.0,
+    //     F,0.29, 0.0, 5, nF(0.0),-0.5,0.0);
     // b1.addMass(0.1, Vector2D(0.0, 0.4));
 
 
-    // Body& b2 = system.addLinearJoint(
-    //     b1,
-    //     Vector2D(0.0, 0.4), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.0, 0.0);
-    // b2.addMass(0.1, Vector2D(0.0, 0.4));
 
-
-
-
-
-    Body& b1 = system.addCamSpringJoint(
+    // test inverted
+    Body& b1 = system.addAngularJoint(
         system.getBase(),
         Vector2D(0.0, 0.4), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        F,0.29, 0.0, 5, 0.0,0.5,0);
+        M_PI+0.2, 0.0);
     b1.addMass(0.1, Vector2D(0.0, 0.4));
 
 
 
-    // Body& b2 = system.addLinearSpring(
-    //     system.getBase(),
-    //     Vector2D(0.0, 0.4), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     2.0, 0.0, 0.0, 0.0);
-    // b2.addMass(0.1, Vector2D(0.0, 0.4));
-
-
-
-
-    // Body& b2 = system.addCamJoint(
-    //     b1,
-    //     Vector2D(0.0, 0.4), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.0, 8, 0.29, 0.0, 0.1, 0.0);
-    // b2.addMass(0.5, Vector2D(0.0, 0.2));
-
-
-    // Body& b2 = system.addCamJointInverted(
-    //     b1,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.0, 8, 0.29, 0.0, 0.0, 0.0);
-    // b2.addMass(0.5, Vector2D(0.0, 0.2));
-
-
-
-    ////
-
-
-    // Body& b2 = system.addAngularJoint(
-    //     b1,
-
-    //     Vector2D(0.0, 0.4), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     M_PI+0.2, 0.0);
-    // b2.addMass(0.1, Vector2D(0.0, 0.4));
-
-
-    // Body& b3 = system.addCamJointInverted(
-    //     b2,
-    //     Vector2D(0.0, 0.4), 0.,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     F,0.29, 0.0, 0.3, -0.6);
-    // b3.addMass(0.1, Vector2D(0.0, 0.4));
-
-
-
-
-    // Body& b3 = system.addCamJointInverted(
-    //     b2,
-    //     Vector2D(0.0, 0.8), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.0, 8, 0.29, 0.0, 0, 0.0);
-    // b3.addMass(0.1, Vector2D(0.0, 0.4));
-
-
-    // Body& b3 = system.addAngularJoint(
-    //     b2,
-    //     Vector2D(1.0, 0.0), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.2, 0.0);
-    // b3.addMass(1.0, Vector2D(1.0, 0.0));
+    Body& b2 = system.addCamSpringJointInverted(
+        b1,
+        Vector2D(0.0, 0.4), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        F,0.29, 0.0, 5, nF(0.0),-0.5,0.0);
+    b2.addMass(0.1, Vector2D(0.0, 0.4));
 
     system.initSymbols();
 
