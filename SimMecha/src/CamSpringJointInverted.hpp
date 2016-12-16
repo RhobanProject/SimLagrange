@@ -197,8 +197,11 @@ class CamSpringJointInverted : public Joint
                              const Vector2D& posLeaf, scalar angleLeaf,
                              scalar value)
     {
-        Joint::draw(viewer, posRoot, angleRoot,
-                    posLeaf, angleLeaf, value);
+        // Joint::draw(viewer, posRoot, angleRoot,
+        //             posLeaf, angleLeaf, value);
+
+
+
 
         Vector2D pos_j = posRoot + Vector2D::rotate(
             Joint::getPosRoot(), angleRoot);
@@ -209,6 +212,8 @@ class CamSpringJointInverted : public Joint
 
         Vector2D pos = posLeaf + Vector2D::rotate(
             Joint::getPosLeaf(), angleLeaf);
+
+        viewer.drawSegmentByEnd(posRoot.x(),posRoot.y(), pos_j.x(),pos_j.y() ,0.05,sf::Color(0,200,0,100));
 
         // viewer.drawJoint(pos.x(), pos.y(),
         //     (Joint::getAngleRoot()+angleRoot)*180.0/M_PI,
@@ -267,7 +272,7 @@ class CamSpringJointInverted : public Joint
         viewer.drawCircle(pos.x(),pos.y(),0.03,sf::Color(255,255,255,255));
 
 
-                //Draw spring
+        //Draw spring
         Vector2D pos1 = posRoot + Vector2D::rotate(
             Joint::getPosRoot(), angleRoot);
         Vector2D pos2 = posLeaf + Vector2D::rotate(

@@ -140,19 +140,21 @@ int main()
     // test inverted
     Body& b1 = system.addAngularJoint(
         system.getBase(),
-        Vector2D(0.0, 0.4), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        M_PI+0.2, 0.0);
-    b1.addMass(0.1, Vector2D(0.0, 0.4));
+        Vector2D(0.0, 0.0), 0.0,
+        M_PI+0.5, 1.0);
+    b1.addMass(1, Vector2D(0.0, 0.4));
 
 
 
     Body& b2 = system.addCamSpringJointInverted(
         b1,
-        Vector2D(0.0, 0.4), 0.0,
+        Vector2D(0.0, 0.8), 0.0,
         Vector2D(0.0, 0.0), 0.0,
-        F,0.29, 0.0, 5, nF(0.0),-0.5,0.0);
-    b2.addMass(0.1, Vector2D(0.0, 0.4));
+        F,0.29, 0.0, 50, nF(0.0),-0.5,0.0);
+    b2.addMass(1, Vector2D(0.0, 0.4));
+
+
 
     system.initSymbols();
 
@@ -199,7 +201,7 @@ int main()
                 simu_reset=false;
             }
             if(!simu_pause)
-                system.runSimulationStep(0.01);
+                system.runSimulationStep(0.001);
         }
         catch(const std::exception & e)
         {

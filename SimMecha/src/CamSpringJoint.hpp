@@ -207,6 +207,9 @@ class CamSpringJoint : public Joint
         pos = posRoot + Vector2D::rotate(
             Joint::getPosRoot(), angleRoot);
 
+        viewer.drawSegmentByEnd(posRoot.x(),posRoot.y(), pos.x(),pos.y() ,0.05,sf::Color(0,200,0,100));
+
+
         double ori=(Joint::getAngleRoot()+angleRoot);
 
         Vector2D rot;
