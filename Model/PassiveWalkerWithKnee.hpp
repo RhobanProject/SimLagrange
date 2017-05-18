@@ -21,15 +21,11 @@
 
 
 #include <iostream>
-#include <fstream>
-#include <string>
 #include <json/json.h>
 
 #include "Model/PassiveWalker.hpp"
 
-#include <cassert>
 
-#include <cmath>
 #include <Eigen/Dense>
 
 #include "SimMecha/src/Body.hpp"

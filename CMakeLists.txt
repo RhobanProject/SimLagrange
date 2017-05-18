@@ -117,6 +117,11 @@ add_executable(
         Simulations/camTestSpring.cpp
 )
 
+add_executable(
+	testCamWalker
+        Model/testCamWalker.cpp
+)
+
 
 
 
@@ -230,4 +235,12 @@ target_link_libraries(testCamSpring
     sfml-graphics
     sfml-window
     sfml-system
+)
+
+
+target_link_libraries(testCamWalker
+    sfml-graphics
+    sfml-window
+    sfml-system
+    jsoncpp
 )

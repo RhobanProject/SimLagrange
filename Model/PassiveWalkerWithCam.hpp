@@ -234,6 +234,22 @@ class PassiveWalkerWithCam: public PassiveWalker
     double current_q2_dot;
     double current_q3_dot;
 
+    //cam
+
+    // hyperbolic
+    TermPtr a=Constant::create(0.001);
+    TermPtr b=Constant::create(0.025);
+    TermPtr c=Constant::create(6.0);
+
+    std::function<TermPtr(TermPtr)> F;
+    std::function<double(double)> nF;
+
+
+
+    //numerical version
+    const double na=0.001;
+    const double nb=0.025;
+    const double nc=6.0;
 
 
     //simu
@@ -434,7 +450,6 @@ class PassiveWalkerWithCam: public PassiveWalker
         init_q3_dot=0.0;
         init_swing=init_swing_angle;
 
-
         slope=ground_slope;
 
 
@@ -495,6 +510,9 @@ class PassiveWalkerWithCam: public PassiveWalker
         modelbase=new System(pos);
 
 
+
+
+
         // stance_leg = &(modelbase->addAngularJoint(
         //     modelbase->getBase(),
         //     Vector2D(0.0, 0.0), 0.0,
@@ -511,33 +529,6 @@ class PassiveWalkerWithCam: public PassiveWalker
             init_angle, init_vel));
         stance_shank->addMass(m_s, Vector2D(0.0, a1));
 
-        // hyperbolic
-        TermPtr a=Constant::create(0.001);
-        TermPtr b=Constant::create(0.025);
-        TermPtr c=Constant::create(6.0);
-
-        auto F = [&a, &b, &c](TermPtr x) -> TermPtr
-                 {
-                     //a/(b+x)+c.x²
-                     return Leph::Symbolic::Add<scalar>::create(
-                         Leph::Symbolic::Frac<scalar>::create( a,
-                                                               Leph::Symbolic::Add<scalar>::create(b,x) ),
-                         Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
-                                                                );
-
-                 };
-
-
-        //numerical version
-        const double na=0.001;
-        const double nb=0.025;
-        const double nc=6.0;
-
-        auto nF = [&na, &nb, &nc](double x) -> double
-                  {
-                      //a/(b+x)+c.x²
-                      return na/(nb+x)+nc*pow(x,2);
-                  };
 
 
 
@@ -549,30 +540,50 @@ class PassiveWalkerWithCam: public PassiveWalker
         // b2.addMass(1, Vector2D(0.0, 0.4));
 
 
-
-        stance_thigh = &(modelbase->addAngularJoint(
+        /*
+          stance_thigh = &(modelbase->addAngularJoint(
+          *stance_shank,
+          Vector2D(0.0, L/2), 0.0,
+          Vector2D(0.0, 0.0), 0.0,
+          // init_angle, init_vel));
+          0, 0)); //TODO init value to optimize?
+        */
+        // std::cerr<<"DEBUG: "<<-nF(0.0)<<" "<<L/2<<std::endl;
+        stance_thigh = &(modelbase->addCamSpringJoint(
             *stance_shank,
-            Vector2D(0.0, L), 0.0,
+            Vector2D(0.0, L/2-0.29), 0.0, //TODO check if we should add nF(0.0)
             Vector2D(0.0, 0.0), 0.0,
-            init_angle, init_vel));
-        stance_thigh->addMass(m_t, Vector2D(0.0, L-b2));
+            // init_angle, init_vel));
+            F,0.29, 0.0, 50, nF(0.0),0, 0)); //TODO init value to optimize?
+
+        stance_thigh->addMass(m_t, Vector2D(0.0, L/2-b2));
 
 
 
         swing_thigh = &(modelbase->addAngularJoint(
             *stance_thigh,
-            Vector2D(0.0, L), 0.0,
+            Vector2D(0.0, L/2), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_swing, init_swingvel));
         swing_thigh->addMass(m_t, Vector2D(0.0, -b2));
 
+        /*
+          swing_shank = &(modelbase->addAngularJoint(
+          *swing_thigh,
+          Vector2D(0.0, -(b2+a2)), 0.0,
+          Vector2D(0.0, 0.0), 0.0,
+          0, init_kneevel)); //straight leg
+          swing_shank->addMass(m_s, Vector2D(0.0, -b1));
+        */
 
-        swing_shank = &(modelbase->addAngularJoint(
+
+        swing_shank = &(modelbase->addCamSpringJoint(
             *swing_thigh,
-            Vector2D(0.0, -(b2+a2)), 0.0,
+            Vector2D(0.0, -(b2+a2)-0.29), 0.0,
             Vector2D(0.0, 0.0), 0.0,
-            0, init_kneevel)); //straight leg
+            F,0.29, 0.0, 50, nF(0.0),0, init_kneevel)); //straight leg
         swing_shank->addMass(m_s, Vector2D(0.0, -b1));
+
 
         modelbase->initSymbols();
 
@@ -661,7 +672,7 @@ class PassiveWalkerWithCam: public PassiveWalker
 
         stance_thigh = &(modelbase->addAngularJoint(
             *stance_shank,
-            Vector2D(0.0, L), 0.0,
+            Vector2D(0.0, L/2), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_angle, init_vel));
         stance_thigh->addMass(m_t, Vector2D(0.0, L-b2));
@@ -700,6 +711,35 @@ class PassiveWalkerWithCam: public PassiveWalker
         // atan2(slope,1.0); //FIXME
         double init_angle=(M_PI+init_swing)/2.0-slope_angle-M_PI/2.0;
 
+
+
+        //cam
+
+        auto aF = [this](TermPtr x) -> TermPtr
+                  {
+                      //a/(b+x)+c.x²
+                      return Leph::Symbolic::Add<scalar>::create(
+                          Leph::Symbolic::Frac<scalar>::create( a,
+                                                                Leph::Symbolic::Add<scalar>::create(b,x) ),
+                          Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
+                                                                 );
+
+                  };
+
+        auto anF = [this](double x) -> double
+                   {
+                       //a/(b+x)+c.x²
+                       std::cout<<"DEBUG"<<std::endl;
+                       return na/(nb+x)+nc*pow(x,2);
+                   };
+
+
+        F=aF;
+        nF=anF;
+
+
+
+
         //build the model
         // InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, M_PI-init_swing, init_q2_dot, init_q3_dot);
         if(!_forced_init)
@@ -719,6 +759,7 @@ class PassiveWalkerWithCam: public PassiveWalker
                    {
                        return ga*x+gb;
                    };
+
 
         //Collision stuffs
 
@@ -950,11 +991,13 @@ class PassiveWalkerWithCam: public PassiveWalker
             // std::cout<<"DEBUG FREE: "<<kneecollision<<" "<<groundcollision<<std::endl;
 
 
-            if(groundcollision)//Forbidden
+            if(groundcollision)//TODO It is now authorized
             {
 
-                std::cout<<"DEBUG COLLISION: forbidden ground (free knee)"<<std::endl;
-                state|=FALL;
+                // std::cout<<"DEBUG COLLISION: forbidden ground (free knee)"<<std::endl;
+                // state|=FALL;
+
+                std::cout<<"DEBUG COLLISION: swing on ground"<<std::endl;
             }
 
 

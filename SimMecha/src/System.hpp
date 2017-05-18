@@ -21,6 +21,8 @@
 #include "SimMecha/src/FloatingBase.hpp"
 #include "SimViewer/src/SimViewer.hpp"
 #include <functional>
+#include <string>
+#include <cstdlib>
 
 namespace Leph {
 namespace SimMecha {
@@ -33,139 +35,139 @@ namespace SimMecha {
  */
 class System
 {
-public:
+  public:
 
-/**
- * Initialization with Fixed Base of
- * given position
- */
-System(const Vector2D& pos) :
-        _base(NULL),
-        _bodies(),
-        _joints(),
-        _time(Symbol::create("t")),
-        _dofs(),
-        _velDofs(),
-        _lagrangian(),
-        _dynamics(),
-        _statePosition(),
-        _stateVelocity(),
-        _stateTorque(),
-        _is_init(true)
-{
-//Init lagrangian to null
-_lagrangian = Symbol::create(
-Symbolic::BaseSymbol::zero());
-//Initialize Fixed Base with constant position
-_base = new FixedBase(pos, _time);
-}
+    /**
+     * Initialization with Fixed Base of
+     * given position
+     */
+    System(const Vector2D& pos) :
+            _base(NULL),
+            _bodies(),
+            _joints(),
+            _time(Symbol::create("t")),
+            _dofs(),
+            _velDofs(),
+            _lagrangian(),
+            _dynamics(),
+            _statePosition(),
+            _stateVelocity(),
+            _stateTorque(),
+            _is_init(true)
+    {
+        //Init lagrangian to null
+        _lagrangian = Symbol::create(
+            Symbolic::BaseSymbol::zero());
+        //Initialize Fixed Base with constant position
+        _base = new FixedBase(pos, _time);
+    }
 
-        /**
-         * Initialization with Floating Base of
-         * given initial position and velocity
-         * (translation movement)
-         */
-        System(const Vector2D& pos, const Vector2D& vel) :
-                _base(NULL),
-                _bodies(),
-                _joints(),
-                _time(Symbol::create("t")),
-                _dofs(),
-                _velDofs(),
-                _lagrangian(),
-                _dynamics(),
-                _statePosition(),
-                _stateVelocity(),
-                _stateTorque(),
-                _is_init(true)
-        {
-//Init lagrangian to null
-_lagrangian = Symbol::create(
-Symbolic::BaseSymbol::zero());
-//Initialize Floating Base with moving
-//position degree of freedom
-createDof("x");
-createDof("y");
-_base = new FloatingBase(_dofs["x"], _dofs["y"], _time);
-_statePosition.push_back(pos.x());
-_statePosition.push_back(pos.y());
-_stateVelocity.push_back(vel.x());
-_stateVelocity.push_back(vel.y());
-_stateTorque.push_back(0.0);
-_stateTorque.push_back(0.0);
-}
+    /**
+     * Initialization with Floating Base of
+     * given initial position and velocity
+     * (translation movement)
+     */
+    System(const Vector2D& pos, const Vector2D& vel) :
+            _base(NULL),
+            _bodies(),
+            _joints(),
+            _time(Symbol::create("t")),
+            _dofs(),
+            _velDofs(),
+            _lagrangian(),
+            _dynamics(),
+            _statePosition(),
+            _stateVelocity(),
+            _stateTorque(),
+            _is_init(true)
+    {
+        //Init lagrangian to null
+        _lagrangian = Symbol::create(
+            Symbolic::BaseSymbol::zero());
+        //Initialize Floating Base with moving
+        //position degree of freedom
+        createDof("x");
+        createDof("y");
+        _base = new FloatingBase(_dofs["x"], _dofs["y"], _time);
+        _statePosition.push_back(pos.x());
+        _statePosition.push_back(pos.y());
+        _stateVelocity.push_back(vel.x());
+        _stateVelocity.push_back(vel.y());
+        _stateTorque.push_back(0.0);
+        _stateTorque.push_back(0.0);
+    }
 
-                /**
-                 * Destructor
-                 */
-                virtual ~System()
-                {
-//Desallocation
-if (_base != NULL) {
-delete _base;
-}
-for (size_t i=0;i<_bodies.size();i++) {
-delete _bodies[i];
-}
-for (size_t i=0;i<_joints.size();i++) {
-delete _joints[i];
-}
-}
+    /**
+     * Destructor
+     */
+    virtual ~System()
+    {
+        //Desallocation
+        if (_base != NULL) {
+            delete _base;
+        }
+        for (size_t i=0;i<_bodies.size();i++) {
+            delete _bodies[i];
+        }
+        for (size_t i=0;i<_joints.size();i++) {
+            delete _joints[i];
+        }
+    }
 
-                        /**
-                         * Return the System Base
-                         */
-                        inline const Base& getBase() const
-                        {
-return *_base;
-}
-                                inline Base& getBase()
-                                {
-return *_base;
-}
+    /**
+     * Return the System Base
+     */
+    inline const Base& getBase() const
+    {
+        return *_base;
+    }
+    inline Base& getBase()
+    {
+        return *_base;
+    }
 
-                                        inline std::vector<Body*> getBodies()
-                                        {
-return _bodies;
-}
+    inline std::vector<Body*> getBodies()
+    {
+        return _bodies;
+    }
 
 
-                                                /**
-                                                 * Create and return a new Body linked to the given
-                                                 * Body with a rotational Joint
-                                                 * Joint position and angle are given within Bodies
-                                                 * coordinates system
-                                                 * Initial position and velocity are given
-                                                 */
-                                                inline Body& addAngularJoint(Body& root,
-                                                                                 const Vector2D& posRoot, scalar angleRoot,
-                                                                                 const Vector2D& posLeaf, scalar angleLeaf,
-                                                                                 scalar statePos, scalar stateVel)
-                                                {
-Body* leaf = new Body(_time);
-Joint* joint = new AngularJoint(
-root, posRoot, angleRoot,
-    *leaf, posLeaf, angleLeaf,
-    createDof());
-leaf->setJointRoot(joint);
-root.addLeafJoint(joint);
+    /**
+     * Create and return a new Body linked to the given
+     * Body with a rotational Joint
+     * Joint position and angle are given within Bodies
+     * coordinates system
+     * Initial position and velocity are given
+     */
+    inline Body& addAngularJoint(Body& root,
+                                 const Vector2D& posRoot, scalar angleRoot,
+                                 const Vector2D& posLeaf, scalar angleLeaf,
+                                 scalar statePos, scalar stateVel)
+    {
+        Body* leaf = new Body(_time);
+        Joint* joint = new AngularJoint(
+            root, posRoot, angleRoot,
+            *leaf, posLeaf, angleLeaf,
+            createDof());
+        leaf->setJointRoot(joint);
+        root.addLeafJoint(joint);
 
-_bodies.push_back(leaf);
-_joints.push_back(joint);
-_statePosition.push_back(statePos);
-_stateVelocity.push_back(stateVel);
-_stateTorque.push_back(0.0);
+        _bodies.push_back(leaf);
+        _joints.push_back(joint);
+        _statePosition.push_back(statePos);
+        _stateVelocity.push_back(stateVel);
+        _stateTorque.push_back(0.0);
 
-return *leaf;
-}
+        return *leaf;
+    }
 
-                                                        /**
-                                                         * Create and return a new Body linked to the given
-                                                         * Body with a linear Joint
-                                                         * Joint position and angle are given within Bodies
-                                                         * coordinates system
-                                                         * Initial position and velocity are given
-                                                         */
+    /**
+     * Create and return a new Body linked to the given
+     * Body with a linear Joint
+     * Joint position and angle are given within Bodies
+     * coordinates system
+     * Initial position and velocity are given
+     */
     inline Body& addLinearJoint(Body& root,
                                 const Vector2D& posRoot, scalar angleRoot,
                                 const Vector2D& posLeaf, scalar angleLeaf,

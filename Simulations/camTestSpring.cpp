@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cassert>
 
 #include "SimMecha/src/Body.hpp"
 #include "SimMecha/src/Joint.hpp"
@@ -16,7 +15,7 @@
 
 #include <stdio.h>
 #include <functional>
-#include <iomanip>
+#include <cstdlib>
 
 using namespace std;
 using namespace Leph::SimMecha;
