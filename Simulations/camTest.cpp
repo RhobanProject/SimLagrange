@@ -56,6 +56,7 @@ int main()
 
     Leph::Any::Any param;
 
+
     viewer.setSpaceHandler((SimViewer::HandlerFunction)space_cb, param);
     viewer.setRHandler((SimViewer::HandlerFunction)R_cb, param);
 
@@ -72,19 +73,19 @@ int main()
 
     //hyperbolic
     auto F = [&a, &b, &c](TermPtr x) -> TermPtr
-        {
+             {
 
-            return Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) );
+                 return Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) );
 
-        };
+             };
 
 
     auto mF = [&a, &b, &c](TermPtr x) -> TermPtr
-        {
+              {
 
-            return Leph::Symbolic::Minus<scalar>::create(Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) ));
+                  return Leph::Symbolic::Minus<scalar>::create(Leph::Symbolic::Add<scalar>::create( Leph::Symbolic::Frac<scalar>::create( a, Leph::Symbolic::Add<scalar>::create(b,x) ), Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) ) ));
 
-        };
+              };
 
 
 
@@ -92,10 +93,10 @@ int main()
     double gb=-1.3;
 
     auto F_ground = [&ga, &gb](double x) -> double
-        {
-            // gb+=0.000001;
-            return ga*x+gb;
-        };
+                    {
+                        // gb+=0.000001;
+                        return ga*x+gb;
+                    };
 
 
 
@@ -200,14 +201,14 @@ int main()
     Ground g(b2, system, 0.9, false, F_ground, Vector2D(0.0, 1.0));
 
     /*
-    HeightUnaryConstraint c1(
-        b3, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryConstraint c2(
-        b2, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryConstraint c3(
-        b1, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    HeightUnaryConstraint c4(
-        system.getBase(), system, 0.90, false, 0.0, Vector2D(0.0, 0.0));
+      HeightUnaryConstraint c1(
+      b3, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
+      HeightUnaryConstraint c2(
+      b2, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
+      HeightUnaryConstraint c3(
+      b1, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
+      HeightUnaryConstraint c4(
+      system.getBase(), system, 0.90, false, 0.0, Vector2D(0.0, 0.0));
     */
 
     while (viewer.isOpen()) {
@@ -232,10 +233,10 @@ int main()
             std::cerr << e.what()<<std::endl;
         }
         /*
-        c1.handle();
-        c2.handle();
-        c3.handle();
-        c4.handle();
+          c1.handle();
+          c2.handle();
+          c3.handle();
+          c4.handle();
         */
 
         g.handle();

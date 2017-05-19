@@ -67,6 +67,11 @@ add_executable(
         Simulations/compassTest.cpp
 )
 
+add_executable(
+	testMonopole
+        Simulations/monopoleTest.cpp
+)
+
 
 add_executable(
 	SimpleWalkerOptim
@@ -142,6 +147,12 @@ target_link_libraries(testCamSimple
 )
 
 target_link_libraries(testCompass
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+target_link_libraries(testMonopole
     sfml-graphics
     sfml-window
     sfml-system

@@ -444,8 +444,8 @@ int main(int argc, char* argv[])
     cmaparams.set_algo(aBIPOP_CMAES);
     // cmaparams.set_elitism(true);
 
-    cmaparams.set_restarts(3);
-    // cmaparams.set_restarts(1);
+    // cmaparams.set_restarts(3);
+    cmaparams.set_restarts(1);
 
     cmaparams.set_ftarget(1e-15);
 
