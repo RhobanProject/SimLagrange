@@ -117,6 +117,15 @@ add_executable(
 	testStability
         Simulations/testStability.cpp
 )
+add_executable(
+	testCamSpring
+        Simulations/camTestSpring.cpp
+)
+
+add_executable(
+	testCamWalker
+        Model/testCamWalker.cpp
+)
 
 
 
@@ -226,6 +235,21 @@ target_link_libraries(KneeWalkerOptimEigen
 )
 
 target_link_libraries(testStability
+    sfml-graphics
+    sfml-window
+    sfml-system
+    jsoncpp
+)
+
+
+target_link_libraries(testCamSpring
+    sfml-graphics
+    sfml-window
+    sfml-system
+)
+
+
+target_link_libraries(testCamWalker
     sfml-graphics
     sfml-window
     sfml-system

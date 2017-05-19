@@ -1,9 +1,9 @@
 //*****************************************************************************
 //
-// File Name	: 'PassiveWalkerWithKnee.hpp'
+// File Name	: 'PassiveWalkerWithCam.hpp'
 // Author	: Steve NGUYEN
 // Contact      : steve.nguyen@labri.fr
-// Created	: mercredi, janvier 27 2016
+// Created	: mercredi, mai 17 2017
 // Revised	:
 // Version	:
 // Target MCU	:
@@ -16,8 +16,8 @@
 //
 //*****************************************************************************
 
-#if !defined(PASSIVEWALKERWITHKNEE_HPP)
-#define PASSIVEWALKERWITHKNEE_HPP
+#if !defined(PASSIVEWALKERWITHCAM_HPP)
+#define PASSIVEWALKERWITHCAM_HPP
 
 
 #include <iostream>
@@ -184,7 +184,7 @@ class PassiveWalkerGroundContact
 
 
 
-class PassiveWalkerWithKnee: public PassiveWalker
+class PassiveWalkerWithCam: public PassiveWalker
 {
   public:
 
@@ -218,7 +218,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     //model
     System* modelbase;
-    Body* stance_leg;
+    Body* stance_leg; //not used as there is no locked knee in this model
     Body* swing_thigh;
     Body* swing_shank;
 
@@ -234,6 +234,23 @@ class PassiveWalkerWithKnee: public PassiveWalker
     double current_q2_dot;
     double current_q3_dot;
 
+    //cam
+
+    // hyperbolic
+    TermPtr a=Constant::create(0.001);
+    TermPtr b=Constant::create(0.025);
+    TermPtr c=Constant::create(6.0);
+
+    std::function<TermPtr(TermPtr)> F;
+    std::function<TermPtr(TermPtr)> minF;
+    std::function<double(double)> nF;
+
+
+
+    //numerical version
+    const double na=0.001;
+    const double nb=0.025;
+    const double nc=6.0;
 
 
     //simu
@@ -254,7 +271,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
     Leph::SimViewer::SimViewer* viewer;
 
 
-    PassiveWalkerWithKnee(Json::Value conf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(conf)
+    PassiveWalkerWithCam(Json::Value conf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(conf)
     {
 
 
@@ -264,8 +281,14 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // System system(Vector2D(0.0, 0.0));
         modelbase=new System(Vector2D(0.0, 0.0));
         //dummy, just to init the memory
-        stance_leg = &(modelbase->addAngularJoint(
+
+        stance_shank = &(modelbase->addAngularJoint(
             modelbase->getBase(),
+            Vector2D(0.0, 0.0), 0.0,
+            Vector2D(0.0, 0.0), 0.0,
+            0, 0));
+        stance_thigh = &(modelbase->addAngularJoint(
+            *stance_shank,
             Vector2D(0.0, 0.0), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             0, 0));
@@ -279,7 +302,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
 
-    PassiveWalkerWithKnee(const char* jsonconf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(jsonconf)
+    PassiveWalkerWithCam(const char* jsonconf, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker(jsonconf)
     {
 
         getConfig();
@@ -287,8 +310,13 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // System system(Vector2D(0.0, 0.0));
         modelbase=new System(Vector2D(0.0, 0.0));
         //dummy, just to init the memory
-        stance_leg = &(modelbase->addAngularJoint(
+        stance_shank = &(modelbase->addAngularJoint(
             modelbase->getBase(),
+            Vector2D(0.0, 0.0), 0.0,
+            Vector2D(0.0, 0.0), 0.0,
+            0, 0));
+        stance_thigh = &(modelbase->addAngularJoint(
+            *stance_shank,
             Vector2D(0.0, 0.0), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             0, 0));
@@ -355,10 +383,10 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
         if(!model["has_knee"].asBool())
-            throw("Trying to create a PassiveWalkerWithKnee: JSON conf said has_knee==false");
+            throw("Trying to create a PassiveWalkerWithCam: JSON conf said has_knee==false");
 
         if(model["has_feet"].asBool())
-            throw("Trying to create a PassiveWalkerWithKnee: JSON conf said has_feet==true");
+            throw("Trying to create a PassiveWalkerWithCam: JSON conf said has_feet==true");
 
 
         _forced_init=model["forced_init"].asBool();
@@ -392,7 +420,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
     }
 
 
-    PassiveWalkerWithKnee(double ground_slope, double init_vel, double init_swing_angle, double init_swing_vel, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker()
+    PassiveWalkerWithCam(double ground_slope, double init_vel, double init_swing_angle, double init_swing_vel, bool draw=DRAW, int skip=SKIP_FRAME, bool log=LOGGING): PassiveWalker()
     {
         //Without json
 
@@ -423,20 +451,23 @@ class PassiveWalkerWithKnee: public PassiveWalker
         init_q3_dot=0.0;
         init_swing=init_swing_angle;
 
-
         slope=ground_slope;
 
 
         // System system(Vector2D(0.0, 0.0));
         modelbase=new System(Vector2D(0.0, 0.0));
         //dummy, just to init the memory
-        stance_leg = &(modelbase->addAngularJoint(
+        stance_shank = &(modelbase->addAngularJoint(
             modelbase->getBase(),
             Vector2D(0.0, 0.0), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             0, 0));
         modelbase->initSymbols();
-
+        stance_thigh = &(modelbase->addAngularJoint(
+            *stance_shank,
+            Vector2D(0.0, 0.0), 0.0,
+            Vector2D(0.0, 0.0), 0.0,
+            0, 0));
         BuildInitModel();
 
 
@@ -447,7 +478,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
 
-    ~PassiveWalkerWithKnee()
+    ~PassiveWalkerWithCam()
     {
 
         if(_log){
@@ -479,29 +510,82 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         modelbase=new System(pos);
 
-        stance_leg = &(modelbase->addAngularJoint(
+
+
+
+
+        // stance_leg = &(modelbase->addAngularJoint(
+        //     modelbase->getBase(),
+        //     Vector2D(0.0, 0.0), 0.0,
+        //     Vector2D(0.0, 0.0), 0.0,
+        //     init_angle, init_vel));
+        // stance_leg->addMass(m_s, Vector2D(0.0, a1));
+        // stance_leg->addMass(m_t, Vector2D(0.0, L-b2));
+
+
+        stance_shank = &(modelbase->addAngularJoint(
             modelbase->getBase(),
             Vector2D(0.0, 0.0), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_angle, init_vel));
-        stance_leg->addMass(m_s, Vector2D(0.0, a1));
-        stance_leg->addMass(m_t, Vector2D(0.0, L-b2));
+        stance_shank->addMass(m_s, Vector2D(0.0, a1));
+
+
+
+
+        // Body& b2 = system.addCamSpringJointInverted(
+        //     b1,
+        //     Vector2D(0.0, 0.8), 0.0,
+        //     Vector2D(0.0, 0.0), 0.0,
+        //     F,0.29, 0.0, 50, nF(0.0),-0.5,0.0);
+        // b2.addMass(1, Vector2D(0.0, 0.4));
+
+
+        /*
+          stance_thigh = &(modelbase->addAngularJoint(
+          *stance_shank,
+          Vector2D(0.0, L/2), 0.0,
+          Vector2D(0.0, 0.0), 0.0,
+          // init_angle, init_vel));
+          0, 0)); //TODO init value to optimize?
+        */
+        // std::cerr<<"DEBUG: "<<-nF(0.0)<<" "<<L/2<<std::endl;
+        stance_thigh = &(modelbase->addCamSpringJoint(
+            *stance_shank,
+            Vector2D(0.0, L/2-0.29), 0.0, //TODO check if we should add nF(0.0)
+            Vector2D(0.0, 0.0), 0.0,
+            // init_angle, init_vel));
+            F,0.29, 0.0, 50, nF(0.0),0, 0)); //TODO init value to optimize?
+
+        stance_thigh->addMass(m_t, Vector2D(0.0, L/2-b2));
+
 
 
         swing_thigh = &(modelbase->addAngularJoint(
-            *stance_leg,
-            Vector2D(0.0, L), 0.0,
+            *stance_thigh,
+            Vector2D(0.0, L/2), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_swing, init_swingvel));
         swing_thigh->addMass(m_t, Vector2D(0.0, -b2));
 
+        /*
+          swing_shank = &(modelbase->addAngularJoint(
+          *swing_thigh,
+          Vector2D(0.0, -(b2+a2)), 0.0,
+          Vector2D(0.0, 0.0), 0.0,
+          0, init_kneevel)); //straight leg
+          swing_shank->addMass(m_s, Vector2D(0.0, -b1));
+        */
 
-        swing_shank = &(modelbase->addAngularJoint(
+
+        //FIXME mauvais placement?
+        swing_shank = &(modelbase->addCamSpringJointInverted(
             *swing_thigh,
-            Vector2D(0.0, -(b2+a2)), 0.0,
+            Vector2D(0.0, -(b2+a2)+0.29), 0.0,
             Vector2D(0.0, 0.0), 0.0,
-            0, init_kneevel)); //straight leg
+            minF,-0.29, 0.0, 50, nF(0.0),0, init_kneevel)); //straight leg
         swing_shank->addMass(m_s, Vector2D(0.0, -b1));
+
 
         modelbase->initSymbols();
 
@@ -512,6 +596,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     void InitModelLockedKnee(Vector2D pos, double init_angle, double init_vel, double init_swing, double init_swingvel)
     {
+
+        //SHOULD NOT BE USED
 
 
         // Vector2D pos=modelbase->evalPosition(*stance_leg);
@@ -531,18 +617,76 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         modelbase=new System(pos);
 
-        stance_leg = &(modelbase->addAngularJoint(
+        // stance_leg = &(modelbase->addAngularJoint(
+        //     modelbase->getBase(),
+        //     Vector2D(0.0, 0.0), 0.0,
+        //     Vector2D(0.0, 0.0), 0.0,
+        //     init_angle, init_vel));
+        // stance_leg->addMass(m_s, Vector2D(0.0, a1));
+        // stance_leg->addMass(m_t, Vector2D(0.0, L-b2));
+
+
+        stance_shank = &(modelbase->addAngularJoint(
             modelbase->getBase(),
             Vector2D(0.0, 0.0), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_angle, init_vel));
-        stance_leg->addMass(m_s, Vector2D(0.0, a1));
-        stance_leg->addMass(m_t, Vector2D(0.0, L-b2));
+        stance_shank->addMass(m_s, Vector2D(0.0, a1));
+
+        // hyperbolic
+        TermPtr a=Constant::create(0.001);
+        TermPtr b=Constant::create(0.025);
+        TermPtr c=Constant::create(6.0);
+
+        auto F = [&a, &b, &c](TermPtr x) -> TermPtr
+                 {
+                     //a/(b+x)+c.x²
+                     return Leph::Symbolic::Add<scalar>::create(
+                         Leph::Symbolic::Frac<scalar>::create( a,
+                                                               Leph::Symbolic::Add<scalar>::create(b,x) ),
+                         Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
+                                                                );
+
+                 };
+
+
+
+        //numerical version
+        const double na=0.001;
+        const double nb=0.025;
+        const double nc=6.0;
+
+        auto nF = [&na, &nb, &nc](double x) -> double
+                  {
+                      //a/(b+x)+c.x²
+                      return na/(nb+x)+nc*pow(x,2);
+                  };
+
+
+
+        // Body& b2 = system.addCamSpringJointInverted(
+        //     b1,
+        //     Vector2D(0.0, 0.8), 0.0,
+        //     Vector2D(0.0, 0.0), 0.0,
+        //     F,0.29, 0.0, 50, nF(0.0),-0.5,0.0);
+        // b2.addMass(1, Vector2D(0.0, 0.4));
+
+
+
+        stance_thigh = &(modelbase->addAngularJoint(
+            *stance_shank,
+            Vector2D(0.0, L/2), 0.0,
+            Vector2D(0.0, 0.0), 0.0,
+            init_angle, init_vel));
+        stance_thigh->addMass(m_t, Vector2D(0.0, L-b2));
+
+
+
 
         //Ignore the thigh
 
         swing_shank = &(modelbase->addAngularJoint(
-            *stance_leg,
+            *stance_thigh,
             Vector2D(0.0, L), 0.0,
             Vector2D(0.0, 0.0), 0.0,
             init_swing, init_swingvel));
@@ -570,6 +714,47 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // atan2(slope,1.0); //FIXME
         double init_angle=(M_PI+init_swing)/2.0-slope_angle-M_PI/2.0;
 
+
+
+        //cam
+
+        auto aF = [this](TermPtr x) -> TermPtr
+                  {
+                      //a/(b+x)+c.x²
+                      return Leph::Symbolic::Add<scalar>::create(
+                          Leph::Symbolic::Frac<scalar>::create( a,
+                                                                Leph::Symbolic::Add<scalar>::create(b,x) ),
+                          Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
+                                                                 );
+
+                  };
+        //FIXME c'est pas -F qu'il faut (ça change aussi la position de la singularité)
+        auto aminF = [this](TermPtr x) -> TermPtr
+                     {
+                         //a/(b+x)+c.x²
+                         return Leph::Symbolic::Minus<scalar>::create(Leph::Symbolic::Add<scalar>::create(
+                             Leph::Symbolic::Frac<scalar>::create( a,
+                                                                   Leph::Symbolic::Add<scalar>::create(b,x) ),
+                             Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
+                                                                                                          ));
+
+                     };
+
+        auto anF = [this](double x) -> double
+                   {
+                       //a/(b+x)+c.x²
+                       std::cout<<"DEBUG"<<std::endl;
+                       return na/(nb+x)+nc*pow(x,2);
+                   };
+
+
+        F=aF;
+        minF=aminF;
+        nF=anF;
+
+
+
+
         //build the model
         // InitModelFreeKnee(Vector2D(0,0),-init_angle, init_q1_dot, M_PI-init_swing, init_q2_dot, init_q3_dot);
         if(!_forced_init)
@@ -589,6 +774,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
                    {
                        return ga*x+gb;
                    };
+
 
         //Collision stuffs
 
@@ -649,7 +835,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
         double q3=-fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
         //TODO check
-        double q1=-modelbase->evalAngle(*stance_leg);
+        double q1=-modelbase->evalAngle(*stance_thigh);
 
         //because of the referential...
         double old_q2=-modelbase->evalAngle(*swing_thigh);
@@ -706,7 +892,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout<<"DEBUG knee vm:\n"<<v_q_m<<std::endl;
         // std::cout<<"DEBUG knee qm:\n"<<Q_m<<std::endl;
         // std::cout<<"DEBUG knee qp:\n"<<Q_p<<std::endl;
-        Vector2D pos=modelbase->evalPosition(*stance_leg);
+        Vector2D pos=modelbase->evalPosition(*stance_thigh);
         // InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1)); //should be ok
         // InitModelLockedKnee(pos,q1, v_q_p(0), (-q1+old_q2), v_q_p(1));
         InitModelLockedKnee(pos,-q1, -v_q_p(0), -(-q1+old_q2), -v_q_p(1));
@@ -723,7 +909,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         //minus everywhere
         double q2=-fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI); //seems to be the positive angle
 
-        double q1=-modelbase->evalAngle(*stance_leg);
+        // double q1=-modelbase->evalAngle(*stance_leg);
+        double q1=-modelbase->evalAngle(*stance_shank);
 
         //because of the referential...
         //argh
@@ -771,7 +958,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
         // std::cout<<"DEBUG foot res: "<<v_q_p<<std::endl;
         // std::cout<<"DEBUG old: "<<q1_dot<<" "<<q2_dot<<std::endl;
 
-        Vector2D oldcontact=modelbase->evalPosition(*stance_leg);
+        // Vector2D oldcontact=modelbase->evalPosition(*stance_leg);
+        Vector2D oldcontact=modelbase->evalPosition(*stance_shank);
 
         // std::cout<<"DEBUG step: ("<<oldcontact.x()<<", "<<oldcontact.y()<<") -> ("<<ground_contact->lastContactPoint.x()<<", "<<ground_contact->lastContactPoint.y()<<")"<<std::endl;
 
@@ -812,16 +1000,19 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
             bool groundcollision=ground_contact->computeCheckConstraint();
-            bool kneecollision=knee_stop->computeCheckConstraint();
+            // bool kneecollision=knee_stop->computeCheckConstraint();
+            bool kneecollision=false; //NO LOCK
 
             // std::cout<<"DEBUG FREE: "<<kneecollision<<" "<<groundcollision<<std::endl;
 
 
-            if(groundcollision)//Forbidden
+            if(groundcollision)//TODO It is now authorized
             {
 
-                std::cout<<"DEBUG COLLISION: forbidden ground (free knee)"<<std::endl;
-                state|=FALL;
+                // std::cout<<"DEBUG COLLISION: forbidden ground (free knee)"<<std::endl;
+                // state|=FALL;
+
+                std::cout<<"DEBUG COLLISION: swing on ground"<<std::endl;
             }
 
 
@@ -855,7 +1046,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
 
         }
-        if(state&LOCKED_KNEE && !(state&FALL))
+        // if(state&LOCKED_KNEE && !(state&FALL))
+        if(!(state&FALL))
         {
             bool groundcollision=ground_contact->computeCheckConstraint();
             //check if collision happened
@@ -865,7 +1057,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
             // double shank_angle=fmod(modelbase->evalAngle(*swing_shank)-M_PI,2.0*M_PI);
             double shank_angle=fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI);
 
-            double stance_angle=fmod(modelbase->evalAngle(*stance_leg),2.0*M_PI);
+            double stance_angle=fmod(modelbase->evalAngle(*stance_thigh),2.0*M_PI);
 
 
             double q2=shank_angle-stance_angle;
@@ -968,7 +1160,7 @@ class PassiveWalkerWithKnee: public PassiveWalker
 
     void draw_ground()
     {
-        Vector2D currentpos=modelbase->evalPosition(*stance_leg);
+        Vector2D currentpos=modelbase->evalPosition(*stance_shank);
         Vector2D pos_r=currentpos;
         Vector2D pos_l=currentpos;
 
@@ -1007,8 +1199,8 @@ class PassiveWalkerWithKnee: public PassiveWalker
                 // viewer->moveCam(-modelbase->evalPosition(*swing_shank).x(),modelbase->evalPosition(*swing_shank).y());
 
 
-                Vector2D foot=modelbase->evalPosition(*stance_leg);
-                scalar centerAngle = modelbase->evalAngle(*stance_leg);
+                Vector2D foot=modelbase->evalPosition(*stance_shank);
+                scalar centerAngle = modelbase->evalAngle(*stance_shank);
 
                 Vector2D hippos = foot + Vector2D::rotate(Vector2D(0.0, L), centerAngle);
 

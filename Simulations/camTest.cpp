@@ -196,9 +196,14 @@ int main()
     //     0.2, 0.0);
     // b3.addMass(1.0, Vector2D(1.0, 0.0));
 
+
+
     system.initSymbols();
 
+
+
     Ground g(b2, system, 0.9, false, F_ground, Vector2D(0.0, 1.0));
+
 
     /*
       HeightUnaryConstraint c1(
