@@ -242,6 +242,7 @@ class PassiveWalkerWithCam: public PassiveWalker
     TermPtr c=Constant::create(6.0);
 
     std::function<TermPtr(TermPtr)> F;
+    std::function<TermPtr(TermPtr)> minF;
     std::function<double(double)> nF;
 
 
@@ -577,11 +578,12 @@ class PassiveWalkerWithCam: public PassiveWalker
         */
 
 
-        swing_shank = &(modelbase->addCamSpringJoint(
+        //FIXME mauvais placement?
+        swing_shank = &(modelbase->addCamSpringJointInverted(
             *swing_thigh,
-            Vector2D(0.0, -(b2+a2)-0.29), 0.0,
+            Vector2D(0.0, -(b2+a2)+0.29), 0.0,
             Vector2D(0.0, 0.0), 0.0,
-            F,0.29, 0.0, 50, nF(0.0),0, init_kneevel)); //straight leg
+            minF,-0.29, 0.0, 50, nF(0.0),0, init_kneevel)); //straight leg
         swing_shank->addMass(m_s, Vector2D(0.0, -b1));
 
 
@@ -646,6 +648,7 @@ class PassiveWalkerWithCam: public PassiveWalker
                                                                 );
 
                  };
+
 
 
         //numerical version
@@ -725,6 +728,17 @@ class PassiveWalkerWithCam: public PassiveWalker
                                                                  );
 
                   };
+        //FIXME c'est pas -F qu'il faut (ça change aussi la position de la singularité)
+        auto aminF = [this](TermPtr x) -> TermPtr
+                     {
+                         //a/(b+x)+c.x²
+                         return Leph::Symbolic::Minus<scalar>::create(Leph::Symbolic::Add<scalar>::create(
+                             Leph::Symbolic::Frac<scalar>::create( a,
+                                                                   Leph::Symbolic::Add<scalar>::create(b,x) ),
+                             Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
+                                                                                                          ));
+
+                     };
 
         auto anF = [this](double x) -> double
                    {
@@ -735,6 +749,7 @@ class PassiveWalkerWithCam: public PassiveWalker
 
 
         F=aF;
+        minF=aminF;
         nF=anF;
 
 

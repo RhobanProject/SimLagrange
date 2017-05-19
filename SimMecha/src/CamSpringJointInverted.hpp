@@ -8,6 +8,7 @@
 #include <functional>
 
 #include <stdio.h>
+#include <cmath>
 
 //Let's annoy Leph
 #define COS(x) Symbolic::Polar<scalar, scalar>::create(x)
@@ -51,6 +52,7 @@ class CamSpringJointInverted : public Joint
         _sl=Constant::create(0);
 
         _F=F;
+
         // _sa=a;
         // _sb=b;
         _sH=H;
