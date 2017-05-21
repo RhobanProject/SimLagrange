@@ -60,8 +60,11 @@
 #define DRAW true
 #define LOGGING false
 
+//Useless in the CamWalker case
 #define FREE_KNEE 1
 #define LOCKED_KNEE 2
+
+
 #define FALL 4
 
 #define _COLLISION_COOLDOWN 2
@@ -71,6 +74,8 @@ using namespace Leph::SimMecha;
 using namespace Leph::SimViewer;
 
 
+
+//Useless with the CamWalker
 class PassiveWalkerKneeStop//: public BinaryConstraint //useless
 {
   public:
@@ -244,6 +249,7 @@ class PassiveWalkerWithCam: public PassiveWalker
     std::function<TermPtr(TermPtr)> F;
     std::function<TermPtr(TermPtr)> minF;
     std::function<double(double)> nF;
+    std::function<double(double)> minnF;
 
 
 
@@ -555,7 +561,7 @@ class PassiveWalkerWithCam: public PassiveWalker
             Vector2D(0.0, L/2-0.29), 0.0, //TODO check if we should add nF(0.0)
             Vector2D(0.0, 0.0), 0.0,
             // init_angle, init_vel));
-            F,0.29, 0.0, 50, nF(0.0),0, 0)); //TODO init value to optimize?
+            F,0.29, 0.0, 50, nF(0.0),0, init_vel)); //TODO init value to optimize?
 
         stance_thigh->addMass(m_t, Vector2D(0.0, L/2-b2));
 
@@ -581,8 +587,8 @@ class PassiveWalkerWithCam: public PassiveWalker
         //FIXME mauvais placement?
         swing_shank = &(modelbase->addCamSpringJointInverted(
             *swing_thigh,
-            Vector2D(0.0, -(b2+a2)+0.29), 0.0,
-            Vector2D(0.0, 0.0), 0.0,
+            Vector2D(0.0, -(b2+a2)), 0.0,
+            Vector2D(0.0, -0.29), 0.0,
             minF,-0.29, 0.0, 50, nF(0.0),0, init_kneevel)); //straight leg
         swing_shank->addMass(m_s, Vector2D(0.0, -b1));
 
@@ -662,6 +668,11 @@ class PassiveWalkerWithCam: public PassiveWalker
                       return na/(nb+x)+nc*pow(x,2);
                   };
 
+        auto minnF = [&na, &nb, &nc](double x) -> double
+                     {
+                         //a/(-b+x)-c.x²
+                         return na/(-nb+x)-nc*pow(x,2);
+                     };
 
 
         // Body& b2 = system.addCamSpringJointInverted(
@@ -728,30 +739,37 @@ class PassiveWalkerWithCam: public PassiveWalker
                                                                  );
 
                   };
-        //FIXME c'est pas -F qu'il faut (ça change aussi la position de la singularité)
+
         auto aminF = [this](TermPtr x) -> TermPtr
                      {
-                         //a/(b+x)+c.x²
-                         return Leph::Symbolic::Minus<scalar>::create(Leph::Symbolic::Add<scalar>::create(
+                         //a/(-b+x)-c.x²
+                         return Leph::Symbolic::Add<scalar>::create(
                              Leph::Symbolic::Frac<scalar>::create( a,
-                                                                   Leph::Symbolic::Add<scalar>::create(b,x) ),
-                             Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
-                                                                                                          ));
+                                                                   Leph::Symbolic::Add<scalar>::create(Leph::Symbolic::Minus<scalar>::create(b),x) ),
+                             Leph::Symbolic::Minus<scalar>::create(Leph::Symbolic::Mult<scalar, scalar, scalar>::create( c, Leph::Symbolic::Pow<scalar>::create(x,2) )
+                                                                   ));
 
                      };
 
         auto anF = [this](double x) -> double
                    {
                        //a/(b+x)+c.x²
-                       std::cout<<"DEBUG"<<std::endl;
+                       // std::cout<<"DEBUG anF "<<na/(nb+x)+nc*pow(x,2)<<std::endl;
                        return na/(nb+x)+nc*pow(x,2);
                    };
+
+        auto aminnF = [this](double x) -> double
+                      {
+                          //a/(-b+x)-c.x²
+                          // std::cout<<"DEBUG aminnF "<<na/(-nb+x)-nc*pow(x,2)<<std::endl;
+                          return na/(-nb+x)-nc*pow(x,2);
+                      };
 
 
         F=aF;
         minF=aminF;
         nF=anF;
-
+        minnF=aminnF;
 
 
 
@@ -905,6 +923,9 @@ class PassiveWalkerWithCam: public PassiveWalker
 
     void foot_on_ground()
     {
+        //FIXME
+
+
 
         //minus everywhere
         double q2=-fmod(modelbase->evalAngle(*swing_shank),2.0*M_PI); //seems to be the positive angle
@@ -976,17 +997,16 @@ class PassiveWalkerWithCam: public PassiveWalker
 
     void detect_collision()
     {
-        //Two possibles correct collisions:
-        // 1/ swing leg knee extension (knee lockup)
-        // 2/ swing leg heel-ground collision (only if knee is locked)
+
+        //Here we don't lock the knee so there is only 1 correct collision:
+        // => Swing leg heel-ground (only if the swing foot is in front of the stance foot)
+
 
         //If collision is detected, find the exact time
 
         Vector2D hip;
-        if(state&LOCKED_KNEE)
-            hip=modelbase->evalPosition(*swing_shank);
-        else
-            hip=modelbase->evalPosition(*swing_thigh);
+
+        hip=modelbase->evalPosition(*swing_thigh);
 
         if(hip.y()<=F_ground(hip.x()))
         {
@@ -995,62 +1015,12 @@ class PassiveWalkerWithCam: public PassiveWalker
         }
         collisiontimeoffset=0.0;
 
-        if(state&FREE_KNEE && !(state&FALL))
-        {
 
-
-            bool groundcollision=ground_contact->computeCheckConstraint();
-            // bool kneecollision=knee_stop->computeCheckConstraint();
-            bool kneecollision=false; //NO LOCK
-
-            // std::cout<<"DEBUG FREE: "<<kneecollision<<" "<<groundcollision<<std::endl;
-
-
-            if(groundcollision)//TODO It is now authorized
-            {
-
-                // std::cout<<"DEBUG COLLISION: forbidden ground (free knee)"<<std::endl;
-                // state|=FALL;
-
-                std::cout<<"DEBUG COLLISION: swing on ground"<<std::endl;
-            }
-
-
-            if(kneecollision && !(state&FALL))//ok lock the knee
-            {
-                std::cout<<"DEBUG COLLISION: knee"<<std::endl;
-                //find the collision time
-                getConstraintTime( [this]() -> bool {
-                        return knee_stop->computeCheckConstraint();
-                    });
-
-                lock_the_knee();
-
-                knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
-                ground_contact->swapmodel(swing_shank,modelbase, Vector2D(0,-L));
-
-                state=0;
-                state|=LOCKED_KNEE;
-                // state&=!(FREE_KNEE);
-                isCollided=_COLLISION_COOLDOWN;
-
-                current_q1=modelbase->statePosition("q1");
-                current_q2=modelbase->statePosition("q2");
-                // current_q3=modelbase->statePosition("q3");
-                current_swing=current_q2;
-
-                current_q1_dot=modelbase->stateVelocity("q1");
-                current_q2_dot=modelbase->stateVelocity("q2");
-                std::cout<<"\tSTATE: "<<current_q1<<" "<<current_q1_dot<<" "<<current_q2<<" "<<current_q2_dot<<std::endl;
-            }
-
-
-        }
-        // if(state&LOCKED_KNEE && !(state&FALL))
         if(!(state&FALL))
         {
             bool groundcollision=ground_contact->computeCheckConstraint();
             //check if collision happened
+
 
             // double q2=modelbase->statePosition("q2")-M_PI;
 
@@ -1062,9 +1032,15 @@ class PassiveWalkerWithCam: public PassiveWalker
 
             double q2=shank_angle-stance_angle;
 
+            Vector2D stancefoot=modelbase->evalPosition(*stance_shank);
+            Vector2D kneepos=modelbase->evalPosition(*swing_shank);
+            scalar centerAngle = modelbase->evalAngle(*swing_shank);
+            Vector2D swingpos = kneepos + Vector2D::rotate(Vector2D(0.0, -(b1+a1)), centerAngle);
+
+
             // std::cout<<"DEBUG Q2: "<<q2<<" stance: "<<stance_angle<<" swing: "<<shank_angle<<std::endl;
             //TODO Check if foot if behind.
-            if(groundcollision && q2>0.0) //ok swap stance leg
+            if(groundcollision && stancefoot.x()-swingpos.x()<0.0) //ok swap stance leg
             {
                 // std::cout<<"DEBUG Q2: "<<q2<<" stance: "<<stance_angle<<" swing: "<<shank_angle<<std::endl;
 
@@ -1078,7 +1054,7 @@ class PassiveWalkerWithCam: public PassiveWalker
                 //Change the model
                 foot_on_ground();
 
-                knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
+                // knee_stop->swapmodel(swing_thigh,swing_shank,modelbase);
                 ground_contact->swapmodel(swing_shank,modelbase, Vector2D(0,-(a1+b1)));
 
                 state=0;
@@ -1106,7 +1082,7 @@ class PassiveWalkerWithCam: public PassiveWalker
 
 
             }
-            if(groundcollision && q2<=0.0)
+            if(groundcollision && stancefoot.x()-swingpos.x()>=0.0)
             {
                 std::cout<<"DEBUG COLLISION: forbidden ground (back leg)"<<std::endl;
                 state|=FALL;
