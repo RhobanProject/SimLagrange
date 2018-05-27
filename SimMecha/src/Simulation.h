@@ -137,6 +137,37 @@ inline EigenVector simulationComputeTorques(
     }
 
     /**
+     * Compute inertia matrix and force vector
+     */
+    inline void simulationComputeInertiaAndForces(
+        const EigenVector& position,
+        const EigenVector& velocity,
+        const EigenVector& torques,
+        const DofContainer& dofs,
+        TermContainer& dynamics, 
+        SymbolPtr time,
+        EigenMatrix& inertia,
+        EigenVector& forces)
+    {
+        forces = simulationComputeTorques(
+            position, velocity,
+            EigenVector::Zero(dofs.size(), 1),
+            dofs, dynamics, time);
+        inertia = EigenMatrix::
+                              Zero(dofs.size(), dofs.size());
+        EigenVector acceleration = EigenVector::
+                                   Zero(dofs.size(), 1);
+        for (size_t i=0;i<dofs.size();i++)
+        {
+            acceleration(i) = 1.0;
+            inertia.col(i) =
+                    simulationComputeTorques(position, velocity,
+                                             acceleration, dofs, dynamics, time) - forces;
+            acceleration(i) = 0.0;
+        }
+    }
+
+    /**
      * Compute and return the acceleration
      * for each degrees of freedom given their position
      * velocity and applied torque using given dynamics
@@ -151,22 +182,12 @@ inline EigenVector simulationComputeTorques(
 #ifdef _PROFILE
         auto t1=std::chrono::steady_clock::now();
 #endif
-        EigenVector forces = simulationComputeTorques(
-            position, velocity,
-            EigenVector::Zero(dofs.size(), 1),
-            dofs, dynamics, time);
-        EigenMatrix inertia = EigenMatrix::
-                              Zero(dofs.size(), dofs.size());
-        EigenVector acceleration = EigenVector::
-                                   Zero(dofs.size(), 1);
-        for (size_t i=0;i<dofs.size();i++)
-        {
-            acceleration(i) = 1.0;
-            inertia.col(i) =
-                    simulationComputeTorques(position, velocity,
-                                             acceleration, dofs, dynamics, time) - forces;
-            acceleration(i) = 0.0;
-        }
+        EigenVector forces;
+        EigenMatrix inertia;
+        simulationComputeInertiaAndForces(
+            position, velocity, torques,
+            dofs, dynamics, time,
+            inertia, forces);
 
         //Using LU decomposition for inversing inertia matrix
         Eigen::FullPivLU<EigenMatrix> inertiaLU(inertia);
@@ -180,7 +201,6 @@ inline EigenVector simulationComputeTorques(
             return inertiaLU.inverse()*(torques - forces);
         } else {
             throw std::logic_error("Simulation singular inertia matrix");
-            //return EigenVector::Zero(dofs.size(), 1);
         }
     }
 
