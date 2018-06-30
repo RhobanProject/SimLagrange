@@ -14,12 +14,39 @@
 using namespace std;
 using namespace Leph::SimMecha;
 
-int main()
+void testFloating()
+{
+    Leph::SimViewer::SimViewer viewer(800, 600);
+    System system(Vector2D(-1.0, 1.0), Vector2D(0.9, 0.0));
+    system.getBase().addMass(1.0, Vector2D(0.0, 0.0));
+    
+    HeightUnaryConstraint c1(
+        system.getBase(), system, 0.8, false, 0.0, Vector2D(0.0, 0.0));
+    
+    system.initSymbols();
+    
+    const double dt = 0.01;
+    while (viewer.isOpen()) {
+        viewer.beginDraw();
+        viewer.drawFrame();
+        system.draw(viewer);
+        viewer.endDraw();
+        
+        system.runSimulationStep(dt);
+        scalar Ep=system.evalPotential();
+        scalar Ec=system.evalKinetic();
+        std::cout.precision(15);
+        std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
+
+        c1.handle(dt);
+    }
+}
+
+void testFixed()
 {
     Leph::SimViewer::SimViewer viewer(800, 600);
 
-    System system(Vector2D(-1.0, 0.0));
-    //System system(Vector2D(-1.0, 1.0), Vector2D());
+    System system(Vector2D(-1.0, 1.5));
     system.getBase().addMass(1.0, Vector2D(0.0, 0.0));
 
     Body& b1 = system.addAngularJoint(
@@ -36,47 +63,49 @@ int main()
         0.2, 0.0);
     b2.addMass(1.0, Vector2D(1.0, 0.0));
 
-    // Body& b3 = system.addAngularJoint(
-    //     b2,
-    //     Vector2D(1.0, 0.0), 0.0,
-    //     Vector2D(0.0, 0.0), 0.0,
-    //     0.2, 0.0);
-    // b3.addMass(1.0, Vector2D(1.0, 0.0));
+    Body& b3 = system.addAngularJoint(
+        b2,
+        Vector2D(1.0, 0.0), 0.0,
+        Vector2D(0.0, 0.0), 0.0,
+        0.2, 0.0);
+    b3.addMass(1.0, Vector2D(1.0, 0.0));
 
     system.initSymbols();
 
+    HeightUnaryConstraint c1(
+        b1, system, 1.0, false, 0.0, Vector2D(0.0, 0.0));
+    HeightUnaryConstraint c2(
+        b2, system, 1.0, false, 0.0, Vector2D(0.0, 0.0));
+    HeightUnaryConstraint c3(
+        b3, system, 1.0, false, 0.0, Vector2D(0.0, 0.0));
+    HeightUnaryConstraint c4(
+        b3, system, 1.0, false, 0.0, Vector2D(1.0, 0.0));
 
-    // HeightUnaryConstraint c1(
-    //     b3, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    // HeightUnaryConstraint c2(
-    //     b2, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    // HeightUnaryConstraint c3(
-    //     b1, system, 0.90, false, 0.0, Vector2D(1.0, 0.0));
-    // HeightUnaryConstraint c4(
-    //     system.getBase(), system, 0.90, false, 0.0, Vector2D(0.0, 0.0));
-
-
+    const double dt = 0.01;
     while (viewer.isOpen()) {
 
         viewer.beginDraw();
         viewer.drawFrame();
         system.draw(viewer);
-        viewer.moveCam(-system.evalPosition(system.getBase()).x(),system.evalPosition(system.getBase()).y());
         viewer.endDraw();
 
-        system.runSimulationStep(0.01);
+        system.runSimulationStep(dt);
         scalar Ep=system.evalPotential();
         scalar Ec=system.evalKinetic();
         std::cout.precision(15);
-        // std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
-        std::cout<<Ep+Ec<<" "<<Ep<<" "<<Ec<<std::endl;
+        std::cout<<"ENERGY: "<<Ep+Ec<<" Ep: "<<Ep<<" Ec: "<<Ec<<std::endl;
 
-        // c1.handle();
-        // c2.handle();
-        // c3.handle();
-        // c4.handle();
-
+        c1.handle(dt);
+        c2.handle(dt);
+        c3.handle(dt);
+        c4.handle(dt);
     }
+}
+
+int main()
+{
+    testFloating();
+    testFixed();
 
     return 0;
 }

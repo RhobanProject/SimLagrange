@@ -53,6 +53,8 @@ class System
             _statePosition(),
             _stateVelocity(),
             _stateTorque(),
+            _lastPosition(),
+            _lastVelocity(),
             _is_init(true)
     {
         //Init lagrangian to null
@@ -79,6 +81,8 @@ class System
             _statePosition(),
             _stateVelocity(),
             _stateTorque(),
+            _lastPosition(),
+            _lastVelocity(),
             _is_init(true)
     {
         //Init lagrangian to null
@@ -414,17 +418,6 @@ class System
      */
     inline void initSymbols()
     {
-
-        _lagrangian = Symbol::create(
-            Symbolic::BaseSymbol::zero()); //reset Lagrangian
-
-
-        _Ec=Symbol::create(
-            Symbolic::BaseSymbol::zero());
-        _Ep=Symbol::create(
-            Symbolic::BaseSymbol::zero());
-
-
         //We assume that Joints in the container are ordered
         //by dependencies (true by construction)
         for (size_t i=0;i<_joints.size();i++) {
@@ -433,6 +426,8 @@ class System
         //Recompute Base lagrangian (new masses added)
         _base->initSymbols();
         //Compute lagrangian expression
+        _Ec = _base->getKinetic();
+        _Ep = _base->getPotential();
         _lagrangian = _base->getLagrangian();
         for (size_t i=0;i<_bodies.size();i++) {
             _lagrangian = Symbolic::Add<scalar>::create(
@@ -510,6 +505,8 @@ class System
             _is_init=false;
         }
 
+        _lastPosition = _statePosition;
+        _lastVelocity = _stateVelocity;
         simulationComputeStep(
             _statePosition,
             _stateVelocity,
@@ -576,6 +573,30 @@ class System
     }
 
     /**
+     * Read access to last used position, velocity
+     * and torque vector at last simulation step
+     */
+    inline const std::vector<scalar>& getLastPositions() const
+    {
+        return _lastPosition;
+    }
+    inline const std::vector<scalar>& getLastVelocities() const
+    {
+        return _lastVelocity;
+    }
+
+    /**
+     * Assign current position and velocity state
+     */
+    inline void setState(
+        const std::vector<scalar>& pos,
+        const std::vector<scalar>& vel)
+    {
+        _statePosition = pos;
+        _stateVelocity = vel;
+    }
+
+    /**
      * Return true if the given degree of freedom
      * name exists
      */
@@ -618,6 +639,73 @@ class System
         return body.getSymAngleVel()->evaluate(bounder);
     }
 
+    /**
+     * Evaluate the position or velocity of a given point
+     * in body frame with current system state
+     */
+    inline const Vector2D& evalPointPosition(
+        Body& body, const Vector2D& posInBody)
+    {
+        Symbolic::Bounder bounder = bounderFromCurrentState();
+        body.getSymPosition()->reset();
+        return body.buildSymPosition(posInBody)->evaluate(bounder);
+    }
+    inline const Vector2D& evalPointVelocity(
+        Body& body, const Vector2D& posInBody)
+    {
+        Symbolic::Bounder bounder = bounderFromCurrentState();
+        body.getSymPosition()->reset();
+        return body.buildSymPositionVel(posInBody)->evaluate(bounder);
+    }
+    
+    /**
+     * Evaluate and return the (2 x n) Jacobian matrix 
+     * at current state of given body position at given position
+     * in body frame
+     */
+    inline EigenMatrix evalJacobian(
+        Body& body, const Vector2D& posInBody)
+    {
+        Symbolic::Bounder bounder = bounderFromCurrentState();
+        body.getSymPosition()->reset();
+
+        //XXX Performances can be improved by caching
+        //inside Body the symbolic expression of Jacobian columns
+        //before evaluating them
+        EigenMatrix jac(2, _dofs.size());
+        for (size_t i=0;i<_dofs.size();i++) {
+            Vector2D diff = body.buildSymPosition(posInBody)
+                ->derivate(_dofs[i])->evaluate(bounder);
+            jac(0, i) = diff.x();
+            jac(1, i) = diff.y();
+        }
+        return jac;
+    }
+
+    /**
+     * Evaluate and return the (n x n) inertia H matrix
+     */
+    inline EigenMatrix evalInertiaMatrix()
+    {
+        EigenMatrix H;
+        EigenVector forces;
+        
+        EigenVector position(_dofs.size(), 1);
+        EigenVector velocity(_dofs.size(), 1);
+        EigenVector torque(_dofs.size(), 1);
+        for (size_t i=0;i<_dofs.size();i++) {
+            position(i) = _statePosition[i];
+            velocity(i) = _stateVelocity[i];
+            torque(i) = _stateTorque[i];
+        }
+        
+        simulationComputeInertiaAndForces(
+            position, velocity, torque,
+            _dofs, _dynamics, _time,
+            H, forces);
+
+        return H;
+    }
 
     inline TermPtr getPotential()
     {
@@ -783,10 +871,13 @@ class System
 
     /**
      * State position and velocity values
-     * of current mechanical System
+     * of current mechanical System and of last
+     * simulation step.
      */
     std::vector<scalar> _statePosition;
     std::vector<scalar> _stateVelocity;
+    std::vector<scalar> _lastPosition;
+    std::vector<scalar> _lastVelocity;
 
     /**
      * Applied torque values to associated

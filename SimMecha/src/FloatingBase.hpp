@@ -35,7 +35,7 @@ class FloatingBase : public Base
             TermPtr symAngleVel = Symbol::create(
                 Symbolic::BaseSymbol::zero());
 
-            //Initalize Symblos and compute 
+            //Initalize Symbols and compute 
             //lagrangian symbolic expression
             Body::initSymbols(
                 symPos, symAngle, symPosVel, symAngleVel);
