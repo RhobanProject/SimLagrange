@@ -9,6 +9,10 @@
 #include "Any/src/Any.hpp"
 #include "Vector/src/Vector2D.hpp"
 #include "SimMecha/src/Simulation.h"
+#include <string>
+#include <vector>
+#include <iostream>
+#include <cstdlib>
 
 namespace Leph {
 namespace SimViewer {

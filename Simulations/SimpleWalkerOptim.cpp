@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <functional>
 
-#include <cmaes/cmaes.h>
+#include <cmaes.h>
 #include "Simulations/SimpleWalkerGround.hpp"
 
 // #define DIST(x,y) (sqrt(pow((x-y),2)))
@@ -28,7 +28,7 @@
 
 // #define DRAW
 
-
+#define DT 0.01
 #define RED "\033[31m"
 #define GREEN "\033[32m"
 #define BLUE "\033[34m"
@@ -215,9 +215,9 @@ FitFunc walk=[](const double *x, const int N)
         {
             std::cerr << e.what()<<std::endl;
         }
-        t+=0.01;
+        t+=DT;
         // std::cout<<"TIME: "<<t<<std::endl;
-        g.handle();
+        g.handle(DT);
 
 
 

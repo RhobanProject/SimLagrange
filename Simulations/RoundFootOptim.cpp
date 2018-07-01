@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <functional>
 
-#include <cmaes/cmaes.h>
+#include <cmaes.h>
 #include "Simulations/RoundFeetWalkerGround.hpp"
 
 // #define DIST(x,y) (sqrt(pow((x-y),2)))
@@ -34,6 +34,8 @@
 #define GREEN "\033[32m"
 #define BLUE "\033[34m"
 #define DEFAULT "\033[39m"
+
+#define DT 0.001
 
 using namespace std;
 using namespace Leph::SimMecha;
@@ -250,9 +252,9 @@ FitFunc walk=[](const double *x, const int N)
             }
             if(!simu_pause){
                 system.runSimulationStep(0.001);
-                t+=0.001;
-                    // std::cout<<"TIME: "<<t<<std::endl;
-                g.handle();
+                t+=DT;
+                // std::cout<<"TIME: "<<t<<std::endl;
+                g.handle(DT);
 
             }
         }

@@ -21,7 +21,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <cmaes/cmaes.h>
+#include <cmaes.h>
 
 #define DIST(x,y) (sqrt(pow((x-y),2)))
 // #define DIST(x,y) (pow(sqrt(pow((x-y),2))),2)

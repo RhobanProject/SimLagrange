@@ -81,14 +81,14 @@ class UnaryConstraint : public Constraint
             scalar stepMax = dt; 
             scalar step;
             for (int i=0;i<50;i++) { //50 is enough to reach double precision limit
-                step = (stepMax+stepMin)/2.0;
-                _system->setState(vectPos, vectVel);
-                _system->runSimulationStep(step);
-                if (computeCheckConstraint(point, dir, posInBody)) {
-                    stepMax = step;
-                } else {
-                    stepMin = step;
-                }
+              step = (stepMax+stepMin)/2.0;
+              _system->setState(vectPos, vectVel);
+              _system->runSimulationStep(step);
+              if (computeCheckConstraint(point, dir, posInBody)) {
+                stepMax = step;
+              } else {
+                stepMin = step;
+              }
             }
 
             //Go back to collision time

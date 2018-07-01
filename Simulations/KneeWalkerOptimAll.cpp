@@ -21,7 +21,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <cmaes/cmaes.h>
+#include <cmaes.h>
 #include <json/json.h>
 #include <iomanip>
 

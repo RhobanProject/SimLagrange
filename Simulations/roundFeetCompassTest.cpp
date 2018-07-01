@@ -21,7 +21,7 @@
 #include <iomanip>
 
 #define SKIP_FRAME 20
-
+#define DT 0.001
 #define DRAW
 #define LOG
 
@@ -274,9 +274,9 @@ int main()
                 scalar Ec=system.evalKinetic();
                 logfile<<time<<" "<<system.statePosition("q1")<<" "<<system.stateVelocity("q1")<<" "<<system.statePosition("q2")<<" "<<system.stateVelocity("q2")<<" "<<Ep<<" "<<Ec<<" "<<Ep+Ec<<"\n";
 #endif
-                system.runSimulationStep(0.001);
+                system.runSimulationStep(DT);
 
-                    /*
+                /*
                 scalar Ep=system.evalPotential();
                 scalar Ec=system.evalKinetic();
                 std::cout.precision(15);
@@ -290,10 +290,10 @@ int main()
             std::cerr << e.what()<<std::endl;
         }
 
-        g.handle();
+        g.handle(DT);
         if(g.hasFallen)
             std::cout<<"FALL, nbStep: "<<g.nbStep<<std::endl;
-        time+=0.001;
+        time+=DT;
     }
 
 

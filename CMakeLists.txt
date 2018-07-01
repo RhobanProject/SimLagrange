@@ -1,7 +1,34 @@
 cmake_minimum_required(VERSION 2.8)
 project(These)
 
+find_package(PkgConfig REQUIRED)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+find_package (Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+find_package(SFML REQUIRED system window graphics)
+include_directories(${SFML_INCLUDE_DIR})
+
+
+pkg_check_modules(JSONCPP jsoncpp)
+include_directories(${JSONCPP_INCLUDE_DIRS})
+link_libraries(${JSONCPP_LIBRARIES})
+
+message("JSONCPP FOUND CONFIG: ${JSONCPP_CONFIG}")
+message("JSONCPP INCLUDE DIRS: ${JSONCPP_INCLUDE_DIRS}")
+message("JSONCPP LIBRARIES: ${JSONCPP_LIBRARIES}")
+
+
+pkg_check_modules(CMAES libcmaes)
+message("CMAES FOUND CONFIG: ${CMAES_CONFIG}")
+message("CMAES INCLUDE DIRS: ${CMAES_INCLUDE_DIRS}")
+message("CMAES LIBRARIES: ${CMAES_LIBRARIES}")
+include_directories(${CMAES_INCLUDE_DIRS})
+link_libraries(${CMAES_LIBRARIES})
+
+
 
 #Tests to compile
 set(TESTS_DIRECTORIES
@@ -19,15 +46,6 @@ set(TESTS_DIRECTORIES
 )
 
 
-#Include Eigen (linear algebra template library)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Eigen)
-
-#Include SFML (windows and graphic library)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/SFML/lib)
-
-#Include JSONcpp
-include_directories(/usr/include/jsoncpp)
 
 
 #Enable C++11

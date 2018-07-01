@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cassert>
 
 #include "SimMecha/src/Body.hpp"
 #include "SimMecha/src/Joint.hpp"
@@ -16,6 +15,9 @@
 
 #include <stdio.h>
 #include <functional>
+#include <cstdlib>
+
+#define DT 0.01
 
 using namespace std;
 using namespace Leph::SimMecha;
@@ -24,8 +26,6 @@ using namespace Leph::SimViewer;
 
 bool simu_pause=false;
 bool simu_reset=false;
-
-
 
 
 
@@ -231,7 +231,7 @@ int main()
                 simu_reset=false;
             }
             if(!simu_pause)
-                system.runSimulationStep(0.01);
+              system.runSimulationStep(DT);
         }
         catch(const std::exception & e)
         {
@@ -244,7 +244,7 @@ int main()
           c4.handle();
         */
 
-        g.handle();
+        g.handle(DT);
     }
 
     return 0;
